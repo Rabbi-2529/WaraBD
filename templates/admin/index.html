@@ -1,0 +1,187 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <!-- ApexCharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <style>
+        body { background-color: #f8fafc; }
+        
+        /* KPI Cards */
+        .stat-card { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); display: flex; align-items: center; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-icon { width: 54px; height: 54px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-right: 16px; }
+        .stat-content { flex: 1; }
+        .stat-label { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; }
+        
+        /* Indigo + Navy Theme Colors */
+        .bg-indigo-light { background: #eef2ff; color: #4f46e5; }
+        .bg-green-light { background: #d1fae5; color: #10b981; }
+        .bg-blue-light { background: #e0f2fe; color: #0ea5e9; }
+        .bg-red-light { background: #fee2e2; color: #ef4444; }
+
+        /* Charts & Cards */
+        .chart-card { background: #fff; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); padding: 24px; height: 100%; margin-bottom: 24px; }
+        .chart-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+        
+        /* Recent Orders Table */
+        .table-custom th { background: #f8fafc; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+        .table-custom td { padding: 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px; vertical-align: middle; }
+        
+        .badge-pill { padding: 5px 10px; font-size: 11px; font-weight: 600; border-radius: 50rem; display: inline-block; }
+        .bg-pending { background: #fef3c7; color: #d97706; }
+        .bg-paid { background: #d1fae5; color: #059669; }
+        .bg-shipped { background: #e0f2fe; color: #0284c7; }
+        .bg-cancelled { background: #fee2e2; color: #dc2626; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    
+    <!-- 1. KPI STAT CARDS -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-green-light"><i class="bx bx-dollar"></i></div>
+                <div class="stat-content">
+                    <p class="stat-label">Total Revenue</p>
+                    <h3 class="stat-value">৳{{ total_revenue|floatformat:0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-indigo-light"><i class="bx bx-cart-alt"></i></div>
+                <div class="stat-content">
+                    <p class="stat-label">Total Orders</p>
+                    <h3 class="stat-value">{{ total_orders }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-light"><i class="bx bx-cube-alt"></i></div>
+                <div class="stat-content">
+                    <p class="stat-label">Active Products</p>
+                    <h3 class="stat-value">{{ total_products }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-red-light"><i class="bx bx-envelope"></i></div>
+                <div class="stat-content">
+                    <p class="stat-label">Unread Messages</p>
+                    <h3 class="stat-value">{{ unread_messages }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CHARTS ROW -->
+    <div class="row g-3 mb-4">
+        <!-- Revenue Chart -->
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <h3 class="chart-title">Revenue Overview (Last 6 Months)</h3>
+                <div id="revenueChart"></div>
+            </div>
+        </div>
+        
+        <!-- Orders Chart -->
+        <div class="col-lg-4">
+            <div class="chart-card">
+                <h3 class="chart-title">Orders Volume</h3>
+                <div id="ordersChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. RECENT ORDERS TABLE -->
+    <div class="row">
+        <div class="col-12">
+            <div class="chart-card p-0">
+                <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+                    <h3 class="chart-title m-0 border-0 p-0">Recent Orders</h3>
+                    <a href="{% url 'admin:web_order_changelist' %}" class="btn btn-sm btn-outline-primary" style="border-color: #4f46e5; color: #4f46e5;">View All</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><a href="{% url 'admin:web_order_change' order.pk %}" style="font-weight: 600;">{{ order.order_number }}</a></td>
+                                <td>{{ order.full_name }}</td>
+                                <td style="font-weight: 700;">৳{{ order.total }}</td>
+                                <td>
+                                    {% if order.status == 'pending' %}<span class="badge-pill bg-pending">Pending</span>
+                                    {% elif order.status == 'paid' %}<span class="badge-pill bg-paid">Paid</span>
+                                    {% elif order.status == 'shipped' %}<span class="badge-pill bg-shipped">Shipped</span>
+                                    {% elif order.status == 'cancelled' %}<span class="badge-pill bg-cancelled">Cancelled</span>
+                                    {% else %}<span class="badge-pill bg-secondary">{{ order.status }}</span>{% endif %}
+                                </td>
+                                <td style="color: #64748b;">{{ order.created_at|date:"d M, Y h:i A" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center py-4 text-muted">No orders found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pass Django Data to JavaScript safely -->
+{{ chart_months|json_script:"chart-months" }}
+{{ chart_revenue|json_script:"chart-revenue" }}
+{{ chart_orders|json_script:"chart-orders" }}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Parse Data
+        const months = JSON.parse(document.getElementById('chart-months').textContent);
+        const revenueData = JSON.parse(document.getElementById('chart-revenue').textContent);
+        const ordersData = JSON.parse(document.getElementById('chart-orders').textContent);
+
+        // 1. Revenue Area Chart
+        const revenueOptions = {
+            series: [{ name: 'Revenue (৳)', data: revenueData }],
+            chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'inherit' },
+            colors: ['#4f46e5'],
+            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3 },
+            xaxis: { categories: months, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { formatter: (val) => '৳' + val.toFixed(0) } }
+        };
+        new ApexCharts(document.querySelector("#revenueChart"), revenueOptions).render();
+
+        // 2. Orders Bar Chart
+        const ordersOptions = {
+            series: [{ name: 'Orders', data: ordersData }],
+            chart: { type: 'bar', height: 300, toolbar: { show: false }, fontFamily: 'inherit' },
+            colors: ['#10b981'],
+            plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
+            dataLabels: { enabled: false },
+            xaxis: { categories: months, axisBorder: { show: false }, axisTicks: { show: false } },
+        };
+        new ApexCharts(document.querySelector("#ordersChart"), ordersOptions).render();
+    });
+</script>
+{% endblock %}

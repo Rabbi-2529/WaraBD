@@ -1,0 +1,1525 @@
+
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --background: #f8fafc;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        #content-main,
+        #content-main form {
+            width: 100%;
+        }
+
+        .aligned label::after,
+        .form-row label::after {
+            content: "" !important;
+        }
+
+        .help,
+        .helptext,
+        p.help {
+            display: none !important;
+        }
+
+        .product-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .product-card,
+        .gallery-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 26px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, .025);
+        }
+
+        .card-heading {
+            padding-bottom: 17px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .card-heading h2,
+        .gallery-card h2 {
+            font-size: 16px;
+            font-weight: 650;
+            color: #0f172a;
+            margin: 0 0 5px;
+        }
+
+        .card-heading p {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .field-group {
+            margin-bottom: 20px;
+            min-width: 0;
+        }
+
+        .field-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .field-group > label {
+            display: block;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .required-mark { color: var(--danger); }
+        .optional-mark { color: #94a3b8; font-weight: 400; }
+
+        .form-control,
+        #content-main input:not([type="checkbox"]):not([type="file"]):not([type="hidden"]),
+        #content-main select,
+        #content-main textarea {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 42px;
+            padding: 10px 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background-color: #fff;
+            color: #0f172a;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        #content-main input:focus,
+        #content-main select:focus,
+        #content-main textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, .10);
+        }
+
+        #content-main input::placeholder,
+        #content-main textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        #content-main textarea {
+            min-height: 170px;
+            resize: vertical;
+        }
+
+        #content-main select {
+            appearance: none;
+            padding-right: 38px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .icon-field { position: relative; }
+
+        .icon-field > i {
+            position: absolute;
+            z-index: 1;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 18px;
+            pointer-events: none;
+        }
+
+        .icon-field input,
+        .icon-field select {
+            padding-left: 41px !important;
+        }
+
+        .status-box {
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-box input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .status-box label {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Main product image uploader */
+
+        .upload-zone {
+            position: relative;
+            padding: 32px 20px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            background: #fcfcff;
+            text-align: center;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: var(--primary);
+            background: #f5f5ff;
+        }
+
+        .upload-icon {
+            width: 52px;
+            height: 52px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #e0e7ff;
+            border-radius: 50%;
+            color: var(--primary);
+            font-size: 25px;
+            margin-bottom: 12px;
+        }
+
+        .upload-title {
+            font-size: 14px;
+            font-weight: 650;
+            color: #0f172a;
+            margin-bottom: 5px;
+        }
+
+        .upload-description {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        .browse-button {
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: #334155;
+            padding: 8px 17px;
+            border-radius: 7px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .browse-button:hover { background: #f1f5f9; }
+
+        .upload-zone input[type="file"] { display: none; }
+
+        .image-preview {
+            display: none;
+            margin: 20px auto 0;
+            max-width: 220px;
+        }
+
+        .image-preview img {
+            display: block;
+            width: 100%;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: white;
+        }
+
+        .image-preview-name {
+            color: var(--primary);
+            font-size: 12px;
+            margin-top: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        /* Modern gallery uploader */
+
+        .gallery-card {
+            overflow: hidden;
+        }
+
+        .gallery-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 17px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .gallery-heading h2 {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin: 0;
+        }
+
+        .gallery-heading h2 i {
+            color: var(--primary);
+            font-size: 21px;
+        }
+
+        .gallery-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 27px;
+            height: 27px;
+            padding: 0 8px;
+            border-radius: 20px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .gallery-dropzone {
+            border: 2px dashed #c7d2fe;
+            background: #fafaff;
+            border-radius: 12px;
+            padding: 27px 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .gallery-dropzone:hover,
+        .gallery-dropzone.drag-over {
+            border-color: var(--primary);
+            background: #f1f2ff;
+        }
+
+        .gallery-dropzone-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #e0e7ff;
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25px;
+            margin-bottom: 10px;
+        }
+
+        .gallery-dropzone strong {
+            display: block;
+            color: #1e293b;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .gallery-dropzone p {
+            color: #64748b;
+            font-size: 12px;
+            margin: 0 0 13px;
+        }
+
+        .gallery-browse {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 15px;
+            background: var(--primary);
+            border: 0;
+            border-radius: 7px;
+            color: white;
+            font-size: 12px;
+            font-weight: 650;
+            cursor: pointer;
+        }
+
+        .gallery-browse:hover { background: #4338ca; }
+
+        .gallery-upload-input { display: none !important; }
+
+        .gallery-upload-note {
+            margin: 12px 0 0;
+            color: #64748b;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .gallery-status {
+            display: none;
+            margin-top: 13px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 12px;
+        }
+
+        .gallery-status.error {
+            display: block;
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        /* Django inline formset */
+
+        .gallery-inline-container {
+            margin-top: 23px;
+        }
+
+        .gallery-inline-container .inline-group {
+            margin: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+
+        .gallery-inline-container .tabular {
+            border: 0 !important;
+            overflow: visible !important;
+        }
+
+        .gallery-inline-container table {
+            width: 100%;
+            border: 0 !important;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            background: transparent !important;
+        }
+
+        .gallery-inline-container thead th {
+            padding: 8px 10px;
+            color: #64748b;
+            background: transparent !important;
+            border: 0 !important;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .gallery-inline-container tbody tr.form-row {
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+        }
+
+        .gallery-inline-container tbody tr.form-row td {
+            padding: 12px 9px;
+            border-top: 1px solid #e2e8f0 !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            vertical-align: middle;
+        }
+
+        .gallery-inline-container tbody tr.form-row td:first-child {
+            border-left: 1px solid #e2e8f0 !important;
+            border-radius: 9px 0 0 9px;
+        }
+
+        .gallery-inline-container tbody tr.form-row td:last-child {
+            border-right: 1px solid #e2e8f0 !important;
+            border-radius: 0 9px 9px 0;
+        }
+
+        .gallery-inline-container tbody tr.form-row input:not([type="checkbox"]):not([type="file"]) {
+            min-width: 65px;
+            padding: 8px 9px;
+            font-size: 12px;
+        }
+
+        .gallery-inline-container tbody tr.form-row input[type="file"] {
+            max-width: 180px;
+            font-size: 11px;
+        }
+
+        .gallery-inline-container .original {
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .gallery-inline-container .original p {
+            margin: 0;
+        }
+
+        .gallery-inline-container .original a {
+            color: var(--primary);
+            overflow-wrap: anywhere;
+        }
+
+        .gallery-inline-container .delete {
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .gallery-inline-container .delete input {
+            accent-color: var(--danger);
+        }
+
+        .gallery-inline-container .add-row {
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .gallery-inline-container .add-row td {
+            border: 0 !important;
+            padding: 8px 0 !important;
+        }
+
+        .gallery-inline-container .add-row a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary) !important;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .gallery-inline-container .add-row a::before {
+            content: "+";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: var(--primary-light);
+            font-size: 17px;
+        }
+
+        .gallery-row-preview {
+            display: block;
+            width: 65px;
+            height: 65px;
+            object-fit: cover;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 7px;
+            background: #f8fafc;
+        }
+
+        .gallery-row-filename {
+            display: block;
+            max-width: 120px;
+            color: #64748b;
+            font-size: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        .gallery-inline-container .empty-form {
+            display: none !important;
+        }
+
+        .gallery-help {
+            color: #64748b;
+            font-size: 11px;
+            line-height: 1.6;
+            margin-top: 15px;
+        }
+
+        /* Validation */
+
+        .errorlist,
+        .field-errors {
+            color: #dc2626;
+            font-size: 12px;
+            margin: 7px 0 0;
+            padding-left: 18px;
+        }
+
+        .errorlist li { margin-bottom: 3px; }
+
+        .form-error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 9px;
+            color: #991b1b;
+            padding: 15px 18px;
+            margin-bottom: 22px;
+        }
+
+        /* Footer actions */
+
+        .product-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            border-top: 1px solid var(--border);
+            padding: 23px 0;
+            margin-top: 5px;
+        }
+
+        .product-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 11px 20px;
+            border: 0;
+            border-radius: 8px;
+            color: white !important;
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none !important;
+            cursor: pointer;
+            transition: .15s;
+        }
+
+        .product-action i { font-size: 17px; }
+
+        .action-discard { background: #ef4444; }
+        .action-discard:hover { background: #dc2626; }
+        .action-draft { background: #3b82f6; }
+        .action-draft:hover { background: #2563eb; }
+        .action-publish { background: #10b981; }
+        .action-publish:hover { background: #059669; }
+
+        .product-action:disabled {
+            opacity: .65;
+            cursor: wait;
+        }
+
+        @media (max-width: 900px) {
+            .product-layout { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .product-card,
+            .gallery-card { padding: 18px; }
+
+            .field-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .product-actions {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .product-action { width: 100%; box-sizing: border-box; }
+
+            .gallery-inline-container {
+                overflow-x: auto;
+            }
+
+            .gallery-inline-container table {
+                min-width: 620px;
+            }
+        }
+    </style>
+{% endblock %}
+
+
+{% block content %}
+<div id="content-main">
+
+    <form
+        method="post"
+        id="{{ opts.model_name }}_form"
+        enctype="multipart/form-data"
+        novalidate
+    >
+        {% csrf_token %}
+
+        {% for hidden_field in adminform.form.hidden_fields %}
+            {{ hidden_field }}
+            {{ hidden_field.errors }}
+        {% endfor %}
+
+        {% if adminform.form.non_field_errors %}
+            <div class="form-error-box">
+                <strong>Please correct the following errors:</strong>
+                {{ adminform.form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="product-layout">
+
+            <!-- LEFT COLUMN -->
+            <div>
+
+                <section class="product-card">
+                    <div class="card-heading">
+                        <h2>Product Information</h2>
+                        <p>Provide the necessary details about your product.</p>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.name.id_for_label }}">
+                            Product Name <span class="required-mark">*</span>
+                        </label>
+                        {{ adminform.form.name }}
+                        {{ adminform.form.name.errors }}
+                    </div>
+
+                    <div style="display:none">
+                        {{ adminform.form.slug }}
+                        {{ adminform.form.slug.errors }}
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label for="{{ adminform.form.sku.id_for_label }}">
+                                SKU <span class="required-mark">*</span>
+                            </label>
+                            {{ adminform.form.sku }}
+                            {{ adminform.form.sku.errors }}
+                        </div>
+
+                        <div class="field-group">
+                            <label for="{{ adminform.form.stock.id_for_label }}">
+                                Stock <span class="required-mark">*</span>
+                            </label>
+                            {{ adminform.form.stock }}
+                            {{ adminform.form.stock.errors }}
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.description.id_for_label }}">
+                            Product Description
+                            <span class="optional-mark">(Optional)</span>
+                        </label>
+                        {{ adminform.form.description }}
+                        {{ adminform.form.description.errors }}
+                    </div>
+                </section>
+
+                <!-- MAIN PRODUCT IMAGE -->
+                <section class="product-card">
+                    <div class="card-heading">
+                        <h2>Product Image</h2>
+                        <p>Upload the main image displayed for this product.</p>
+                    </div>
+
+                    <div class="upload-zone" id="product-dropzone">
+                        <div class="upload-icon">
+                            <i class="bx bx-cloud-upload"></i>
+                        </div>
+
+                        <div class="upload-title">
+                            Drop your image here or click to browse
+                        </div>
+
+                        <div class="upload-description">
+                            Choose a clear product image from your computer.
+                        </div>
+
+                        <button type="button" class="browse-button" id="browse-image">
+                            <i class="bx bx-image-add"></i>
+                            Browse Images
+                        </button>
+
+                        <div class="image-preview" id="image-preview">
+                            <img id="image-preview-img" src="" alt="Product preview">
+                            <div class="image-preview-name" id="file-name"></div>
+                        </div>
+
+                        <div style="display:none">
+                            {{ adminform.form.image }}
+                        </div>
+                    </div>
+
+                    {{ adminform.form.image.errors }}
+                </section>
+
+                <!-- GALLERY IMAGES -->
+                {% for inline_admin_formset in inline_admin_formsets %}
+                    <section class="gallery-card">
+
+                        <div class="gallery-heading">
+                            <h2>
+                                <i class="bx bx-images"></i>
+                                Gallery Images
+                            </h2>
+                            <span class="gallery-count" id="gallery-count">0</span>
+                        </div>
+
+                        <div class="gallery-dropzone" id="gallery-dropzone">
+                            <div class="gallery-dropzone-icon">
+                                <i class="bx bx-cloud-upload"></i>
+                            </div>
+
+                            <strong>Drop multiple product images here</strong>
+
+                            <p>
+                                Select or drag multiple images to add them to your gallery.
+                            </p>
+
+                            <button
+                                type="button"
+                                class="gallery-browse"
+                                id="gallery-browse"
+                            >
+                                <i class="bx bx-images"></i>
+                                Browse Gallery Images
+                            </button>
+
+                            <input
+                                type="file"
+                                id="gallery-multiple-input"
+                                class="gallery-upload-input"
+                                accept="image/*"
+                                multiple
+                            >
+                        </div>
+
+                        <p class="gallery-upload-note">
+                            Each image will be added as a separate gallery item.
+                            You can edit its caption and display order below.
+                        </p>
+
+                        <div id="gallery-status" class="gallery-status"></div>
+
+                        <div class="gallery-inline-container">
+                            {% include inline_admin_formset.opts.template %}
+                        </div>
+
+                        <p class="gallery-help">
+                            <i class="bx bx-info-circle"></i>
+                            Existing gallery images can be removed using their
+                            Django delete checkbox. Captions and ordering are
+                            saved with the product.
+                        </p>
+
+                    </section>
+                {% endfor %}
+
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div>
+
+                <!-- PRICING -->
+                <section class="product-card">
+                    <div class="card-heading">
+                        <h2>Pricing</h2>
+                        <p>Set your product price and discount.</p>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.price.id_for_label }}">
+                            Base Price <span class="required-mark">*</span>
+                        </label>
+                        <div class="icon-field">
+                            <i class="bx bx-money"></i>
+                            {{ adminform.form.price }}
+                        </div>
+                        {{ adminform.form.price.errors }}
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.discount_type.id_for_label }}">
+                            Discount Type <span class="optional-mark">(Optional)</span>
+                        </label>
+                        <div class="icon-field">
+                            <i class="bx bx-purchase-tag-alt"></i>
+                            {{ adminform.form.discount_type }}
+                        </div>
+                        {{ adminform.form.discount_type.errors }}
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.discount_price.id_for_label }}">
+                            Discount Value <span class="optional-mark">(Optional)</span>
+                        </label>
+                        <div class="icon-field">
+                            <i class="bx bx-tag"></i>
+                            {{ adminform.form.discount_price }}
+                        </div>
+                        {{ adminform.form.discount_price.errors }}
+                    </div>
+                </section>
+
+                <!-- ORGANIZE -->
+                <section class="product-card">
+                    <div class="card-heading">
+                        <h2>Organize</h2>
+                        <p>Organize and categorize your product.</p>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.brand.id_for_label }}">Brand</label>
+                        <div class="icon-field">
+                            <i class="bx bx-layer"></i>
+                            {{ adminform.form.brand }}
+                        </div>
+                        {{ adminform.form.brand.errors }}
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.category.id_for_label }}">
+                            Category <span class="required-mark">*</span>
+                        </label>
+                        <div class="icon-field">
+                            <i class="bx bx-grid-alt"></i>
+                            {{ adminform.form.category }}
+                        </div>
+                        {{ adminform.form.category.errors }}
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.sub_category.id_for_label }}">
+                            Sub Category
+                        </label>
+                        <div class="icon-field">
+                            <i class="bx bx-menu-alt-left"></i>
+                            {{ adminform.form.sub_category }}
+                        </div>
+                        {{ adminform.form.sub_category.errors }}
+                    </div>
+
+                    <div class="field-group">
+                        <label for="{{ adminform.form.stock_status.id_for_label }}">
+                            Stock Status <span class="required-mark">*</span>
+                        </label>
+                        <div class="icon-field">
+                            <i class="bx bx-package"></i>
+                            {{ adminform.form.stock_status }}
+                        </div>
+                        {{ adminform.form.stock_status.errors }}
+                    </div>
+
+                    <div class="field-group">
+                        <label>Status</label>
+                        <div class="status-box">
+                            {{ adminform.form.is_active }}
+                            <label for="{{ adminform.form.is_active.id_for_label }}">
+                                Active / Published
+                            </label>
+                        </div>
+                        {{ adminform.form.is_active.errors }}
+                    </div>
+
+                    {% if adminform.form.tags %}
+                        <div class="field-group">
+                            <label for="{{ adminform.form.tags.id_for_label }}">Tags</label>
+                            <div class="icon-field">
+                                <i class="bx bx-purchase-tag"></i>
+                                {{ adminform.form.tags }}
+                            </div>
+                            {{ adminform.form.tags.errors }}
+                        </div>
+                    {% endif %}
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="product-actions">
+
+            <a
+                href="{% url 'admin:web_product_changelist' %}"
+                class="product-action action-discard"
+            >
+                <i class="bx bx-x"></i>
+                Discard
+            </a>
+
+            <button
+                type="submit"
+                name="_save"
+                value="1"
+                class="product-action action-draft"
+                id="save-draft"
+            >
+                <i class="bx bx-save"></i>
+                Save as Draft
+            </button>
+
+            <button
+                type="submit"
+                name="_save"
+                value="1"
+                class="product-action action-publish"
+                id="publish-product"
+            >
+                <i class="bx bx-check-circle"></i>
+                Publish Product
+            </button>
+
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+
+{% block admin_change_form_document_ready %}
+    {{ block.super }}
+
+    <script>
+    (function () {
+        "use strict";
+
+        function initializeProductForm() {
+            const form = document.getElementById("{{ opts.model_name }}_form");
+            if (!form) return;
+
+            /* General Django field styling */
+            form.querySelectorAll("input, select, textarea").forEach(function (field) {
+                if (
+                    field.type !== "hidden" &&
+                    field.type !== "file" &&
+                    field.type !== "checkbox" &&
+                    field.type !== "submit"
+                ) {
+                    field.classList.add("form-control");
+                }
+            });
+
+            /* Placeholders */
+            const placeholders = {
+                id_name: "Enter product name",
+                id_sku: "Enter product SKU",
+                id_stock: "Enter available stock",
+                id_price: "Enter base price",
+                id_discount_price: "Enter discount value",
+                id_brand: "Enter brand name",
+                id_sub_category: "Enter subcategory",
+                id_tags: "Enter tags separated by commas",
+                id_description: "Write a detailed product description..."
+            };
+
+            Object.entries(placeholders).forEach(function ([id, value]) {
+                const field = document.getElementById(id);
+                if (field) field.placeholder = value;
+            });
+
+            /* Select placeholders */
+            const selectLabels = {
+                id_category: "Choose Category",
+                id_discount_type: "Choose Discount Type",
+                id_stock_status: "Choose Stock Status"
+            };
+
+            Object.entries(selectLabels).forEach(function ([id, label]) {
+                const field = document.getElementById(id);
+
+                if (
+                    field &&
+                    field.tagName === "SELECT" &&
+                    field.options.length &&
+                    field.options[0].value === ""
+                ) {
+                    field.options[0].textContent = label;
+                }
+            });
+
+            /* Automatic slug generation */
+            const nameField = document.getElementById("id_name");
+            const slugField = document.getElementById("id_slug");
+
+            if (nameField && slugField) {
+                nameField.addEventListener("input", function () {
+                    if (slugField.dataset.touched === "true") return;
+
+                    slugField.value = nameField.value
+                        .toLowerCase()
+                        .trim()
+                        .replace(/[^\w\s-]/g, "")
+                        .replace(/[\s_-]+/g, "-")
+                        .replace(/^-+|-+$/g, "");
+                });
+
+                slugField.addEventListener("input", function () {
+                    slugField.dataset.touched = "true";
+                });
+            }
+
+            /* Main image uploader */
+            const dropzone = document.getElementById("product-dropzone");
+            const browseButton = document.getElementById("browse-image");
+            const fileInput = document.getElementById("id_image");
+            const preview = document.getElementById("image-preview");
+            const previewImage = document.getElementById("image-preview-img");
+            const fileName = document.getElementById("file-name");
+
+            function showSelectedImage(file) {
+                if (!file || !file.type.startsWith("image/")) return;
+
+                const reader = new FileReader();
+
+                reader.onload = function (event) {
+                    previewImage.src = event.target.result;
+                    fileName.textContent = file.name;
+                    preview.style.display = "block";
+                };
+
+                reader.readAsDataURL(file);
+            }
+
+            if (fileInput && dropzone) {
+                browseButton.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    fileInput.click();
+                });
+
+                dropzone.addEventListener("click", function (event) {
+                    if (!event.target.closest(".browse-button")) {
+                        fileInput.click();
+                    }
+                });
+
+                fileInput.addEventListener("change", function () {
+                    if (this.files && this.files.length) {
+                        showSelectedImage(this.files[0]);
+                    }
+                });
+
+                ["dragenter", "dragover"].forEach(function (eventName) {
+                    dropzone.addEventListener(eventName, function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        dropzone.classList.add("drag-over");
+                    });
+                });
+
+                ["dragleave", "drop"].forEach(function (eventName) {
+                    dropzone.addEventListener(eventName, function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        dropzone.classList.remove("drag-over");
+                    });
+                });
+
+                dropzone.addEventListener("drop", function (event) {
+                    const files = event.dataTransfer.files;
+                    if (!files || !files.length) return;
+
+                    const file = files[0];
+
+                    if (!file.type.startsWith("image/")) {
+                        alert("Please select an image file.");
+                        return;
+                    }
+
+                    const transfer = new DataTransfer();
+                    transfer.items.add(file);
+                    fileInput.files = transfer.files;
+
+                    showSelectedImage(file);
+                });
+            }
+
+            /* -----------------------------------------------
+               MODERN DJANGO GALLERY UPLOADER
+            ------------------------------------------------ */
+
+            const galleryDropzone = document.getElementById("gallery-dropzone");
+            const galleryBrowse = document.getElementById("gallery-browse");
+            const galleryInput = document.getElementById("gallery-multiple-input");
+            const galleryStatus = document.getElementById("gallery-status");
+            const galleryCount = document.getElementById("gallery-count");
+
+            /*
+             * Locate the Django inline formset.
+             * This deliberately keeps Django's own management
+             * form, row IDs, DELETE fields and add-row behavior.
+             */
+            const galleryGroup = form.querySelector(
+                ".gallery-inline-container .js-inline-admin-formset"
+            ) || form.querySelector(
+                ".gallery-inline-container .inline-group"
+            );
+
+            function getGalleryRows() {
+                if (!galleryGroup) return [];
+
+                return Array.from(
+                    galleryGroup.querySelectorAll(
+                        "tbody tr.form-row:not(.empty-form)"
+                    )
+                ).filter(function (row) {
+                    return !row.classList.contains("add-row");
+                });
+            }
+
+            function getGalleryFileInput(row) {
+                return row.querySelector(
+                    'input[type="file"][name$="-image"]'
+                );
+            }
+
+            function rowHasExistingImage(row) {
+                const imageCell = row.querySelector(".field-image");
+
+                if (!imageCell) return false;
+
+                return Boolean(imageCell.querySelector("a[href]"));
+            }
+
+            function rowIsMarkedForDeletion(row) {
+                const deleteInput = row.querySelector(
+                    'input[type="checkbox"][name$="-DELETE"]'
+                );
+
+                return Boolean(deleteInput && deleteInput.checked);
+            }
+
+            function updateGalleryCount() {
+                const rows = getGalleryRows();
+
+                const count = rows.filter(function (row) {
+                    const input = getGalleryFileInput(row);
+
+                    return (
+                        rowHasExistingImage(row) ||
+                        (input && input.files && input.files.length > 0)
+                    ) && !rowIsMarkedForDeletion(row);
+                }).length;
+
+                if (galleryCount) {
+                    galleryCount.textContent = count;
+                }
+            }
+
+            function showGalleryMessage(message, isError) {
+                if (!galleryStatus) return;
+
+                galleryStatus.textContent = message;
+                galleryStatus.classList.toggle("error", Boolean(isError));
+                galleryStatus.style.display = "block";
+            }
+
+            function addGalleryPreview(row, file) {
+                const imageCell = row.querySelector(".field-image");
+                if (!imageCell) return;
+
+                const oldPreview = imageCell.querySelector(".gallery-preview-wrapper");
+
+                if (oldPreview) {
+                    oldPreview.remove();
+                }
+
+                const wrapper = document.createElement("div");
+                wrapper.className = "gallery-preview-wrapper";
+
+                const image = document.createElement("img");
+                image.className = "gallery-row-preview";
+                image.alt = file.name;
+                image.src = URL.createObjectURL(file);
+
+                const filename = document.createElement("span");
+                filename.className = "gallery-row-filename";
+                filename.textContent = file.name;
+
+                wrapper.appendChild(image);
+                wrapper.appendChild(filename);
+
+                imageCell.insertBefore(wrapper, imageCell.firstChild);
+            }
+
+            function getAvailableGalleryRow() {
+                let rows = getGalleryRows();
+
+                /*
+                 * A row is available when it is not an existing image
+                 * and its file input has no selected file.
+                 */
+                let available = rows.find(function (row) {
+                    const input = getGalleryFileInput(row);
+
+                    return (
+                        input &&
+                        !input.files.length &&
+                        !rowHasExistingImage(row) &&
+                        !rowIsMarkedForDeletion(row)
+                    );
+                });
+
+                if (available) return available;
+
+                /*
+                 * No blank row remains.
+                 * Use Django's standard Add another link so the
+                 * inline formset updates TOTAL_FORMS correctly.
+                 */
+                const addLink = galleryGroup
+                    ? galleryGroup.querySelector(".add-row a")
+                    : null;
+
+                if (addLink) {
+                    addLink.click();
+
+                    rows = getGalleryRows();
+
+                    available = rows.find(function (row) {
+                        const input = getGalleryFileInput(row);
+
+                        return (
+                            input &&
+                            !input.files.length &&
+                            !rowHasExistingImage(row) &&
+                            !rowIsMarkedForDeletion(row)
+                        );
+                    });
+                }
+
+                return available || null;
+            }
+
+            function assignFileToGalleryRow(file, row) {
+                const input = getGalleryFileInput(row);
+
+                if (!input) return false;
+
+                try {
+                    const transfer = new DataTransfer();
+                    transfer.items.add(file);
+                    input.files = transfer.files;
+
+                    input.dispatchEvent(
+                        new Event("change", { bubbles: true })
+                    );
+
+                    addGalleryPreview(row, file);
+                    return true;
+                } catch (error) {
+                    console.error("Gallery image assignment failed:", error);
+                    return false;
+                }
+            }
+
+            function handleGalleryFiles(fileList) {
+                if (!fileList || !fileList.length) return;
+
+                if (!galleryGroup) {
+                    showGalleryMessage(
+                        "The Django gallery formset could not be found. Please check ProductImageInline.",
+                        true
+                    );
+                    return;
+                }
+
+                const files = Array.from(fileList).filter(function (file) {
+                    return file.type && file.type.startsWith("image/");
+                });
+
+                if (!files.length) {
+                    showGalleryMessage(
+                        "Please select valid image files.",
+                        true
+                    );
+                    return;
+                }
+
+                let uploaded = 0;
+                let failed = 0;
+
+                files.forEach(function (file) {
+                    const row = getAvailableGalleryRow();
+
+                    if (!row) {
+                        failed++;
+                        return;
+                    }
+
+                    if (assignFileToGalleryRow(file, row)) {
+                        uploaded++;
+                    } else {
+                        failed++;
+                    }
+                });
+
+                updateGalleryCount();
+
+                if (failed > 0) {
+                    showGalleryMessage(
+                        uploaded + " image(s) added. " +
+                        failed + " image(s) could not be added. " +
+                        "Please check the gallery rows.",
+                        true
+                    );
+                } else {
+                    showGalleryMessage(
+                        uploaded + " image(s) added successfully. " +
+                        "Save the product to upload them.",
+                        false
+                    );
+                }
+
+                /*
+                 * Allow the same file to be selected again later.
+                 * The selected files have already been transferred
+                 * to their individual Django inline inputs.
+                 */
+                galleryInput.value = "";
+            }
+
+            if (galleryDropzone && galleryInput) {
+                if (galleryBrowse) {
+                    galleryBrowse.addEventListener("click", function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        galleryInput.click();
+                    });
+                }
+
+                galleryDropzone.addEventListener("click", function (event) {
+                    if (!event.target.closest(".gallery-browse")) {
+                        galleryInput.click();
+                    }
+                });
+
+                galleryInput.addEventListener("change", function () {
+                    handleGalleryFiles(this.files);
+                });
+
+                ["dragenter", "dragover"].forEach(function (eventName) {
+                    galleryDropzone.addEventListener(eventName, function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        galleryDropzone.classList.add("drag-over");
+                    });
+                });
+
+                ["dragleave", "drop"].forEach(function (eventName) {
+                    galleryDropzone.addEventListener(eventName, function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        galleryDropzone.classList.remove("drag-over");
+                    });
+                });
+
+                galleryDropzone.addEventListener("drop", function (event) {
+                    const files = event.dataTransfer.files;
+                    handleGalleryFiles(files);
+                });
+            }
+
+            /*
+             * Preview images selected directly in Django's
+             * individual inline file fields as well.
+             */
+            if (galleryGroup) {
+                galleryGroup.addEventListener("change", function (event) {
+                    const input = event.target;
+
+                    if (
+                        !input.matches('input[type="file"][name$="-image"]')
+                    ) {
+                        updateGalleryCount();
+                        return;
+                    }
+
+                    const file = input.files && input.files[0];
+                    if (!file) return;
+
+                    const row = input.closest("tr.form-row");
+                    if (row) {
+                        addGalleryPreview(row, file);
+                    }
+
+                    updateGalleryCount();
+                });
+
+                galleryGroup.addEventListener("change", function (event) {
+                    if (
+                        event.target.matches(
+                            'input[type="checkbox"][name$="-DELETE"]'
+                        )
+                    ) {
+                        updateGalleryCount();
+                    }
+                });
+
+                /*
+                 * Django emits this event when its inline JavaScript
+                 * creates a new form row.
+                 */
+                if (window.django && window.django.jQuery) {
+                    window.django.jQuery(document).on(
+                        "formset:added",
+                        function (event, row, formsetName) {
+                            updateGalleryCount();
+                        }
+                    );
+                }
+            }
+
+            updateGalleryCount();
+
+            /* Draft and publish behavior */
+            const draftButton = document.getElementById("save-draft");
+            const publishButton = document.getElementById("publish-product");
+            const activeCheckbox = document.getElementById("id_is_active");
+
+            if (draftButton) {
+                draftButton.addEventListener("click", function () {
+                    if (activeCheckbox) activeCheckbox.checked = false;
+                });
+            }
+
+            if (publishButton) {
+                publishButton.addEventListener("click", function () {
+                    if (activeCheckbox) activeCheckbox.checked = true;
+                });
+            }
+
+            /* Prevent accidental double submission */
+            form.addEventListener("submit", function (event) {
+                if (form.dataset.submitting === "true") {
+                    event.preventDefault();
+                    return;
+                }
+
+                form.dataset.submitting = "true";
+
+                const buttons = form.querySelectorAll(
+                    ".product-actions button[type='submit']"
+                );
+
+                buttons.forEach(function (button) {
+                    if (button !== event.submitter) {
+                        button.disabled = true;
+                    }
+                });
+            });
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initializeProductForm);
+        } else {
+            initializeProductForm();
+        }
+    })();
+    </script>
+{% endblock %}

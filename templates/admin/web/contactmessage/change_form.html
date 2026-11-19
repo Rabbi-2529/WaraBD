@@ -1,0 +1,107 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        .ubold-card { background: #fff; border: none; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); margin-bottom: 24px; overflow: hidden; }
+        .card-header { padding: 16px 24px; border-bottom: 1px solid #e2e8f0; }
+        .card-title { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-row { padding: 16px 24px; border-bottom: 1px solid #e2e8f0; }
+        .form-row:last-child { border-bottom: none; }
+        .form-row label { display: block; font-weight: 700; color: #1e293b; font-size: 12px; margin-bottom: 6px; text-transform: uppercase; }
+        
+        /* Make the message highly readable */
+        .readonly { 
+            display: block; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; 
+            border-radius: 6px; color: #0f172a !important; font-weight: 500 !important; font-size: 15px;
+            line-height: 1.6;
+        }
+        .readonly.message-box { min-height: 200px; white-space: pre-wrap; font-size: 16px; }
+        
+        .submit-row { background: #fff; padding: 16px 24px; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); display: flex; gap: 12px; align-items: center; margin-bottom: 24px; border: none; }
+        .submit-row input, .submit-row button { color: #ffffff !important; border: none !important; padding: 10px 24px !important; border-radius: 6px !important; font-weight: 600 !important; font-size: 14px; cursor: pointer; }
+        .submit-row input[name="_save"], .submit-row input.default { background: #10b981 !important; }
+        .submit-row a.deletelink { background: #ef4444 !important; color: #fff !important; text-decoration: none !important; padding: 10px 24px !important; border-radius: 6px !important; font-weight: 600 !important; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% if form_url %}action="{{ form_url }}" {% endif %}method="post" id="{{ opts.model_name }}_form" novalidate>
+        {% csrf_token %}
+        
+        {% if errors %}<p class="errornote" style="background:#fee2e2; color:#ef4444; padding:12px; border-radius:6px; font-weight:bold;">Please correct the errors below.</p>{{ adminform.form.non_field_errors }}{% endif %}
+
+        <div class="submit-row">
+            {% block submit_buttons_top %}{% submit_row %}{% endblock %}
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Message Content -->
+                <div class="ubold-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="bx bx-envelope"></i> Message Content</h3>
+                    </div>
+                    <div class="form-row">
+                        <label>Subject</label>
+                        <div class="readonly">{{ original.subject }}</div>
+                    </div>
+                    <div class="form-row">
+                        <label>Message</label>
+                        <div class="readonly message-box">{{ original.message }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Sender Info -->
+                <div class="ubold-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="bx bx-user"></i> Sender Info</h3>
+                    </div>
+                    <div class="form-row">
+                        <label>Name</label>
+                        <div class="readonly">{{ original.name }}</div>
+                    </div>
+                    <div class="form-row">
+                        <label>Email</label>
+                        <div class="readonly"><a href="mailto:{{ original.email }}">{{ original.email }}</a></div>
+                    </div>
+                    <div class="form-row">
+                        <label>Phone</label>
+                        <div class="readonly">{{ original.phone|default:"Not provided" }}</div>
+                    </div>
+                    <div class="form-row">
+                        <label>Received On</label>
+                        <div class="readonly">{{ original.created_at|date:"d M, Y h:i A" }}</div>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="ubold-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="bx bx-check-circle"></i> Status</h3>
+                    </div>
+                    <div class="form-row">
+                        <label>Mark as Read</label>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                            {{ adminform.form.is_read }}
+                            <label for="{{ adminform.form.is_read.id_for_label }}" style="font-weight: 600; margin: 0; cursor: pointer; font-size: 14px; color: #4f46e5;">This message has been read</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="submit-row">
+            {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{# web/templates/web/_site_config.html #}
+<script>
+  window.__WARA__ = window.__WARA__ || {};
+  window.__WARA__.site = {
+    name: "{{ site_settings.name|escapejs }}",
+    phone: "{{ site_settings.phone|escapejs }}",
+    whatsapp: "{{ site_settings.whatsapp|escapejs }}",
+    email: "{{ site_settings.email|escapejs }}",
+    address: "{{ site_settings.address|escapejs }}",
+    mapQuery: "{{ site_settings.map_query|escapejs }}",
+    hours: "{{ site_settings.hours|escapejs }}",
+    announcement: "{{ site_settings.announcement|escapejs }}",
+    merchant: {
+      bkash: "{{ site_settings.bkash_number|escapejs }}",
+      nagad: "{{ site_settings.nagad_number|escapejs }}"
+    },
+    social: {
+      facebook: "{{ site_settings.facebook|escapejs }}",
+      instagram: "{{ site_settings.instagram|escapejs }}",
+      youtube: "{{ site_settings.youtube|escapejs }}"
+    },
+    delivery: {
+      inside: {
+        fee: Number("{{ site_settings.delivery_inside_fee|default:'0'|escapejs }}"),
+        eta: "{{ site_settings.delivery_inside_eta|escapejs }}"
+      },
+      outside: {
+        fee: Number("{{ site_settings.delivery_outside_fee|default:'0'|escapejs }}"),
+        eta: "{{ site_settings.delivery_outside_eta|escapejs }}"
+      }
+    }
+  };
+</script>

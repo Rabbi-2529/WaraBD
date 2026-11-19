@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{# Renders the Add button at the top right via base_site.html #}
+{% block object-tools %}
+    {% if has_add_permission %}
+        <ul class="object-tools m-0 p-0" style="list-style:none;">
+            <li>
+                <a href="{% url cl.opts|admin_urlname:'add' %}" class="btn btn-success" style="display:inline-flex; align-items:center; gap:6px; font-weight:500; padding:10px 20px; border-radius:6px; background-color:#34c38f; border-color:#34c38f; color:#fff; text-decoration:none;">
+                    <i class="bx bx-plus"></i> {% translate 'Add' %} {{ cl.opts.verbose_name }}
+                </a>
+            </li>
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <div id="changelist" class="row">
+            
+            {# LEFT COLUMN: Search, Table, Actions #}
+            <div class="col-lg-9 col-12">
+                {% block search %}{% search_form cl %}{% endblock %}
+                {% block date_hierarchy %}{% if cl.date_hierarchy %}{% date_hierarchy cl %}{% endif %}{% endblock %}
+
+                <form id="changelist-form" method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if action_form and actions_on_top and cl.show_admin_actions %}
+                        {% admin_actions %}
+                    {% endif %}
+
+                    <div class="results">
+                        {% block result_list %}{% result_list cl %}{% endblock %}
+                    </div>
+
+                    {% if action_form and actions_on_bottom and cl.show_admin_actions %}
+                        {% admin_actions %}
+                    {% endif %}
+
+                    {% block pagination %}{% pagination cl %}{% endblock %}
+                </form>
+            </div>
+
+            {# RIGHT COLUMN: Filters #}
+            <div class="col-lg-3 col-12">
+                {% block filters %}
+                    {% if cl.has_filters %}
+                        <div id="changelist-filter" class="p-3 bg-light rounded border-start border-4 border-primary mt-4 mt-lg-0">
+                            <h2 class="h6 fw-bold text-uppercase text-muted mb-3" style="letter-spacing:1px; font-size:12px;">{% translate 'Filter' %}</h2>
+                            {% for spec in cl.filter_specs %}
+                                {% admin_list_filter cl spec %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endblock %}
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

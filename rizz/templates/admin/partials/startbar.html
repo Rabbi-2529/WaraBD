@@ -1,0 +1,64 @@
+{% load i18n %}
+<aside class="vertical-menu" id="vertical-menu">
+    <div id="sidebar-menu" style="padding-top:16px;">
+        <ul class="list-unstyled mb-0" id="side-menu">
+
+            <li>
+                <a href="{% url 'admin:index' %}" style="display:flex;align-items:center;gap:10px;padding:11px 20px;color:#a6b0cf;text-decoration:none;font-size:14px;">
+                    <i class="bx bx-home-circle" style="font-size:18px;"></i>
+                    <span>{% translate 'Dashboard' %}</span>
+                </a>
+            </li>
+
+            {# Quick Link to Store #}
+            <li style="padding:22px 20px 8px;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#79829c;font-weight:600;">Store</li>
+            <li>
+                <a href="/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:11px 20px;color:#a6b0cf;text-decoration:none;font-size:14px;">
+                    <i class="bx bx-store" style="font-size:18px;"></i>
+                    <span>View Website</span>
+                </a>
+            </li>
+
+            {% if available_apps %}
+                {% for app in available_apps %}
+                    {% if app.models %}
+                        <li style="padding:22px 20px 8px;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#79829c;font-weight:600;">
+                            {{ app.name }}
+                        </li>
+                        {% for model in app.models %}
+                            <li>
+                                <a href="{{ model.admin_url|default:'#' }}" style="display:flex;align-items:center;gap:10px;padding:11px 20px;color:#a6b0cf;text-decoration:none;font-size:14px;">
+                                    {% if 'product' in model.name|lower %}
+                                        <i class="bx bx-cube-alt" style="font-size:18px;"></i>
+                                    {% elif 'order' in model.name|lower %}
+                                        <i class="bx bx-cart-alt" style="font-size:18px;"></i>
+                                    {% elif 'message' in model.name|lower %}
+                                        <i class="bx bx-envelope" style="font-size:18px;"></i>
+                                    {% elif 'categor' in model.name|lower %}
+                                        <i class="bx bx-purchase-tag-alt" style="font-size:18px;"></i>
+                                    {% elif 'user' in model.name|lower %}
+                                        <i class="bx bx-user" style="font-size:18px;"></i>
+                                    {% else %}
+                                        <i class="bx bx-grid-alt" style="font-size:18px;"></i>
+                                    {% endif %}
+                                    <span>{{ model.name }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            <li style="padding:22px 20px 8px;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:#79829c;font-weight:600;">
+                {% translate 'Settings' %}
+            </li>
+            <li>
+                <a href="{% url 'admin:password_change' %}" style="display:flex;align-items:center;gap:10px;padding:11px 20px;color:#a6b0cf;text-decoration:none;font-size:14px;">
+                    <i class="bx bx-lock" style="font-size:18px;"></i>
+                    <span>{% translate 'Change password' %}</span>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</aside>

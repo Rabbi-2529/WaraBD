@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment and Node packages
+.venv/
+venv/
+node_modules/
+
+# Secrets — never commit
+.env
+
+# Local data and generated files
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3.bak
+media/
+staticfiles/
+htmlcov/
+.coverage
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

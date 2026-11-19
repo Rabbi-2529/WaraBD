@@ -1,0 +1,210 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_settings.meta_title|default:"WaRa BD — Keyless Cabinet Locks" }}</title>
+  <meta name="description" content="{{ site_settings.meta_description }}">
+  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
+</head>
+<body data-page="home">
+  <div id="site-header"></div>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <div>
+          <h1>Keyless security for every <span class="r">cabinet</span> &amp; <span class="g">drawer</span>.</h1>
+          <p class="hero-lead">A slim round keypad lock with visitor password changing access. Set a code, close the drawer, done — no keys to lose and no wiring to run.</p>
+          <div class="hero-price">
+            <span class="price-now" data-bind="price"></span>
+            <span class="price-old" data-bind="old-price"></span>
+            <span class="price-save">Save <span data-bind="save"></span></span>
+          </div>
+          <div class="hero-cta" data-buy-scope>
+            <button type="button" class="btn btn-red" data-buy-now><i data-icon="zap"></i> Buy Now</button>
+            <button type="button" class="btn btn-green" data-add-to-cart><i data-icon="cart"></i> Add to Cart</button>
+          </div>
+          <div class="hero-trust">
+            <span><i data-icon="shield"></i> 1-Year Warranty</span>
+            <span><i data-icon="truck"></i> Cash on Delivery</span>
+            <span><i data-icon="award"></i> FCC · CE · RoHS</span>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-ring"></div>
+          <div class="keypad-wrap" id="heroKeypad"></div>
+          <div class="lock-status" id="lockStatus" aria-live="off"><span class="led"></span><b>Locked</b></div>
+          <a class="hero-photo" href="{% url 'web:product_list' %}"><img data-pimg="0" alt=""><span>Real product · Black</span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Highlights (Dynamic) -->
+    <section class="highlight-strip">
+      <div class="container">
+        <div class="grid grid-4">
+          {% for hl in highlights %}
+          <div class="hl-item">
+            <div class="icon-box {% cycle '' 'green' %}"><i data-icon="{{ hl.icon }}"></i></div>
+            <div><h3>{{ hl.title }}</h3><p>{{ hl.subtitle }}</p></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Spotlight -->
+    <section class="section">
+      <div class="container spotlight">
+        <div class="spot-media reveal">
+          <span class="tag">Visitor password access</span>
+          <img data-pimg="3" alt="">
+        </div>
+        <div class="reveal" data-buy-scope>
+          <span class="eyebrow">Meet the FT-SCL029</span>
+          <h2 style="font-size:36px">A smart lock that fits where keys never worked well</h2>
+          <p style="color:var(--muted)">The keypad sits flush on the outside of the door while a motorized lock body mounts out of sight inside. Owners keep a management code and USB keys; everyday users get their own code — or, in public mode, every visitor sets a fresh one.</p>
+          <ul class="check-list" style="margin:20px 0 28px">
+            <li><i data-icon="check"></i><span><strong>Motorized locking</strong> — quiet, smooth and tamper-resistant</span></li>
+            <li><i data-icon="check"></i><span><strong>Fits doors thicker than 3 mm</strong> — cabinets, drawers, wardrobes, lockers</span></li>
+            <li><i data-icon="check"></i><span><strong>Low power use</strong> with a low-battery reminder</span></li>
+            <li><i data-icon="check"></i><span><strong>External USB emergency power</strong> if the battery ever runs flat</span></li>
+            <li><i data-icon="check"></i><span><strong>Minimalist black ABS</strong> body that suits any furniture</span></li>
+          </ul>
+          <div class="buy-row" style="margin-bottom:0">
+            <div data-qty-mount></div>
+            <button type="button" class="btn btn-green" data-add-to-cart><i data-icon="cart"></i> Add to Cart</button>
+            <a class="btn btn-outline" href="{% url 'web:product_list' %}">Full details</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <section class="section" style="padding-top:0">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Shop WaRa</span>
+          <h2>Our products</h2>
+          <p>Genuine WaRa smart security, with more products on the way.</p>
+        </div>
+        <div class="product-grid" id="homeProducts"></div>
+        <p style="text-align:center;margin-top:30px"><a class="btn btn-outline" href="{% url 'web:product_list' %}"><i data-icon="bag"></i> View all products</a></p>
+      </div>
+    </section>
+
+    <!-- Applications -->
+    <section class="section section-soft">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Where it works</span>
+          <h2>One lock, dozens of places</h2>
+          <p>From the bedroom wardrobe to a hotel full of lockers, the FT-SCL029 secures anything with a door or a drawer.</p>
+        </div>
+        <div class="grid grid-4 reveal">
+          <a class="app-tile" href="{% url 'web:portfolio' %}"><i data-icon="archive"></i>Cabinets</a>
+          <a class="app-tile" href="{% url 'web:portfolio' %}"><i data-icon="drawer"></i>Drawers</a>
+          <a class="app-tile" href="{% url 'web:portfolio' %}"><i data-icon="home"></i>Wardrobes</a>
+          <a class="app-tile" href="{% url 'web:portfolio' %}"><i data-icon="grid"></i>Lockers</a>
+          <a class="app-tile" href="{% url 'web:portfolio' %}"><i data-icon="briefcase"></i>Offices</a>
+          <a class="app-tile" href="{% url 'web:portfolio' %}"><i data-icon="bed"></i>Hotels</a>
+          <a class="app-tile" href="{% url 'web:portfolio' %}"><i data-icon="hospital"></i>Hospitals</a>
+          <a class="app-tile" href="{% url 'web:portfolio' %}"><i data-icon="activity"></i>Gyms &amp; spas</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modes (Dynamic) -->
+    <section class="section section-dark">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Two ways to use it</span>
+          <h2>Public mode or private mode — you choose</h2>
+          <p>Switch the lock between shared, visitor-friendly use and fixed personal access.</p>
+        </div>
+        <div class="grid grid-2">
+          {% for mode in home_modes %}
+          <div class="mode-card {% if forloop.counter == 2 %}green{% endif %} reveal">
+            <h3><i data-icon="{{ mode.icon }}"></i> {{ mode.title }} {% if mode.badge %}<span class="badge">{{ mode.badge }}</span>{% endif %}</h3>
+            <ul>
+              {% for line in mode.text.splitlines %}
+                 {% if line.strip %}<li><i data-icon="check"></i>{{ line }}</li>{% endif %}
+              {% endfor %}
+            </ul>
+            <p class="best"><strong>Best for:</strong> {{ mode.place }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Simple setup</span>
+          <h2>Up and running in four steps</h2>
+          <p>No electrician, no wiring — just basic tools and a few minutes.</p>
+        </div>
+        <div class="steps reveal">
+          <div class="step"><h3>Mount it</h3><p>Fix the round keypad on the front and screw the lock body inside the door (3 mm+ thickness).</p></div>
+          <div class="step"><h3>Set your codes</h3><p>Create a management code for the owner and a user code for daily access.</p></div>
+          <div class="step"><h3>Pick a mode</h3><p>Choose public mode for visitors or private mode for a fixed personal code.</p></div>
+          <div class="step"><h3>Tap &amp; open</h3><p>Enter the code and the motor unlocks. USB keys and USB power are your backup.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Numbers -->
+    <section class="section-sm section-soft">
+      <div class="container grid grid-4">
+        <div class="stat reveal"><div class="num">2</div><div class="lbl">Password sets</div></div>
+        <div class="stat reveal"><div class="num">1 + 3</div><div class="lbl">USB keys (main + management)</div></div>
+        <div class="stat reveal"><div class="num">Ø 50.5 mm</div><div class="lbl">Compact keypad</div></div>
+        <div class="stat reveal"><div class="num">1 Year</div><div class="lbl">Warranty</div></div>
+      </div>
+    </section>
+
+    <!-- Why us (Dynamic) -->
+    <section class="section">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Why WaRa BD</span>
+          <h2>Buy with confidence</h2>
+        </div>
+        <div class="grid grid-4">
+          {% for why in home_whys %}
+          <div class="card reveal">
+            <div class="icon-box {% if forloop.counter|divisibleby:2 %}green{% endif %}"><i data-icon="{{ why.icon }}"></i></div>
+            <h3>{{ why.title }}</h3><p>{{ why.text }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section" style="padding-top:0">
+      <div class="container">
+        <div class="cta-band reveal" data-buy-scope>
+          <div>
+            <h2>Secure your drawers today — <span data-bind="price"></span></h2>
+            <p>Delivered to your door with cash on delivery all over Bangladesh.</p>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-white" data-buy-now><i data-icon="zap"></i> Order Now</button>
+            <a class="btn btn-outline-light" data-href="wa"><i data-icon="message"></i> WhatsApp</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  {% include "web/_products_bridge.html" %}
+</body>
+</html>

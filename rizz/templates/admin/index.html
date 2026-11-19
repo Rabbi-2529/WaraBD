@@ -1,0 +1,165 @@
+{# templates/admin/index.html #}
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div class="row">
+    {# ───── Stat cards ───── #}
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium mb-2">{% translate 'Products' %}</p>
+                        <h4 class="mb-0">{{ total_products|default:"0" }}</h4>
+                    </div>
+                    <div class="flex-shrink-0 align-self-center">
+                        <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                            <span class="avatar-title"><i class="bx bx-cube-alt font-size-24"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium mb-2">{% translate 'Orders' %}</p>
+                        <h4 class="mb-0">{{ total_orders|default:"0" }}</h4>
+                    </div>
+                    <div class="flex-shrink-0 align-self-center">
+                        <div class="mini-stat-icon avatar-sm rounded-circle bg-success">
+                            <span class="avatar-title"><i class="bx bx-cart-alt font-size-24"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium mb-2">{% translate 'Messages' %}</p>
+                        <h4 class="mb-0">{{ total_messages|default:"0" }}</h4>
+                    </div>
+                    <div class="flex-shrink-0 align-self-center">
+                        <div class="mini-stat-icon avatar-sm rounded-circle bg-warning">
+                            <span class="avatar-title"><i class="bx bx-envelope font-size-24"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card mini-stats-wid">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <p class="text-muted fw-medium mb-2">{% translate 'Users' %}</p>
+                        <h4 class="mb-0">{{ total_users|default:"0" }}</h4>
+                    </div>
+                    <div class="flex-shrink-0 align-self-center">
+                        <div class="mini-stat-icon avatar-sm rounded-circle bg-info">
+                            <span class="avatar-title"><i class="bx bx-user font-size-24"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {# ───── Recent Orders ───── #}
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">{% translate 'Recent Orders' %}</h4>
+                <div class="table-responsive">
+                    <table class="table table-centered table-nowrap mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{% translate 'Order #' %}</th>
+                                <th>{% translate 'Customer' %}</th>
+                                <th>{% translate 'Total' %}</th>
+                                <th>{% translate 'Status' %}</th>
+                                <th>{% translate 'Date' %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><a href="{% url 'admin:web_order_change' order.pk %}">{{ order.order_number }}</a></td>
+                                <td>{{ order.full_name }}</td>
+                                <td>${{ order.total }}</td>
+                                <td><span class="badge bg-{% if order.status == 'paid' %}success{% elif order.status == 'pending' %}warning{% elif order.status == 'cancelled' %}danger{% else %}info{% endif %}">{{ order.get_status_display }}</span></td>
+                                <td>{{ order.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">{% translate 'No orders yet.' %}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ───── Latest Messages ───── #}
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">{% translate 'Latest Messages' %}</h4>
+                {% for msg in recent_messages %}
+                    <div class="d-flex border-bottom py-2">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">{{ msg.name }}</h6>
+                            <p class="text-muted mb-0 small">{{ msg.subject|truncatechars:40 }}</p>
+                        </div>
+                        {% if not msg.is_read %}<span class="badge bg-danger align-self-center">{% translate 'New' %}</span>{% endif %}
+                    </div>
+                {% empty %}
+                    <p class="text-muted">{% translate 'No messages.' %}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ───── Django's default app list (permissions-aware) ───── #}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-4">{% translate 'All Apps' %}</h4>
+                {% for app in app_list %}
+                    <div class="mb-3">
+                        <h6 class="mb-2">{{ app.name }}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-borderless mb-0">
+                                {% for model in app.models %}
+                                <tr>
+                                    <td>
+                                        {% if model.admin_url %}<a href="{{ model.admin_url }}">{{ model.name }}</a>{% else %}{{ model.name }}{% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if model.add_url %}<a href="{{ model.add_url }}" class="btn btn-sm btn-success">{% translate 'Add' %}</a>{% endif %}
+                                        {% if model.admin_url %}<a href="{{ model.admin_url }}" class="btn btn-sm btn-primary">{% translate 'Change' %}</a>{% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

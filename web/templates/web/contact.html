@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us | WaRa BD</title>
+  <meta name="description" content="Contact WaRa BD for orders, installation help, warranty support and bulk quotes for the FT-SCL029 cabinet lock.">
+  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
+</head>
+<body data-page="contact">
+  <div id="site-header"></div>
+
+  <main>
+    <section class="page-banner">
+      <div class="container">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'web:home' %}">Home</a><span class="sep">/</span><span>Contact</span></nav>
+        <h1>Contact Us</h1>
+        <p>Questions about the lock, an order, installation or a bulk quote? We usually reply within a few hours.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container contact-layout">
+        <div>
+          <div class="section-head left" style="margin-bottom:28px">
+            <span class="eyebrow">Get in touch</span>
+            <h2>We're here to help</h2>
+            <p>Call, message or drop by — whatever suits you best.</p>
+          </div>
+          <div class="contact-cards">
+            <div class="c-card"><div class="icon-box"><i data-icon="phone"></i></div><div><h3>Call us</h3><a data-href="tel" data-bind="phone"></a></div></div>
+            <div class="c-card"><div class="icon-box green"><i data-icon="message"></i></div><div><h3>WhatsApp</h3><a data-href="wa">Chat with our team</a></div></div>
+            <div class="c-card"><div class="icon-box"><i data-icon="mail"></i></div><div><h3>Email</h3><a data-href="mail" data-bind="email"></a></div></div>
+            <div class="c-card"><div class="icon-box green"><i data-icon="pin"></i></div><div><h3>Address</h3><p data-bind="address"></p></div></div>
+            <div class="c-card"><div class="icon-box dark"><i data-icon="clock"></i></div><div><h3>Business hours</h3><p data-bind="hours"></p></div></div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <form id="contactForm" novalidate>
+            {% csrf_token %}
+            <h2>Send us a message</h2>
+            <p style="color:var(--muted)">Fields marked <span style="color:var(--red)">*</span> are required.</p>
+            <div class="form-grid">
+              <div class="field">
+                <label for="cName">Full name <span class="req">*</span></label>
+                <input id="cName" name="name" type="text" autocomplete="name" placeholder="Your name" data-rule="name">
+              </div>
+              <div class="field">
+                <label for="cPhone">Mobile number <span class="req">*</span></label>
+                <input id="cPhone" name="phone" type="tel" autocomplete="tel" placeholder="01XXXXXXXXX" data-rule="phone">
+              </div>
+              <div class="field">
+                <label for="cEmail">Email</label>
+                <input id="cEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" data-rule="email">
+              </div>
+              <div class="field">
+                <label for="cSubject">Subject <span class="req">*</span></label>
+                <select id="cSubject" name="subject" data-rule="choice">
+                  <option value="">Choose a topic</option>
+                  <option>Product inquiry</option>
+                  <option>Order status</option>
+                  <option>Installation help</option>
+                  <option>Warranty &amp; support</option>
+                  <option>Bulk / corporate order</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="cMessage">Message <span class="req">*</span></label>
+                <textarea id="cMessage" name="message" placeholder="How can we help?" data-rule="message"></textarea>
+              </div>
+              <div class="full">
+                <button type="submit" class="btn btn-red btn-block"><i data-icon="send"></i> Send message</button>
+              </div>
+            </div>
+          </form>
+
+          <div class="form-success" id="contactSuccess" role="status">
+            <div class="big-icon"><i data-icon="check"></i></div>
+            <h2 tabindex="-1">Message received!</h2>
+            <p style="color:var(--muted)">Thanks for reaching out. Our team will get back to you shortly. Need a faster answer? Send the same message on WhatsApp.</p>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px">
+              <a class="btn btn-green" id="contactWa" href="#" target="_blank" rel="noopener"><i data-icon="message"></i> Send on WhatsApp</a>
+              <button type="button" class="btn btn-outline" id="contactAgain">Send another</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="container">
+        <div class="map-frame">
+          <iframe id="mapFrame" title="WaRa BD location map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  {% include "web/_products_bridge.html" %}
+</body>
+</html>

@@ -1,0 +1,35 @@
+{# templates/admin/partials/topbar.html #}
+{% load i18n static %}
+<header id="page-topbar">
+    <div class="navbar-header" style="display:flex;justify-content:space-between;align-items:center;padding:0 24px;height:70px;background:#fff;border-bottom:1px solid #eef2f7;">
+
+        {# Left: logo + menu toggle #}
+        <div style="display:flex;align-items:center;gap:16px;">
+            <a href="{% url 'admin:index' %}" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:#556ee6;color:#fff;border-radius:8px;font-weight:700;font-size:18px;">R</span>
+                <span style="font-weight:700;font-size:16px;color:#343a40;">
+                    {{ site_header|default:_('Administration') }}
+                </span>
+            </a>
+            <button type="button" id="vertical-menu-btn" style="background:transparent;border:0;padding:8px;cursor:pointer;color:#79829c;font-size:20px;" aria-label="Toggle sidebar">
+                <i class="bx bx-menu"></i>
+            </button>
+        </div>
+
+        {# Right: user dropdown #}
+        <div style="display:flex;align-items:center;gap:16px;">
+            {% if request.user.is_authenticated %}
+                <span style="font-size:14px;color:#495057;">
+                    <i class="bx bx-user-circle" style="font-size:18px;margin-right:6px;vertical-align:middle;"></i>
+                    {{ request.user.get_short_name|default:request.user.email }}
+                </span>
+                <form action="{% url 'admin:logout' %}" method="post" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" style="background:transparent;border:1px solid #eef2f7;padding:6px 12px;border-radius:6px;color:#74788d;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="bx bx-log-out"></i> {% translate 'Log out' %}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</header>

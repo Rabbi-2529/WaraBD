@@ -1,0 +1,1394 @@
+/* =========================================================
+   WaRa BD — store script
+   Edit SITE and DELIVERY below to update details everywhere on
+   the site; products live in products.js. Cart and orders live
+   in localStorage.
+   ========================================================= */
+(function () {
+  'use strict';
+
+  /* ---------- Store settings ---------- */
+  const SITE = {
+    name: 'WaRa BD',
+    phone: '+880 1958-666999',
+    whatsapp: '8801958666999',
+    email: 'info@warabd.com',
+    address: 'Dhaka, Bangladesh',
+    mapQuery: 'Dhaka, Bangladesh',
+    hours: 'Saturday – Thursday, 10:00 AM – 8:00 PM',
+    announcement: 'In stock · Cash on delivery all over Bangladesh',
+    // Merchant numbers customers send bKash / Nagad payments to
+    merchant: { bkash: '01958-666999', nagad: '01958-666999' },
+    social: { facebook: '#', instagram: '#', youtube: '#' }
+  };
+
+  /* ---------- Catalog (see products.js) ---------- */
+  const CATALOG = (window.WARA_PRODUCTS || []).filter(p => p && p.id);
+  const PRODUCTS = {};
+  CATALOG.forEach(p => { PRODUCTS[p.id] = p; });
+  // The featured product powers the home and portfolio pages
+  const PRODUCT = CATALOG.find(p => p.featured) || CATALOG[0];
+
+  const STOCK = {
+    'in-stock': { label: 'In stock', buy: true },
+    'out-of-stock': { label: 'Out of stock', buy: false },
+    'upcoming': { label: 'Upcoming', buy: false }
+  };
+  const stockOf = p => STOCK[p.stock] || STOCK['in-stock'];
+
+  const DELIVERY = {
+    inside: { label: 'Inside Dhaka', fee: 60, eta: '1–2 working days' },
+    outside: { label: 'Outside Dhaka', fee: 120, eta: '2–4 working days' }
+  };
+
+  const PAYMENTS = {
+    cod: { label: 'Cash on Delivery' },
+    bkash: { label: 'bKash' },
+    nagad: { label: 'Nagad' }
+  };
+
+  const MAX_QTY = 20;
+
+  const DISTRICTS = ['Bagerhat', 'Bandarban', 'Barguna', 'Barishal', 'Bhola', 'Bogura', 'Brahmanbaria', 'Chandpur', 'Chapai Nawabganj', 'Chattogram', 'Chuadanga', "Cox's Bazar", 'Cumilla', 'Dhaka', 'Dinajpur', 'Faridpur', 'Feni', 'Gaibandha', 'Gazipur', 'Gopalganj', 'Habiganj', 'Jamalpur', 'Jashore', 'Jhalokathi', 'Jhenaidah', 'Joypurhat', 'Khagrachhari', 'Khulna', 'Kishoreganj', 'Kurigram', 'Kushtia', 'Lakshmipur', 'Lalmonirhat', 'Madaripur', 'Magura', 'Manikganj', 'Meherpur', 'Moulvibazar', 'Munshiganj', 'Mymensingh', 'Naogaon', 'Narail', 'Narayanganj', 'Narsingdi', 'Natore', 'Netrokona', 'Nilphamari', 'Noakhali', 'Pabna', 'Panchagarh', 'Patuakhali', 'Pirojpur', 'Rajbari', 'Rajshahi', 'Rangamati', 'Rangpur', 'Satkhira', 'Shariatpur', 'Sherpur', 'Sirajganj', 'Sunamganj', 'Sylhet', 'Tangail', 'Thakurgaon'];
+
+  /* ---------- Helpers ---------- */
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+  const money = n => '৳' + Number(n).toLocaleString('en-IN');
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const clampQty = n => Math.min(MAX_QTY, Math.max(1, parseInt(n, 10) || 1));
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const params = new URLSearchParams(location.search);
+  const waLink = text => 'https://wa.me/' + SITE.whatsapp + (text ? '?text=' + encodeURIComponent(text) : '');
+  const fmtDate = iso => new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  const store = {
+    get(key, fallback) {
+      try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
+    },
+    set(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* storage unavailable */ }
+    },
+    remove(key) {
+      try { localStorage.removeItem(key); } catch (e) { /* storage unavailable */ }
+    }
+  };
+
+  /* ---------- Icons ---------- */
+  const ICONS = {
+    cart: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+    phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+    mail: '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+    pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+    minus: '<line x1="5" y1="12" x2="19" y2="12"/>',
+    trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>',
+    key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    unlock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+    users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+    battery: '<rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/><line x1="5" y1="10" x2="5" y2="14"/>',
+    usb: '<circle cx="12" cy="19" r="2.5"/><path d="M12 16.5V3"/><path d="M9 6l3-3 3 3"/><path d="M12 13l-4-2.5V8"/><path d="M12 11l4-2.5V6.5"/><rect x="15" y="4.5" width="2" height="2"/><circle cx="8" cy="7" r="1"/>',
+    truck: '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+    refresh: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    award: '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>',
+    menu: '<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
+    arrow: '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+    back: '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+    chevron: '<polyline points="6 9 12 15 18 9"/>',
+    home: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+    briefcase: '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+    bed: '<path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/>',
+    hospital: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/>',
+    book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+    bag: '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+    box: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+    activity: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+    wine: '<path d="M8 22h8"/><path d="M12 15v7"/><path d="M7 2h10v6a5 5 0 0 1-10 0z"/>',
+    archive: '<polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>',
+    drawer: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="10" y1="7.5" x2="14" y2="7.5"/><line x1="10" y1="16.5" x2="14" y2="16.5"/>',
+    grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+    keypad: '<circle cx="12" cy="12" r="10"/><circle cx="9" cy="8.5" r=".6"/><circle cx="12" cy="8.5" r=".6"/><circle cx="15" cy="8.5" r=".6"/><circle cx="9" cy="12" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="15" cy="12" r=".6"/><circle cx="9" cy="15.5" r=".6"/><circle cx="12" cy="15.5" r=".6"/><circle cx="15" cy="15.5" r=".6"/>',
+    eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+    eyeoff: '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
+    message: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+    facebook: '<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>',
+    instagram: '<rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>',
+    youtube: '<path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>',
+    alert: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    printer: '<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+    cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>',
+    mobile: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    headset: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    heart: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+    tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    ruler: '<path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4z"/><path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/>',
+    zoom: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>',
+    send: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+    info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+    file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    wifioff: '<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>'
+  };
+
+  const icon = (name, cls) => '<svg class="i' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
+
+  /* ---------- Keypad illustration (hero + image fallback) ---------- */
+  function keypadSVG(attrs) {
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
+    const cols = [102, 150, 198];
+    const rows = [106, 152, 198, 244];
+    const keyMarkup = keys.map((label, i) => {
+      const cx = cols[i % 3];
+      const cy = rows[Math.floor(i / 3)];
+      const star = label === '*';
+      return '<g class="key" data-k="' + label + '"><rect x="' + (cx - 21) + '" y="' + (cy - 18) + '" width="42" height="36" rx="12" fill="#1d1d1d" stroke="#3a3a3a" stroke-width="1.5"/>' +
+        '<text x="' + cx + '" y="' + (cy + (star ? 10 : 7)) + '" text-anchor="middle" font-family="Arial, sans-serif" font-size="' + (star ? 26 : 20) + '" font-weight="700" fill="#ffffff">' + label + '</text></g>';
+    }).join('');
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" ' + (attrs || '') + '>' +
+      '<defs><radialGradient id="kpg" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#2b2b2b"/><stop offset="1" stop-color="#050505"/></radialGradient></defs>' +
+      '<circle cx="150" cy="150" r="146" fill="#111111"/>' +
+      '<circle cx="150" cy="150" r="138" fill="url(#kpg)" stroke="#2c2c2c" stroke-width="2"/>' +
+      '<text x="150" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff">WaRa</text>' +
+      '<circle class="kp-led" cx="54" cy="152" r="6" fill="#d7182a"/>' +
+      keyMarkup + '</svg>';
+  }
+
+  const FALLBACK_IMG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500"><rect width="600" height="500" fill="#ffffff"/>' +
+    keypadSVG('x="160" y="80" width="280" height="280"') +
+    '<text x="300" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#0f0f0f">Image coming soon</text></svg>'
+  );
+  window.WARA_FALLBACK = FALLBACK_IMG;
+
+  const productImg = (p, index, cls, extra) => {
+    const imgs = (p && p.images) || [];
+    const im = imgs[index || 0] || imgs[0] || { src: FALLBACK_IMG, caption: '' };
+    return '<img src="' + esc(im.src) + '" alt="' + esc((p ? p.name : '') + (im.caption ? ' — ' + im.caption : '')) + '"' + (cls ? ' class="' + cls + '"' : '') +
+      ' loading="lazy" onerror="this.onerror=null;this.src=window.WARA_FALLBACK"' + (extra || '') + '>';
+  };
+  const imgTag = (index, cls, extra) => productImg(PRODUCT, index, cls, extra);
+  const productUrl = p => 'product.html?id=' + encodeURIComponent(p.id);
+
+  /* ---------- Cart ---------- */
+  const Cart = {
+    KEY: 'wara_cart',
+    items() {
+      const raw = store.get(this.KEY, []);
+      return Array.isArray(raw) ? raw.filter(i => PRODUCTS[i.id] && i.qty > 0).map(i => ({ id: i.id, qty: clampQty(i.qty) })) : [];
+    },
+    save(items) {
+      store.set(this.KEY, items);
+      updateCartBadge(true);
+      document.dispatchEvent(new CustomEvent('cart:change'));
+    },
+    qtyOf(id) {
+      const it = this.items().find(i => i.id === id);
+      return it ? it.qty : 0;
+    },
+    add(id, qty) {
+      const items = this.items();
+      const it = items.find(i => i.id === id);
+      const before = it ? it.qty : 0;
+      const after = Math.min(MAX_QTY, before + qty);
+      if (it) it.qty = after; else items.push({ id, qty: after });
+      this.save(items);
+      return after - before;
+    },
+    setQty(id, qty) {
+      const items = this.items();
+      const it = items.find(i => i.id === id);
+      if (it) it.qty = clampQty(qty); else items.push({ id, qty: clampQty(qty) });
+      this.save(items);
+    },
+    remove(id) { this.save(this.items().filter(i => i.id !== id)); },
+    restore(items) { this.save(items); },
+    clear() { this.save([]); },
+    count() { return this.items().reduce((s, i) => s + i.qty, 0); },
+    totals(zone) {
+      const lines = this.items().map(i => {
+        const p = PRODUCTS[i.id];
+        return { id: i.id, qty: i.qty, product: p, total: p.price * i.qty, oldTotal: (p.oldPrice || p.price) * i.qty };
+      });
+      const subtotal = lines.reduce((s, l) => s + l.total, 0);
+      const oldTotal = lines.reduce((s, l) => s + l.oldTotal, 0);
+      const delivery = zone && DELIVERY[zone] && lines.length ? DELIVERY[zone].fee : 0;
+      return { lines, count: lines.reduce((s, l) => s + l.qty, 0), subtotal, savings: oldTotal - subtotal, delivery, total: subtotal + delivery };
+    }
+  };
+
+  function updateCartBadge(bump) {
+    $$('.cart-count').forEach(el => {
+      el.textContent = Cart.count();
+      if (bump) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+    });
+  }
+
+  /* ---------- Toasts ---------- */
+  function toast(msg, opts) {
+    opts = opts || {};
+    let stack = $('.toast-stack');
+    if (!stack) { stack = document.createElement('div'); stack.className = 'toast-stack'; stack.setAttribute('aria-live', 'polite'); document.body.appendChild(stack); }
+    const el = document.createElement('div');
+    el.className = 'toast' + (opts.type === 'error' ? ' error' : '');
+    el.innerHTML = '<span class="t-icon">' + icon(opts.type === 'error' ? 'x' : 'check') + '</span><span>' + msg + '</span>' +
+      (opts.href ? '<a href="' + opts.href + '">' + opts.linkText + '</a>' : '') +
+      (opts.onAction ? '<a href="#" data-act>' + opts.actionText + '</a>' : '');
+    if (opts.onAction) el.querySelector('[data-act]').addEventListener('click', e => { e.preventDefault(); opts.onAction(); close(); });
+    stack.appendChild(el);
+    function close() { el.classList.add('out'); setTimeout(() => el.remove(), 300); }
+    setTimeout(close, opts.duration || 3800);
+  }
+
+  /* ---------- Layout: header, footer, floating WhatsApp ---------- */
+  const NAV = [
+    ['index.html', 'Home', 'home'],
+    ['products.html', 'Products', 'products'],
+    ['portfolio.html', 'Portfolio', 'portfolio'],
+    ['about.html', 'About Us', 'about'],
+    ['contact.html', 'Contact', 'contact']
+  ];
+
+  const logoHTML = '<a class="logo" href="index.html" aria-label="WaRa BD home"><span class="logo-mark">' + icon('lock') + '</span><span><span class="wa">Wa</span><span class="ra">Ra</span></span><small>BD</small></a>';
+
+  function renderLayout() {
+    const page = document.body.dataset.page;
+    const header = $('#site-header');
+    if (header) {
+      header.outerHTML =
+        '<div class="topbar"><div class="container">' +
+          '<div class="topbar-group"><span><span class="dot"></span>' + esc(SITE.announcement) + '</span></div>' +
+          '<div class="topbar-group"><a href="tel:' + SITE.phone.replace(/[^\d+]/g, '') + '">' + icon('phone') + esc(SITE.phone) + '</a>' +
+          '<a class="hide-sm" href="mailto:' + SITE.email + '">' + icon('mail') + esc(SITE.email) + '</a></div>' +
+        '</div></div>' +
+        '<header class="site-header" id="siteHeader"><div class="container nav">' + logoHTML +
+          '<nav class="nav-links" id="navLinks" aria-label="Main">' +
+            NAV.map(n => '<a href="' + n[0] + '"' + (n[2] === page || (n[2] === 'products' && page === 'product') ? ' class="active" aria-current="page"' : '') + '>' + n[1] + '</a>').join('') +
+          '</nav>' +
+          '<div class="nav-actions">' +
+            '<a class="btn btn-red btn-sm hide-sm" href="products.html">Shop Now</a>' +
+            '<a class="cart-btn" href="cart.html" aria-label="Shopping cart">' + icon('cart') + '<span class="cart-count">0</span></a>' +
+            '<button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">' + icon('menu') + '</button>' +
+          '</div>' +
+        '</div></header>';
+    }
+
+    const footer = $('#site-footer');
+    if (footer) {
+      footer.outerHTML =
+        '<footer class="site-footer"><div class="container footer-grid">' +
+          '<div>' + logoHTML +
+            '<p>Smart, keyless security products from WaRa — genuine items with official warranty and support across Bangladesh.</p>' +
+            '<div class="socials">' +
+              '<a href="' + SITE.social.facebook + '" aria-label="Facebook">' + icon('facebook') + '</a>' +
+              '<a href="' + SITE.social.instagram + '" aria-label="Instagram">' + icon('instagram') + '</a>' +
+              '<a href="' + SITE.social.youtube + '" aria-label="YouTube">' + icon('youtube') + '</a>' +
+            '</div>' +
+          '</div>' +
+          '<div><h4>Shop</h4><ul class="footer-links">' +
+            '<li><a href="products.html">All products</a></li>' +
+            '<li><a href="' + productUrl(PRODUCT) + '">' + esc(PRODUCT.model) + ' details</a></li>' +
+            '<li><a href="portfolio.html">Product portfolio</a></li>' +
+            '<li><a href="cart.html">Shopping cart</a></li>' +
+            '<li><a href="checkout.html">Checkout</a></li>' +
+          '</ul></div>' +
+          '<div><h4>Company</h4><ul class="footer-links">' +
+            '<li><a href="about.html">About us</a></li>' +
+            '<li><a href="contact.html">Contact us</a></li>' +
+            '<li><a href="' + productUrl(PRODUCT) + '#faq">FAQ</a></li>' +
+            '<li><a href="' + productUrl(PRODUCT) + '#warranty">Warranty & delivery</a></li>' +
+          '</ul></div>' +
+          '<div><h4>Get in touch</h4><ul class="footer-contact">' +
+            '<li>' + icon('pin') + '<span>' + esc(SITE.address) + '</span></li>' +
+            '<li>' + icon('phone') + '<a href="tel:' + SITE.phone.replace(/[^\d+]/g, '') + '">' + esc(SITE.phone) + '</a></li>' +
+            '<li>' + icon('mail') + '<a href="mailto:' + SITE.email + '">' + esc(SITE.email) + '</a></li>' +
+            '<li>' + icon('clock') + '<span>' + esc(SITE.hours) + '</span></li>' +
+          '</ul></div>' +
+        '</div>' +
+        '<div class="footer-bottom"><div class="container">' +
+          '<span>© ' + new Date().getFullYear() + ' ' + esc(SITE.name) + '. All rights reserved.</span>' +
+          '<span class="pay-chips"><span>Cash on Delivery</span><span>bKash</span><span>Nagad</span></span>' +
+        '</div></div></footer>' +
+        '<a class="wa-float" href="' + waLink('Hi WaRa BD, I have a question about your products.') + '" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">' + icon('message') + '</a>';
+    }
+
+    const toggle = $('#menuToggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        const open = $('#navLinks').classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open);
+        toggle.innerHTML = icon(open ? 'x' : 'menu');
+      });
+    }
+    const siteHeader = $('#siteHeader');
+    if (siteHeader) {
+      const onScroll = () => siteHeader.classList.toggle('scrolled', window.scrollY > 10);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    }
+    updateCartBadge(false);
+  }
+
+  /* ---------- Bind config values into static HTML ---------- */
+  function bindContent(root) {
+    root = root || document;
+    const save = (PRODUCT.oldPrice || PRODUCT.price) - PRODUCT.price;
+    const values = {
+      'price': money(PRODUCT.price),
+      'old-price': money(PRODUCT.oldPrice),
+      'save': money(save),
+      'save-pct': Math.round(save / PRODUCT.oldPrice * 100) + '%',
+      'name': PRODUCT.name,
+      'subtitle': PRODUCT.subtitle,
+      'model': PRODUCT.model,
+      'sku': PRODUCT.sku,
+      'warranty': PRODUCT.warranty,
+      'phone': SITE.phone,
+      'email': SITE.email,
+      'address': SITE.address,
+      'hours': SITE.hours,
+      'inside-fee': money(DELIVERY.inside.fee),
+      'outside-fee': money(DELIVERY.outside.fee),
+      'inside-eta': DELIVERY.inside.eta,
+      'outside-eta': DELIVERY.outside.eta,
+      'max-qty': MAX_QTY
+    };
+    $$('[data-bind]', root).forEach(el => { if (values[el.dataset.bind] != null) el.textContent = values[el.dataset.bind]; });
+    $$('[data-href]', root).forEach(el => {
+      const t = el.dataset.href;
+      if (t === 'tel') el.href = 'tel:' + SITE.phone.replace(/[^\d+]/g, '');
+      if (t === 'mail') el.href = 'mailto:' + SITE.email;
+      if (t === 'wa') { el.href = waLink(el.dataset.waText || 'Hi WaRa BD, I want to place an order.'); el.target = '_blank'; el.rel = 'noopener'; }
+    });
+    $$('[data-icon]', root).forEach(el => { el.outerHTML = icon(el.dataset.icon, el.className); });
+    $$('img[data-pimg]', root).forEach(el => {
+      const im = PRODUCT.images[+el.dataset.pimg] || PRODUCT.images[0];
+      el.onerror = () => { el.onerror = null; el.src = FALLBACK_IMG; };
+      el.src = im.src;
+      if (!el.alt) el.alt = PRODUCT.name + ' — ' + im.caption;
+    });
+    $$('[data-qty-mount]', root).forEach(el => { el.outerHTML = qtyHTML(1, el.dataset.size, el.id); });
+  }
+
+  /* ---------- Quantity stepper ---------- */
+  function qtyHTML(value, size, id) {
+    const v = clampQty(value);
+    return '<div class="qty' + (size ? ' ' + size : '') + '"' + (id ? ' id="' + id + '"' : '') + '>' +
+      '<button type="button" data-step="-1" aria-label="Decrease quantity"' + (v <= 1 ? ' disabled' : '') + '>' + icon('minus') + '</button>' +
+      '<input type="number" inputmode="numeric" min="1" max="' + MAX_QTY + '" value="' + v + '" aria-label="Quantity">' +
+      '<button type="button" data-step="1" aria-label="Increase quantity"' + (v >= MAX_QTY ? ' disabled' : '') + '>' + icon('plus') + '</button>' +
+    '</div>';
+  }
+
+  function syncQty(wrap) {
+    const input = $('input', wrap);
+    const v = clampQty(input.value);
+    input.value = v;
+    $('[data-step="-1"]', wrap).disabled = v <= 1;
+    $('[data-step="1"]', wrap).disabled = v >= MAX_QTY;
+    return v;
+  }
+
+  function scopeQty(el) {
+    const scope = el.closest('[data-buy-scope]');
+    const input = scope && $('.qty input', scope);
+    return input ? clampQty(input.value) : 1;
+  }
+
+  function scopeProduct(el) {
+    const scope = el.closest('[data-buy-scope]');
+    const id = el.dataset.id || (scope && scope.dataset.id) || (PRODUCT && PRODUCT.id);
+    return PRODUCTS[id];
+  }
+
+  function initGlobalEvents() {
+    // Normalise typed quantities before page-level change handlers run
+    document.addEventListener('change', e => {
+      const wrap = e.target.closest && e.target.closest('.qty');
+      if (wrap && e.target.tagName === 'INPUT') syncQty(wrap);
+    }, true);
+
+    document.addEventListener('click', e => {
+      const step = e.target.closest('.qty [data-step]');
+      if (step) {
+        const wrap = step.closest('.qty');
+        const input = $('input', wrap);
+        const next = (parseInt(input.value, 10) || 1) + Number(step.dataset.step);
+        if (next > MAX_QTY) { toast('Maximum ' + MAX_QTY + ' units per order. Call us for bulk orders.', { type: 'error' }); return; }
+        input.value = clampQty(next);
+        syncQty(wrap);
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+
+      const add = e.target.closest('[data-add-to-cart]');
+      if (add) {
+        e.preventDefault();
+        const p = scopeProduct(add);
+        if (!p || !stockOf(p).buy) { toast('This product is not available to order right now.', { type: 'error' }); return; }
+        const added = Cart.add(p.id, scopeQty(add));
+        if (!added) {
+          toast('Your cart already has the maximum of ' + MAX_QTY + ' units.', { type: 'error', href: 'cart.html', linkText: 'View cart' });
+          return;
+        }
+        toast(added + ' × ' + esc(p.model) + ' added to cart', { href: 'cart.html', linkText: 'View cart' });
+        const label = add.innerHTML;
+        add.innerHTML = icon('check') + ' Added';
+        add.disabled = true;
+        setTimeout(() => { add.innerHTML = label; add.disabled = false; }, 1400);
+        return;
+      }
+
+      const buy = e.target.closest('[data-buy-now]');
+      if (buy) {
+        e.preventDefault();
+        const p = scopeProduct(buy);
+        if (!p || !stockOf(p).buy) { toast('This product is not available to order right now.', { type: 'error' }); return; }
+        Cart.setQty(p.id, scopeQty(buy));
+        location.href = 'checkout.html';
+        return;
+      }
+
+      const faq = e.target.closest('.faq-q');
+      if (faq) {
+        const item = faq.closest('.faq-item');
+        const open = item.classList.toggle('open');
+        faq.setAttribute('aria-expanded', open);
+      }
+    });
+
+    // Keep badge and cart pages in sync across tabs
+    window.addEventListener('storage', e => {
+      if (e.key === Cart.KEY) { updateCartBadge(true); document.dispatchEvent(new CustomEvent('cart:change')); }
+    });
+  }
+
+  /* ---------- Scroll reveal ---------- */
+  function initReveal() {
+    const items = $$('.reveal');
+    if (!('IntersectionObserver' in window)) { items.forEach(el => el.classList.add('in')); return; }
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { threshold: 0.12 });
+    items.forEach(el => io.observe(el));
+  }
+
+  /* ---------- Lightbox ---------- */
+  let lbIndex = 0;
+  let lbImages = [];
+  function openLightbox(images, index) {
+    lbImages = images && images.length ? images : [{ src: FALLBACK_IMG, caption: '' }];
+    let lb = $('#lightbox');
+    if (!lb) {
+      lb = document.createElement('div');
+      lb.id = 'lightbox';
+      lb.className = 'lightbox';
+      lb.setAttribute('role', 'dialog');
+      lb.setAttribute('aria-modal', 'true');
+      lb.innerHTML = '<button class="lb-close" aria-label="Close">' + icon('x') + '</button>' +
+        '<button class="gallery-nav prev" aria-label="Previous image">' + icon('arrow') + '</button>' +
+        '<img alt=""><button class="gallery-nav next" aria-label="Next image">' + icon('arrow') + '</button><div class="lb-cap"></div>';
+      document.body.appendChild(lb);
+      lb.addEventListener('click', e => {
+        if (e.target === lb || e.target.closest('.lb-close')) closeLightbox();
+        else if (e.target.closest('.prev')) showLb(lbIndex - 1);
+        else if (e.target.closest('.next')) showLb(lbIndex + 1);
+      });
+      document.addEventListener('keydown', e => {
+        if (!lb.classList.contains('open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') showLb(lbIndex - 1);
+        if (e.key === 'ArrowRight') showLb(lbIndex + 1);
+      });
+    }
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    showLb(index);
+    $('.lb-close', lb).focus();
+  }
+  function showLb(i) {
+    const n = lbImages.length;
+    lbIndex = (i + n) % n;
+    const lb = $('#lightbox');
+    const img = $('img', lb);
+    img.onerror = () => { img.onerror = null; img.src = FALLBACK_IMG; };
+    img.src = lbImages[lbIndex].src;
+    img.alt = lbImages[lbIndex].caption;
+    $('.lb-cap', lb).textContent = (lbIndex + 1) + ' / ' + n + (lbImages[lbIndex].caption ? ' — ' + lbImages[lbIndex].caption : '');
+  }
+  function closeLightbox() {
+    $('#lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  /* ---------- Shared totals block ---------- */
+  function totalsHTML(t, deliveryText) {
+    return '<div class="sum-row"><span>Subtotal (' + t.count + ' item' + (t.count === 1 ? '' : 's') + ')</span><span>' + money(t.subtotal) + '</span></div>' +
+      (t.savings > 0 ? '<div class="sum-row save"><span>You save</span><span>− ' + money(t.savings) + '</span></div>' : '') +
+      '<div class="sum-row"><span>Delivery</span><span>' + (deliveryText || money(t.delivery)) + '</span></div>' +
+      '<div class="sum-row total"><span>Total</span><span>' + money(t.total) + '</span></div>';
+  }
+
+  function emptyCartHTML(title, text) {
+    return '<div class="empty-state"><div class="big-icon">' + icon('cart') + '</div>' +
+      '<h2>' + (title || 'Your cart is empty') + '</h2>' +
+      '<p>' + (text || 'Browse our WaRa products and add your favourites to the cart.') + '</p>' +
+      '<a class="btn btn-red" href="products.html">' + icon('bag') + ' Browse products</a></div>';
+  }
+
+  /* =========================================================
+     Page: Home
+     ========================================================= */
+  function initHome() {
+    const shelf = $('#homeProducts');
+    if (shelf) shelf.innerHTML = CATALOG.slice(0, 4).map(productCardHTML).join('') + comingSoonHTML();
+    const wrap = $('#heroKeypad');
+    if (!wrap) return;
+    wrap.innerHTML = keypadSVG('role="img" aria-label="WaRa FT-SCL029 keypad"');
+    const status = $('#lockStatus');
+    const label = $('b', status);
+    const led = $('.kp-led', wrap);
+    const keyEl = k => $('.key[data-k="' + k + '"]', wrap);
+    const setState = (text, ok) => {
+      label.textContent = text;
+      status.classList.toggle('ok', ok);
+      led.setAttribute('fill', ok ? '#12924a' : '#d7182a');
+    };
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setState('Locked', false); return; }
+    const code = ['2', '5', '8', '0', '#'];
+    (async function loop() {
+      for (;;) {
+        setState('Locked', false);
+        await wait(1600);
+        setState('Entering code…', false);
+        for (const k of code) {
+          keyEl(k).classList.add('pressed');
+          await wait(230);
+          keyEl(k).classList.remove('pressed');
+          await wait(170);
+        }
+        $$('.key', wrap).forEach(el => el.classList.add('ok'));
+        setState('Unlocked', true);
+        await wait(380);
+        $$('.key', wrap).forEach(el => el.classList.remove('ok'));
+        await wait(2400);
+      }
+    })();
+  }
+
+  /* =========================================================
+     Product cards (listing, home, related)
+     ========================================================= */
+  function productCardHTML(p) {
+    const st = stockOf(p);
+    const save = p.oldPrice > p.price ? p.oldPrice - p.price : 0;
+    return '<article class="p-card" data-buy-scope data-id="' + esc(p.id) + '">' +
+      '<a class="p-card-media" href="' + productUrl(p) + '">' + productImg(p, 0) +
+        (save ? '<span class="p-card-badge">' + money(save) + ' Off</span>' : '') +
+        (st.buy ? '' : '<span class="p-card-badge stock-out">' + st.label + '</span>') +
+      '</a>' +
+      '<div class="p-card-body">' +
+        '<span class="p-card-cat">' + esc(p.brand) + ' · ' + esc(p.category) + '</span>' +
+        '<h3><a href="' + productUrl(p) + '">' + esc(p.name) + '</a></h3>' +
+        '<div class="p-card-price"><strong>' + money(p.price) + '</strong>' + (save ? '<s>' + money(p.oldPrice) + '</s>' : '') + '</div>' +
+        '<div class="p-card-actions">' +
+          (st.buy
+            ? '<button type="button" class="btn btn-green" data-add-to-cart>' + icon('cart') + ' Add to Cart</button>' +
+              '<button type="button" class="btn btn-red" data-buy-now>Buy Now</button>'
+            : '<a class="btn btn-outline" href="' + productUrl(p) + '">View details</a>') +
+        '</div>' +
+      '</div></article>';
+  }
+
+  // Placeholder tile while the catalog is still small
+  function comingSoonHTML() {
+    if (CATALOG.length >= 4) return '';
+    return '<div class="p-card soon"><div class="icon-box green">' + icon('box') + '</div>' +
+      '<h3>More WaRa products coming soon</h3>' +
+      '<p>New smart security products are on the way. Message us to hear first when they arrive.</p>' +
+      '<a class="link-arrow" target="_blank" rel="noopener" href="' + waLink('Hi WaRa BD, please let me know when new products arrive.') + '">Get notified ' + icon('arrow') + '</a></div>';
+  }
+
+  /* =========================================================
+     Page: Products (listing with filters)
+     ========================================================= */
+  function initProducts() {
+    const grid = $('#productGrid'); if (!grid) return;
+    grid.innerHTML = CATALOG.map(productCardHTML).join('');
+    const sidebar = $('#shopSidebar');
+    const minR = $('#fMin');
+    const maxR = $('#fMax');
+    const minN = $('#fMinNum');
+    const maxN = $('#fMaxNum');
+    const fill = $('.range-fill', sidebar);
+    const search = $('#fSearch');
+    const sortSel = $('#fSort');
+
+    // Slider bounds snap to the nearest ৳500 around the catalog's prices
+    const prices = CATALOG.map(p => p.price);
+    const floor = Math.floor(Math.min.apply(null, prices) / 500) * 500;
+    let ceil = Math.ceil(Math.max.apply(null, prices) / 500) * 500;
+    if (ceil <= floor) ceil = floor + 500;
+    [minR, maxR, minN, maxN].forEach(el => { el.min = floor; el.max = ceil; el.step = 50; });
+
+    const optHTML = (group, value, label, n) =>
+      '<label class="filter-opt"><span><input type="checkbox" name="' + group + '" value="' + esc(value) + '"> ' + esc(label) + '</span><span class="count">' + n + '</span></label>';
+    const cats = Array.from(new Set(CATALOG.map(p => p.category)));
+    $('#fCats').innerHTML = cats.map(c => optHTML('cat', c, c, CATALOG.filter(p => p.category === c).length)).join('');
+    $('#fStock').innerHTML = Object.keys(STOCK).map(k => optHTML('stock', k, STOCK[k].label, CATALOG.filter(p => (p.stock || 'in-stock') === k).length)).join('');
+
+    // Deep links: products.html?category=Smart%20Cabinet%20Lock&q=lock
+    const qCat = params.get('category');
+    if (qCat) $$('input[name="cat"]', sidebar).forEach(i => { i.checked = i.value === qCat; });
+    if (params.get('q')) search.value = params.get('q');
+
+    const clampNum = (v, a, b) => Math.min(b, Math.max(a, Number(v) || 0));
+    function syncRange(src) {
+      const fromNum = src === minN || src === maxN;
+      let lo = fromNum ? clampNum(minN.value, floor, ceil) : Number(minR.value);
+      let hi = fromNum ? clampNum(maxN.value, floor, ceil) : Number(maxR.value);
+      if (lo > hi) { if (src === minR || src === minN) lo = hi; else hi = lo; }
+      minR.value = minN.value = lo;
+      maxR.value = maxN.value = hi;
+      fill.style.left = ((lo - floor) / (ceil - floor) * 100) + '%';
+      fill.style.right = ((ceil - hi) / (ceil - floor) * 100) + '%';
+      // Keep the min handle reachable when both handles sit at the top end
+      minR.style.zIndex = lo >= ceil ? 3 : '';
+    }
+
+    const SORTS = {
+      'price-asc': (a, b) => a.price - b.price,
+      'price-desc': (a, b) => b.price - a.price,
+      'name': (a, b) => a.name.localeCompare(b.name),
+      'newest': (a, b) => String(b.added || '').localeCompare(String(a.added || ''))
+    };
+
+    function render() {
+      const lo = Number(minR.value);
+      const hi = Number(maxR.value);
+      const q = search.value.trim().toLowerCase();
+      const catSel = $$('input[name="cat"]:checked', sidebar).map(i => i.value);
+      const stockSel = $$('input[name="stock"]:checked', sidebar).map(i => i.value);
+      let list = CATALOG.filter(p =>
+        p.price >= lo && p.price <= hi &&
+        (!catSel.length || catSel.includes(p.category)) &&
+        (!stockSel.length || stockSel.includes(p.stock || 'in-stock')) &&
+        (!q || [p.name, p.subtitle, p.model, p.brand, p.category].join(' ').toLowerCase().includes(q)));
+      if (SORTS[sortSel.value]) list = list.slice().sort(SORTS[sortSel.value]);
+
+      $('#shopCount').innerHTML = 'Showing <b>' + list.length + '</b> of <b>' + CATALOG.length + '</b> product' + (CATALOG.length === 1 ? '' : 's');
+      if (!list.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="big-icon">' + icon('zoom') + '</div>' +
+          '<h2>No products match your filters</h2><p>Try a wider price range or clear the filters.</p>' +
+          '<button type="button" class="btn btn-red" data-reset-filters>Reset filters</button></div>';
+        return;
+      }
+      grid.innerHTML = list.map(productCardHTML).join('') + comingSoonHTML();
+    }
+
+    function reset() {
+      minR.value = floor;
+      maxR.value = ceil;
+      syncRange(minR);
+      search.value = '';
+      $$('input[type="checkbox"]', sidebar).forEach(i => { i.checked = false; });
+      sortSel.value = 'default';
+      render();
+    }
+
+    [minR, maxR].forEach(el => el.addEventListener('input', () => { syncRange(el); render(); }));
+    [minN, maxN].forEach(el => el.addEventListener('change', () => { syncRange(el); render(); }));
+    sidebar.addEventListener('change', e => { if (e.target.type === 'checkbox') render(); });
+    search.addEventListener('input', render);
+    sortSel.addEventListener('change', render);
+    $('#fReset').addEventListener('click', reset);
+    grid.addEventListener('click', e => { if (e.target.closest('[data-reset-filters]')) reset(); });
+    $('#filterToggle').addEventListener('click', () => {
+      const open = sidebar.classList.toggle('open');
+      $('#filterToggle').setAttribute('aria-expanded', String(open));
+    });
+
+    minR.value = floor;
+    maxR.value = ceil;
+    syncRange(minR);
+    render();
+  }
+
+  /* =========================================================
+     Page: Product details (product.html?id=...)
+     ========================================================= */
+  function initProduct() {
+    const mount = $('#productMount');
+    const crumbs = $('#pCrumbs');
+    const wanted = params.get('id');
+    const p = wanted ? PRODUCTS[wanted] : PRODUCT;
+    const bar = $('#stickyBuy');
+
+    if (!p) {
+      crumbs.innerHTML = '<a href="index.html">Home</a><span class="sep">/</span><a href="products.html">Products</a><span class="sep">/</span><strong>Not found</strong>';
+      mount.innerHTML = '<section class="section"><div class="container"><div class="empty-state"><div class="big-icon">' + icon('zoom') + '</div>' +
+        '<h2>Product not found</h2><p>This product may have been removed, or the link is incorrect.</p>' +
+        '<a class="btn btn-red" href="products.html">' + icon('bag') + ' Browse products</a></div></div></section>';
+      if (bar) bar.remove();
+      return;
+    }
+
+    const st = stockOf(p);
+    const save = p.oldPrice > p.price ? p.oldPrice - p.price : 0;
+    const pct = save ? Math.round(save / p.oldPrice * 100) : 0;
+    const images = p.images && p.images.length ? p.images : [{ src: FALLBACK_IMG, caption: '' }];
+    document.title = p.name + ' | WaRa BD';
+    const meta = $('meta[name="description"]');
+    if (meta && p.short) meta.setAttribute('content', p.short);
+
+    crumbs.innerHTML = '<a href="index.html">Home</a><span class="sep">/</span><a href="products.html">Products</a><span class="sep">/</span>' +
+      '<a href="products.html?category=' + encodeURIComponent(p.category) + '">' + esc(p.category) + '</a><span class="sep">/</span><strong>' + esc(p.model) + '</strong>';
+
+    const tabs = [
+      ['description', 'Description', p.description && p.description.length],
+      ['specs', 'Specifications', p.specs && p.specs.length],
+      ['features', 'Features', p.features && p.features.length],
+      ['applications', 'Applications', p.applications],
+      ['warranty', 'Warranty & Delivery', true]
+    ].filter(t => t[2]);
+
+    const tagList = (items, cls) => '<div class="tags' + (cls ? ' ' + cls : '') + '">' + items.map(t => '<span>' + esc(t) + '</span>').join('') + '</div>';
+    const PANELS = {
+      description: () =>
+        '<div class="spotlight" style="gap:48px"><div>' +
+          (p.descriptionTitle ? '<h2 style="font-size:26px">' + esc(p.descriptionTitle) + '</h2>' : '') +
+          p.description.map(par => '<p class="rich">' + par + '</p>').join('') +
+          (p.tags ? '<div class="tags" style="margin-top:20px">' + p.tags.map(t => '<span>' + icon('award') + ' ' + esc(t) + '</span>').join('') + '</div>' : '') +
+        '</div><div class="spot-media">' + productImg(p, Math.min(2, images.length - 1)) + '</div></div>',
+      specs: () =>
+        '<table class="spec-table"><tbody>' + p.specs.map(s => '<tr><th scope="row">' + esc(s[0]) + '</th><td>' + esc(s[1]) + '</td></tr>').join('') + '</tbody></table>',
+      features: () =>
+        '<div class="grid grid-3">' + p.features.map((f, i) =>
+          '<div class="card"><div class="icon-box' + (i % 2 ? ' green' : '') + '">' + icon(f.icon || 'check') + '</div><h3>' + esc(f.title) + '</h3><p>' + esc(f.text) + '</p></div>').join('') + '</div>',
+      applications: () =>
+        (p.applications.compatible ? '<h3>Compatible with</h3>' + tagList(p.applications.compatible, 'dark') : '') +
+        (p.applications.places ? '<h3 style="margin-top:28px">Where people use it</h3>' + tagList(p.applications.places) : '') +
+        (p.featured ? '<p style="margin-top:24px"><a class="link-arrow" href="portfolio.html">See the full product portfolio ' + icon('arrow') + '</a></p>' : ''),
+      warranty: () =>
+        '<div class="grid grid-2 policy">' +
+          '<div class="card"><h3>' + icon('truck') + ' Delivery</h3><ul>' +
+            '<li><strong>' + DELIVERY.inside.label + ':</strong> ' + money(DELIVERY.inside.fee) + ', ' + DELIVERY.inside.eta + '</li>' +
+            '<li><strong>' + DELIVERY.outside.label + ':</strong> ' + money(DELIVERY.outside.fee) + ', ' + DELIVERY.outside.eta + '</li>' +
+            '<li><strong>Payment:</strong> Cash on delivery, bKash or Nagad</li>' +
+            '<li>We call to confirm every order before it ships</li>' +
+            '<li>Check the parcel in front of the delivery person</li>' +
+          '</ul></div>' +
+          '<div class="card"><h3>' + icon('shield') + ' Warranty</h3><ul>' +
+            (p.warranty ? '<li><strong>' + esc(p.warranty) + '</strong> warranty from the delivery date</li>' : '') +
+            '<li>Covers manufacturing and electronic defects</li>' +
+            '<li>Keep your order number as proof of purchase</li>' +
+            '<li>Not covered: physical damage, water damage or misuse</li>' +
+            '<li>Faulty on arrival? Tell us within 3 days for a replacement</li>' +
+          '</ul></div>' +
+        '</div>'
+    };
+
+    const related = CATALOG.filter(x => x.id !== p.id)
+      .sort((a, b) => (b.category === p.category) - (a.category === p.category))
+      .slice(0, 4);
+
+    mount.innerHTML =
+      '<section class="section" style="padding-top:44px"><div class="container">' +
+        '<div class="product-layout">' +
+          '<div>' +
+            '<div class="gallery-main" id="gMain" title="Click to enlarge">' +
+              (pct ? '<span class="gallery-badge">Save ' + pct + '%</span>' : '') +
+              (images.length > 1 ? '<button type="button" class="gallery-nav prev" aria-label="Previous image">' + icon('arrow') + '</button>' +
+                '<button type="button" class="gallery-nav next" aria-label="Next image">' + icon('arrow') + '</button>' : '') +
+              productImg(p, 0, '', ' id="gMainImg"') +
+            '</div>' +
+            (images.length > 1 ? '<div class="thumbs" id="gThumbs">' + images.map((im, i) =>
+              '<button type="button" data-i="' + i + '" aria-label="Show image ' + (i + 1) + '"' + (i === 0 ? ' class="active"' : '') + '>' + productImg(p, i) + '</button>').join('') + '</div>' : '') +
+          '</div>' +
+          '<div data-buy-scope data-id="' + esc(p.id) + '">' +
+            '<div class="p-brand"><span>Brand: <strong>' + esc(p.brand) + '</strong></span><span>·</span>' +
+              '<span>Model: <strong>' + esc(p.model) + '</strong></span><span>·</span>' +
+              '<span class="stock' + (st.buy ? '' : ' out') + '">' + st.label + '</span></div>' +
+            '<h1 class="p-title">' + esc(p.name) + (p.subtitle ? ' <span style="color:var(--red)">' + esc(p.subtitle) + '</span>' : '') + '</h1>' +
+            (p.short ? '<p class="p-short">' + esc(p.short) + '</p>' : '') +
+            '<div class="p-price"><span class="price-now">' + money(p.price) + '</span>' +
+              (save ? '<span class="price-old">' + money(p.oldPrice) + '</span><span class="price-save">Save ' + money(save) + ' (' + pct + '%)</span>' : '') +
+            '</div>' +
+            (p.highlights ? '<ul class="p-highlights">' + p.highlights.map(h => '<li>' + icon('check') + esc(h) + '</li>').join('') + '</ul>' : '') +
+            (st.buy
+              ? '<div class="buy-row" id="buyRow">' + qtyHTML(1) +
+                  '<button type="button" class="btn btn-green" data-add-to-cart>' + icon('cart') + ' Add to Cart</button>' +
+                  '<button type="button" class="btn btn-red" data-buy-now>' + icon('zap') + ' Buy Now</button></div>'
+              : '<div class="form-alert show" id="buyRow" style="margin-bottom:22px">' + icon('info') +
+                  '<span>This product is ' + st.label.toLowerCase() + '. Call or WhatsApp us to pre-order.</span></div>') +
+            '<div class="delivery-box">' +
+              '<div class="row">' + icon('truck') + '<div><strong>' + DELIVERY.inside.label + ' — ' + money(DELIVERY.inside.fee) + '</strong><span>Delivery in ' + DELIVERY.inside.eta + '</span></div></div>' +
+              '<div class="row">' + icon('truck') + '<div><strong>' + DELIVERY.outside.label + ' — ' + money(DELIVERY.outside.fee) + '</strong><span>Delivery in ' + DELIVERY.outside.eta + '</span></div></div>' +
+              '<div class="row">' + icon('cash') + '<div><strong>Cash on delivery available</strong><span>Or pay with bKash / Nagad at checkout</span></div></div>' +
+              (p.warranty ? '<div class="row">' + icon('shield') + '<div><strong>' + esc(p.warranty) + ' warranty</strong><span>Against manufacturing defects</span></div></div>' : '') +
+            '</div>' +
+            '<div class="call-order">' + icon('phone') + ' Prefer to order by phone? <a data-href="tel">' + esc(SITE.phone) + '</a> or ' +
+              '<a data-href="wa" data-wa-text="' + esc('Hi WaRa BD, I want to order the ' + p.name + ' (' + p.model + ').') + '">WhatsApp us</a></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="tabs" id="productTabs"><div class="tab-list" role="tablist">' +
+          tabs.map((t, i) => '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (i === 0) + '"' + (i === 0 ? ' class="active"' : '') + '>' + t[1] + '</button>').join('') +
+        '</div>' +
+          tabs.map((t, i) => '<div class="tab-panel' + (i === 0 ? ' active' : '') + '" id="tab-' + t[0] + '" role="tabpanel">' + PANELS[t[0]]() + '</div>').join('') +
+        '</div>' +
+      '</div></section>' +
+      (p.steps && p.steps.length
+        ? '<section class="section section-soft" id="setup"><div class="container"><div class="section-head"><span class="eyebrow">How it works</span><h2>From box to ready in minutes</h2></div>' +
+            '<div class="steps">' + p.steps.map(x => '<div class="step"><h3>' + esc(x.title) + '</h3><p>' + esc(x.text) + '</p></div>').join('') + '</div></div></section>'
+        : '') +
+      (p.faq && p.faq.length
+        ? '<section class="section" id="faq"><div class="container"><div class="section-head"><span class="eyebrow">FAQ</span><h2>Questions before you buy</h2></div><div class="faq">' +
+            p.faq.map((f, i) => '<div class="faq-item' + (i === 0 ? ' open' : '') + '"><button type="button" class="faq-q" aria-expanded="' + (i === 0) + '">' + esc(f.q) + icon('chevron') + '</button>' +
+              '<div class="faq-a">' + f.a + '</div></div>').join('') +
+          '</div></div></section>'
+        : '') +
+      (related.length
+        ? '<section class="section section-soft"><div class="container"><div class="section-head"><span class="eyebrow">More from WaRa</span><h2>You may also like</h2></div>' +
+            '<div class="product-grid">' + related.map(productCardHTML).join('') + '</div></div></section>'
+        : '');
+
+    bindContent(mount);
+
+    // Sticky mobile buy bar
+    if (bar && st.buy) {
+      bar.dataset.id = p.id;
+      bar.innerHTML = '<div><small>' + esc(p.model) + '</small><span class="sp">' + money(p.price) + '</span></div>' +
+        '<div style="display:flex;gap:8px"><button type="button" class="btn btn-green btn-sm" data-add-to-cart aria-label="Add to cart">' + icon('cart') + '</button>' +
+        '<button type="button" class="btn btn-red btn-sm" data-buy-now>Buy Now</button></div>';
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(([en]) => {
+          bar.classList.toggle('show', !en.isIntersecting && en.boundingClientRect.top < 0);
+        }).observe($('#buyRow'));
+      }
+    } else if (bar) {
+      bar.remove();
+    }
+
+    // Gallery
+    const main = $('#gMain');
+    const thumbs = $('#gThumbs');
+    let current = 0;
+    const show = i => {
+      current = (i + images.length) % images.length;
+      const img = $('#gMainImg');
+      img.onerror = () => { img.onerror = null; img.src = FALLBACK_IMG; };
+      img.src = images[current].src;
+      img.alt = p.name + (images[current].caption ? ' — ' + images[current].caption : '');
+      if (thumbs) $$('button', thumbs).forEach((b, bi) => b.classList.toggle('active', bi === current));
+    };
+    if (thumbs) thumbs.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(+b.dataset.i); });
+    $$('.gallery-nav', main).forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      show(current + (b.classList.contains('next') ? 1 : -1));
+    }));
+    main.addEventListener('click', () => openLightbox(images, current));
+    if (window.matchMedia('(hover: hover)').matches) {
+      main.addEventListener('mousemove', e => {
+        if (e.target.closest('.gallery-nav')) { main.classList.remove('zoom'); return; }
+        const r = main.getBoundingClientRect();
+        $('#gMainImg').style.transformOrigin = ((e.clientX - r.left) / r.width * 100) + '% ' + ((e.clientY - r.top) / r.height * 100) + '%';
+        main.classList.add('zoom');
+      });
+      main.addEventListener('mouseleave', () => main.classList.remove('zoom'));
+    }
+
+    // Tabs (deep-linkable: product.html?id=...#specs)
+    const tabBtns = $$('.tab-list button', mount);
+    const activate = name => {
+      tabBtns.forEach(b => {
+        const on = b.dataset.tab === name;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+        $('#tab-' + b.dataset.tab).classList.toggle('active', on);
+      });
+    };
+    tabBtns.forEach(b => b.addEventListener('click', () => activate(b.dataset.tab)));
+    const hash = location.hash.replace('#', '');
+    if (hash) {
+      let target = document.getElementById(hash);
+      if (tabBtns.some(b => b.dataset.tab === hash)) { activate(hash); target = $('#productTabs'); }
+      if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth' }), 150);
+    }
+  }
+
+  /* =========================================================
+     Page: Portfolio
+     ========================================================= */
+  const USE_CASES = [
+    { cat: 'home', icon: 'archive', tone: '', title: 'Bedroom Wardrobes', place: 'Homes & apartments', mode: 'private', text: 'Keep jewellery, cash and documents behind a code only your family knows.' },
+    { cat: 'home', icon: 'drawer', tone: 'red', title: 'Kitchen & Medicine Drawers', place: 'Family homes', mode: 'private', text: 'Child-safe storage for knives, cleaning products and medicines — no key lying around.' },
+    { cat: 'home', icon: 'wine', tone: 'green', title: 'Wine & Display Cabinets', place: 'Homes, lounges, cellars', mode: 'private', text: 'A clean round keypad that protects collections without spoiling the look of the furniture.' },
+    { cat: 'office', icon: 'briefcase', tone: '', title: 'Office Filing Cabinets', place: 'Corporate offices', mode: 'private', text: 'Admins hold the management code, staff use a user code — confidential files stay confidential.' },
+    { cat: 'office', icon: 'users', tone: 'red', title: 'Shared Staff Lockers', place: 'Co-working & hot-desk floors', mode: 'public', text: 'Each employee sets a fresh code for the day; the locker is free again after they leave.' },
+    { cat: 'hospitality', icon: 'bed', tone: 'green', title: 'Hotel Room Wardrobes', place: 'Hotels & guest houses', mode: 'public', text: 'Guests choose their own code at check-in while management keeps master access by USB key.' },
+    { cat: 'hospitality', icon: 'hospital', tone: '', title: 'Medicine Cabinets', place: 'Hospitals, clinics & pharmacies', mode: 'private', text: 'Restrict drug cabinets and patient-record drawers to authorised staff only.' },
+    { cat: 'public', icon: 'activity', tone: 'red', title: 'Gym, Spa & Pool Lockers', place: 'Fitness & leisure centres', mode: 'public', text: 'Members pick any code, store their things, and the locker resets for the next person.' },
+    { cat: 'public', icon: 'book', tone: 'green', title: 'School & Campus Lockers', place: 'Schools, colleges, libraries', mode: 'public', text: 'No more lost keys or cut padlocks — students simply set and remember their own code.' },
+    { cat: 'public', icon: 'grid', tone: '', title: 'Shopper Bag-Drop Lockers', place: 'Malls & supermarkets', mode: 'public', text: 'Self-service bag lockers that need no attendant and no key handover.' },
+    { cat: 'commercial', icon: 'cash', tone: 'red', title: 'Retail Cash & Stock Drawers', place: 'Shops & showrooms', mode: 'private', text: 'Lock away cash, cards and high-value stock under the counter with a quick-entry code.' },
+    { cat: 'commercial', icon: 'box', tone: 'green', title: 'Warehouse Tool Cabinets', place: 'Warehouses & workshops', mode: 'private', text: 'Give shift supervisors their own access while USB management keys provide backup.' }
+  ];
+  const CATS = { all: 'All', home: 'Home', office: 'Office', hospitality: 'Hospitality & Health', public: 'Public Spaces', commercial: 'Commercial' };
+
+  function initPortfolio() {
+    $('#photoGrid').innerHTML = PRODUCT.images.map((im, i) =>
+      '<figure data-i="' + i + '" tabindex="0" role="button" aria-label="Enlarge: ' + esc(im.caption) + '">' + imgTag(i) +
+      '<figcaption><span>' + esc(im.caption) + '</span>' + icon('zoom') + '</figcaption></figure>').join('');
+    $('#photoGrid').addEventListener('click', e => { const f = e.target.closest('figure'); if (f) openLightbox(PRODUCT.images, +f.dataset.i); });
+    $('#photoGrid').addEventListener('keydown', e => {
+      const f = e.target.closest('figure');
+      if (f && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openLightbox(PRODUCT.images, +f.dataset.i); }
+    });
+
+    $('#pfFilters').innerHTML = Object.keys(CATS).map(k =>
+      '<button type="button" data-f="' + k + '"' + (k === 'all' ? ' class="active"' : '') + '>' + CATS[k] + '</button>').join('');
+    $('#pfGrid').innerHTML = USE_CASES.map(u =>
+      '<article class="pf-card" data-cat="' + u.cat + '">' +
+        '<div class="pf-visual ' + u.tone + '"><span class="pf-cat">' + CATS[u.cat] + '</span>' + icon(u.icon, 'big') + '</div>' +
+        '<div class="pf-body"><h3>' + u.title + '</h3>' +
+          '<p>' + u.text + '</p>' +
+          '<span class="pf-mode' + (u.mode === 'public' ? ' red' : '') + '">' + icon(u.mode === 'public' ? 'users' : 'user') +
+            (u.mode === 'public' ? 'Public (visitor) mode' : 'Private mode') + ' · ' + u.place + '</span>' +
+        '</div></article>').join('');
+
+    $('#pfFilters').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      $$('#pfFilters button').forEach(x => x.classList.toggle('active', x === b));
+      $$('#pfGrid .pf-card').forEach(c => c.classList.toggle('hide', b.dataset.f !== 'all' && c.dataset.cat !== b.dataset.f));
+    });
+  }
+
+  /* =========================================================
+     Form validation (contact + checkout)
+     ========================================================= */
+  const RULES = {
+    name: v => v.trim().length >= 3 || 'Please enter your full name.',
+    phone: v => /^(?:\+?88)?01[3-9]\d{8}$/.test(v.replace(/[\s-]/g, '')) || 'Enter a valid Bangladeshi mobile number, e.g. 01712345678.',
+    email: v => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Enter a valid email address.',
+    address: v => v.trim().length >= 10 || 'Please enter your full address (house, road, area).',
+    required: v => v.trim().length > 0 || 'This field is required.',
+    choice: v => v.trim().length > 0 || 'Please select an option from the list.',
+    message: v => v.trim().length >= 10 || 'Please write at least 10 characters.',
+    trx: v => /^[A-Za-z0-9]{6,}$/.test(v.trim()) || 'Enter the transaction ID from your payment SMS.'
+  };
+
+  function checkField(input) {
+    const rule = RULES[input.dataset.rule];
+    const wrap = input.closest('.field');
+    if (!rule || !wrap) return true;
+    if (input.offsetParent === null) { wrap.classList.remove('invalid'); return true; }
+    const res = rule(input.value);
+    const ok = res === true;
+    wrap.classList.toggle('invalid', !ok);
+    input.setAttribute('aria-invalid', String(!ok));
+    let err = $('.err', wrap);
+    if (!err) { err = document.createElement('div'); err.className = 'err'; wrap.appendChild(err); }
+    err.textContent = ok ? '' : res;
+    return ok;
+  }
+
+  function validateForm(form) {
+    let first = null;
+    $$('[data-rule]', form).forEach(i => { if (!checkField(i) && !first) first = i; });
+    return first;
+  }
+
+  function liveValidate(form) {
+    form.addEventListener('input', e => {
+      if (e.target.dataset.rule && e.target.closest('.field.invalid')) checkField(e.target);
+    });
+    form.addEventListener('focusout', e => {
+      if (e.target.dataset && e.target.dataset.rule && e.target.value.trim()) checkField(e.target);
+    });
+  }
+
+  /* =========================================================
+     Page: Contact
+     ========================================================= */
+  function initContact() {
+    const form = $('#contactForm');
+    const map = $('#mapFrame');
+    if (map) map.src = 'https://www.google.com/maps?q=' + encodeURIComponent(SITE.mapQuery) + '&output=embed';
+    liveValidate(form);
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const bad = validateForm(form);
+      if (bad) { bad.focus(); toast('Please fix the highlighted fields.', { type: 'error' }); return; }
+      const data = Object.fromEntries(new FormData(form).entries());
+      // Hook a real endpoint here (Formspree, your API, etc.). Messages are kept locally for now.
+      const inbox = store.get('wara_messages', []);
+      inbox.push(Object.assign({ date: new Date().toISOString() }, data));
+      store.set('wara_messages', inbox.slice(-50));
+      $('#contactWa').href = waLink('Hi WaRa BD, I am ' + data.name + ' (' + data.phone + ').\nSubject: ' + data.subject + '\n\n' + data.message);
+      form.hidden = true;
+      $('#contactSuccess').classList.add('show');
+      $('#contactSuccess h2').focus();
+    });
+    $('#contactAgain').addEventListener('click', () => {
+      form.reset();
+      form.hidden = false;
+      $('#contactSuccess').classList.remove('show');
+    });
+  }
+
+  /* =========================================================
+     Page: Cart
+     ========================================================= */
+  function initCart() {
+    const mount = $('#cartMount');
+
+    const summaryHTML = t =>
+      '<h3>Order summary</h3>' + totalsHTML(t, 'At checkout') +
+      '<a class="btn btn-red btn-block" href="checkout.html">Proceed to checkout ' + icon('arrow') + '</a>' +
+      '<p class="summary-note">' + icon('truck') + 'Delivery from ' + money(DELIVERY.inside.fee) + ' · Cash on delivery</p>';
+
+    const render = () => {
+      const t = Cart.totals();
+      if (!t.lines.length) { mount.innerHTML = emptyCartHTML(); return; }
+      mount.innerHTML =
+        '<div class="cart-layout"><div>' +
+          '<table class="cart-table"><thead><tr><th>Product</th><th>Price</th><th>Quantity</th><th>Total</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody>' +
+          t.lines.map(l =>
+            '<tr data-id="' + l.id + '">' +
+              '<td><div class="cart-prod"><a href="' + productUrl(l.product) + '">' + productImg(l.product) + '</a><div>' +
+                '<h3><a href="' + productUrl(l.product) + '">' + esc(l.product.name) + '</a></h3>' +
+                '<span>Model: ' + esc(l.product.model) + (l.product.color ? ' · Color: ' + esc(l.product.color) : '') + '</span></div></div></td>' +
+              '<td data-label="Price">' + money(l.product.price) + '</td>' +
+              '<td data-label="Quantity">' + qtyHTML(l.qty, 'sm') + '</td>' +
+              '<td data-label="Total" class="line-total" data-line-total>' + money(l.total) + '</td>' +
+              '<td class="rm"><button type="button" class="remove-btn" data-remove="' + l.id + '" aria-label="Remove ' + esc(l.product.model) + ' from cart">' + icon('trash') + '</button></td>' +
+            '</tr>').join('') +
+          '</tbody></table>' +
+          '<div class="cart-actions"><a class="btn btn-outline" href="products.html">' + icon('back') + ' Continue shopping</a>' +
+          '<button type="button" class="btn btn-outline" data-clear-cart>' + icon('trash') + ' Clear cart</button></div>' +
+        '</div><aside class="summary" id="cartSummary">' + summaryHTML(t) + '</aside></div>';
+    };
+
+    const update = () => {
+      const t = Cart.totals();
+      const rows = $$('tr[data-id]', mount);
+      if (!t.lines.length || rows.length !== t.lines.length) { render(); return; }
+      t.lines.forEach(l => {
+        const row = $('tr[data-id="' + l.id + '"]', mount);
+        if (!row) return;
+        $('[data-line-total]', row).textContent = money(l.total);
+        const input = $('.qty input', row);
+        if (+input.value !== l.qty) { input.value = l.qty; syncQty($('.qty', row)); }
+      });
+      $('#cartSummary').innerHTML = summaryHTML(t);
+    };
+
+    mount.addEventListener('change', e => {
+      const row = e.target.closest('tr[data-id]');
+      if (row && e.target.matches('.qty input')) Cart.setQty(row.dataset.id, e.target.value);
+    });
+    mount.addEventListener('click', e => {
+      const rm = e.target.closest('[data-remove]');
+      if (rm) {
+        const snapshot = Cart.items();
+        Cart.remove(rm.dataset.remove);
+        toast('Item removed from cart', { actionText: 'Undo', onAction: () => Cart.restore(snapshot) });
+      }
+      if (e.target.closest('[data-clear-cart]')) {
+        const snapshot = Cart.items();
+        Cart.clear();
+        toast('Cart cleared', { actionText: 'Undo', onAction: () => Cart.restore(snapshot) });
+      }
+    });
+    document.addEventListener('cart:change', update);
+    render();
+  }
+
+  /* =========================================================
+     Page: Checkout
+     ========================================================= */
+  function initCheckout() {
+    const mount = $('#checkoutMount');
+    const form = $('#checkoutForm');
+
+    if (!Cart.count()) {
+      mount.innerHTML = emptyCartHTML('Nothing to check out yet', 'Your cart is empty. Add a product first, then come back here to place your order.');
+      return;
+    }
+
+    // District options
+    $('#coDistrict').insertAdjacentHTML('beforeend', DISTRICTS.map(d => '<option>' + esc(d) + '</option>').join(''));
+
+    // Prefill from a previous order
+    const saved = store.get('wara_customer', null);
+    if (saved) {
+      ['name', 'phone', 'email', 'district', 'address'].forEach(k => {
+        const el = form.elements[k];
+        if (el && saved[k]) el.value = saved[k];
+      });
+      if (saved.zone && form.elements.zone) form.elements.zone.value = saved.zone;
+    }
+
+    const zone = () => (form.elements.zone.value || 'inside');
+    const pay = () => form.elements.payment.value || 'cod';
+
+    const summaryMount = $('#coSummary');
+    const renderSummary = () => {
+      const t = Cart.totals(zone());
+      if (!t.lines.length) {
+        mount.innerHTML = emptyCartHTML('Your cart is now empty', 'All items were removed. Add a product again to continue.');
+        return;
+      }
+      summaryMount.innerHTML =
+        '<h3>Your order</h3>' +
+        t.lines.map(l =>
+          '<div class="sum-item" data-id="' + l.id + '">' + productImg(l.product) +
+            '<div class="meta"><h4>' + esc(l.product.name) + '</h4>' + qtyHTML(l.qty, 'sm') + '</div>' +
+            '<div class="price">' + money(l.total) + '</div></div>').join('') +
+        '<div id="coTotals">' + totalsHTML(t) + '</div>' +
+        '<div class="form-alert" id="coAlert" role="alert">' + icon('alert') + '<span></span></div>' +
+        '<button type="submit" class="btn btn-red btn-block" id="placeOrder">' + icon('lock') + ' Place order · ' + money(t.total) + '</button>' +
+        '<p class="summary-note">' + icon('shield') + 'Genuine products · Official warranty</p>';
+      $$('.pay-amount').forEach(el => { el.textContent = money(t.total); });
+    };
+
+    const updateTotals = () => {
+      const t = Cart.totals(zone());
+      if (!t.lines.length || $$('.sum-item', summaryMount).length !== t.lines.length) { renderSummary(); return; }
+      t.lines.forEach(l => {
+        const row = $('.sum-item[data-id="' + l.id + '"]', summaryMount);
+        $('.price', row).textContent = money(l.total);
+        const input = $('.qty input', row);
+        if (+input.value !== l.qty) { input.value = l.qty; syncQty($('.qty', row)); }
+      });
+      $('#coTotals').innerHTML = totalsHTML(t);
+      $('#placeOrder').innerHTML = icon('lock') + ' Place order · ' + money(t.total);
+      $$('.pay-amount').forEach(el => { el.textContent = money(t.total); });
+    };
+
+    summaryMount.addEventListener('change', e => {
+      const row = e.target.closest('.sum-item');
+      if (row && e.target.matches('.qty input')) Cart.setQty(row.dataset.id, e.target.value);
+    });
+    document.addEventListener('cart:change', updateTotals);
+
+    // Delivery zone follows the district unless the customer picks one
+    $('#coDistrict').addEventListener('change', e => {
+      if (!e.target.value) return;
+      form.elements.zone.value = e.target.value === 'Dhaka' ? 'inside' : 'outside';
+      updateTotals();
+    });
+    $$('input[name="zone"]', form).forEach(r => r.addEventListener('change', updateTotals));
+
+    // Payment method panels
+    const syncPayment = () => {
+      const p = pay();
+      $('#mobilePay').classList.toggle('show', p !== 'cod');
+      if (p !== 'cod') {
+        $$('.pay-name').forEach(el => { el.textContent = PAYMENTS[p].label; });
+        $('#payMerchant').textContent = SITE.merchant[p];
+      }
+    };
+    $$('input[name="payment"]', form).forEach(r => r.addEventListener('change', syncPayment));
+
+    renderSummary();
+    syncPayment();
+    liveValidate(form);
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const alertBox = $('#coAlert');
+      alertBox.classList.remove('show');
+      const bad = validateForm(form);
+      const terms = form.elements.terms;
+      const termsWrap = terms.closest('.check');
+      termsWrap.classList.toggle('invalid', !terms.checked);
+      if (bad || !terms.checked) {
+        $('span', alertBox).textContent = bad ? 'Please complete the highlighted fields.' : 'Please accept the terms & conditions to continue.';
+        alertBox.classList.add('show');
+        (bad || terms).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => (bad || terms).focus({ preventScroll: true }), 350);
+        return;
+      }
+
+      const t = Cart.totals(zone());
+      const f = form.elements;
+      const p = pay();
+      const order = {
+        id: 'WR' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + Math.floor(1000 + Math.random() * 9000),
+        date: new Date().toISOString(),
+        customer: {
+          name: f.name.value.trim(),
+          phone: f.phone.value.trim(),
+          email: f.email.value.trim(),
+          district: f.district.value,
+          address: f.address.value.trim(),
+          note: f.note.value.trim()
+        },
+        zone: zone(),
+        payment: { method: p, label: PAYMENTS[p].label, sender: p === 'cod' ? '' : f.sender.value.trim(), trxId: p === 'cod' ? '' : f.trx.value.trim().toUpperCase() },
+        lines: t.lines.map(l => ({ id: l.id, name: l.product.name, model: l.product.model, price: l.product.price, qty: l.qty, total: l.total })),
+        subtotal: t.subtotal,
+        savings: t.savings,
+        delivery: t.delivery,
+        total: t.total
+      };
+      store.set('wara_customer', Object.assign({ zone: order.zone }, order.customer));
+
+      $('#processing').classList.add('show');
+      const result = await processOrder(order);
+      if (result.ok) {
+        const orders = store.get('wara_orders', []);
+        orders.push(order);
+        store.set('wara_orders', orders.slice(-20));
+        store.set('wara_last_order', order);
+        Cart.clear();
+        location.href = 'order-success.html?order=' + encodeURIComponent(order.id);
+      } else {
+        store.set('wara_failed', { reason: result.reason, payment: order.payment, total: order.total, date: order.date });
+        location.href = 'order-failed.html?reason=' + encodeURIComponent(result.reason);
+      }
+    });
+  }
+
+  // Replace with a real API call, e.g. fetch('/api/orders', { method: 'POST', body: JSON.stringify(order) }).
+  // Demo rules: Cash on Delivery always succeeds; bKash / Nagad succeed when the TrxID
+  // looks genuine (8–10 letters + digits, e.g. 9A7K3M2Q8T), otherwise payment verification fails.
+  function processOrder(order) {
+    return wait(1600).then(() => {
+      if (navigator.onLine === false) return { ok: false, reason: 'network' };
+      if (order.payment.method !== 'cod' && !/^(?=.*\d)(?=.*[A-Z])[A-Z0-9]{8,10}$/.test(order.payment.trxId)) {
+        return { ok: false, reason: 'payment' };
+      }
+      return { ok: true };
+    });
+  }
+
+  /* =========================================================
+     Page: Order success
+     ========================================================= */
+  function initSuccess() {
+    const mount = $('#resultMount');
+    const order = store.get('wara_last_order', null);
+    const wanted = params.get('order');
+    if (!order || (wanted && wanted !== order.id)) {
+      mount.innerHTML = '<div class="result-head"><div class="result-icon fail">' + icon('info') + '</div>' +
+        '<h1>No recent order found</h1><p>We couldn\'t find an order on this device. If you just ordered, please call us and we\'ll confirm it for you.</p></div>' +
+        '<div class="result-actions"><a class="btn btn-red" href="products.html">Shop now</a><a class="btn btn-outline" href="contact.html">Contact us</a></div>';
+      return;
+    }
+    const c = order.customer;
+    const zone = DELIVERY[order.zone] || DELIVERY.inside;
+    const cod = order.payment.method === 'cod';
+    document.title = 'Order ' + order.id + ' confirmed — WaRa BD';
+
+    mount.innerHTML =
+      '<div class="result-head"><div class="result-icon ok">' + icon('check') + '</div>' +
+        '<h1>Thank you, ' + esc(c.name.split(' ')[0]) + '! Your order is placed.</h1>' +
+        '<p>We\'ve received your order and will call <strong>' + esc(c.phone) + '</strong> shortly to confirm delivery.</p></div>' +
+      '<div class="order-meta">' +
+        '<div><small>Order number</small><strong class="oid">' + esc(order.id) + '</strong></div>' +
+        '<div><small>Date</small><strong>' + fmtDate(order.date) + '</strong></div>' +
+        '<div><small>Payment</small><strong>' + esc(order.payment.label) + '</strong></div>' +
+        '<div><small>Total</small><strong>' + money(order.total) + '</strong></div>' +
+      '</div>' +
+      '<div class="result-cols">' +
+        '<div class="box"><h3>' + icon('file') + 'Order details</h3>' +
+          order.lines.map(l =>
+            '<div class="sum-item">' + (PRODUCTS[l.id] ? productImg(PRODUCTS[l.id]) : '<img src="' + FALLBACK_IMG + '" alt="">') + '<div class="meta"><h4>' + esc(l.name) + '</h4><span style="color:var(--muted);font-size:14px">' +
+            money(l.price) + ' × ' + l.qty + '</span></div><div class="price">' + money(l.total) + '</div></div>').join('') +
+          '<div class="sum-row"><span>Subtotal</span><span>' + money(order.subtotal) + '</span></div>' +
+          (order.savings > 0 ? '<div class="sum-row save"><span>You saved</span><span>− ' + money(order.savings) + '</span></div>' : '') +
+          '<div class="sum-row"><span>Delivery (' + esc(zone.label) + ')</span><span>' + money(order.delivery) + '</span></div>' +
+          '<div class="sum-row total"><span>' + (cod ? 'To pay on delivery' : 'Total paid') + '</span><span>' + money(order.total) + '</span></div>' +
+        '</div>' +
+        '<div class="box"><h3>' + icon('pin') + 'Delivery address</h3>' +
+          '<address><strong>' + esc(c.name) + '</strong><br>' + esc(c.address) + '<br>' + esc(c.district) + ', Bangladesh<br>' +
+          esc(c.phone) + (c.email ? '<br>' + esc(c.email) : '') + '</address>' +
+          (c.note ? '<p style="margin:14px 0 0;color:var(--muted);font-size:14px"><strong style="color:var(--black)">Note:</strong> ' + esc(c.note) + '</p>' : '') +
+          (!cod ? '<p style="margin:14px 0 0;font-size:14px"><strong>' + esc(order.payment.label) + ' TrxID:</strong> ' + esc(order.payment.trxId) + '</p>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="next-steps">' +
+        '<div>' + icon('phone') + '<h4>1. Confirmation call</h4><p>Our team calls you to confirm the order and address.</p></div>' +
+        '<div>' + icon('box') + '<h4>2. Packed & shipped</h4><p>Your lock is packed and handed to the courier.</p></div>' +
+        '<div>' + icon('truck') + '<h4>3. Delivered</h4><p>Arrives in ' + esc(zone.eta) + '.' + (cod ? ' Pay ' + money(order.total) + ' in cash on delivery.' : '') + '</p></div>' +
+      '</div>' +
+      '<div class="result-actions">' +
+        '<a class="btn btn-red" href="index.html">' + icon('home') + ' Back to home</a>' +
+        '<button type="button" class="btn btn-outline" onclick="window.print()">' + icon('printer') + ' Print invoice</button>' +
+        '<a class="btn btn-green" target="_blank" rel="noopener" href="' + waLink('Hi WaRa BD, I placed order ' + order.id + '. Please update me on the delivery.') + '">' + icon('message') + ' Track on WhatsApp</a>' +
+      '</div>';
+  }
+
+  /* =========================================================
+     Page: Order failed
+     ========================================================= */
+  function initFailed() {
+    const mount = $('#resultMount');
+    const info = store.get('wara_failed', {}) || {};
+    const reason = params.get('reason') || info.reason || 'unknown';
+    const method = info.payment && info.payment.label ? info.payment.label : 'mobile payment';
+    const REASONS = {
+      payment: {
+        icon: 'cash',
+        title: 'Payment could not be verified',
+        text: 'We couldn\'t match the transaction ID ' + (info.payment && info.payment.trxId ? '<strong>' + esc(info.payment.trxId) + '</strong> ' : '') +
+          'with a ' + esc(method) + ' payment' + (info.total ? ' of <strong>' + money(info.total) + '</strong>' : '') +
+          '. Please check the TrxID in your payment SMS and try again, or choose Cash on Delivery. If money was deducted, keep the SMS and call us — we\'ll sort it out.'
+      },
+      network: {
+        icon: 'wifioff',
+        title: 'Connection lost',
+        text: 'Your device appears to be offline, so the order wasn\'t sent. Check your internet connection and try again.'
+      },
+      unknown: {
+        icon: 'alert',
+        title: 'Something went wrong',
+        text: 'We couldn\'t complete your order this time. Please try again in a moment or call us to order by phone.'
+      }
+    };
+    const r = REASONS[reason] || REASONS.unknown;
+    const t = Cart.totals();
+
+    mount.innerHTML =
+      '<div class="result-head"><div class="result-icon fail">' + icon('x') + '</div>' +
+        '<h1>Your order was not completed</h1>' +
+        '<p>Don\'t worry — nothing was lost. ' + (t.count ? 'Your cart is saved, so you can try again in one click.' : 'You can start a new order any time.') + '</p></div>' +
+      '<div class="reason-box">' + icon(r.icon) + '<div><h3>' + r.title + '</h3><p>' + r.text + '</p></div></div>' +
+      (t.count ?
+        '<div class="box" style="margin-bottom:26px"><h3>' + icon('cart') + 'Saved in your cart</h3>' +
+          t.lines.map(l => '<div class="sum-item">' + productImg(l.product) + '<div class="meta"><h4>' + esc(l.product.name) + '</h4>' +
+            '<span style="color:var(--muted);font-size:14px">' + money(l.product.price) + ' × ' + l.qty + '</span></div><div class="price">' + money(l.total) + '</div></div>').join('') +
+          '<div class="sum-row total"><span>Subtotal</span><span>' + money(t.subtotal) + '</span></div></div>' : '') +
+      '<div class="next-steps">' +
+        '<div>' + icon('refresh') + '<h4>Try again</h4><p>Re-check your details and payment information.</p></div>' +
+        '<div>' + icon('cash') + '<h4>Switch to COD</h4><p>Pay in cash when the lock arrives at your door.</p></div>' +
+        '<div>' + icon('headset') + '<h4>Order by phone</h4><p>Call ' + esc(SITE.phone) + ' and we\'ll place it for you.</p></div>' +
+      '</div>' +
+      '<div class="result-actions">' +
+        (t.count ? '<a class="btn btn-red" href="checkout.html">' + icon('refresh') + ' Try again</a><a class="btn btn-outline" href="cart.html">' + icon('cart') + ' View cart</a>'
+          : '<a class="btn btn-red" href="products.html">' + icon('bag') + ' Browse products</a>') +
+        '<a class="btn btn-green" target="_blank" rel="noopener" href="' + waLink('Hi WaRa BD, my order failed (' + r.title + '). Can you help me place it?') + '">' + icon('message') + ' Get help on WhatsApp</a>' +
+      '</div>';
+  }
+
+  /* ---------- Boot ---------- */
+  document.documentElement.classList.add('js');
+  document.addEventListener('DOMContentLoaded', () => {
+    renderLayout();
+    bindContent();
+    initGlobalEvents();
+    const pages = { home: initHome, products: initProducts, product: initProduct, portfolio: initPortfolio, contact: initContact, cart: initCart, checkout: initCheckout, success: initSuccess, failed: initFailed };
+    const init = pages[document.body.dataset.page];
+    if (init) init();
+    initReveal();
+  });
+})();

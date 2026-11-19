@@ -1,0 +1,52 @@
+
+{% load static %}
+
+{% include "web/_site_config.html" %}
+
+{{ products_json|json_script:"products-data" }}
+{{ use_cases_json|json_script:"usecases-data" }}
+
+<script>
+(function () {
+    "use strict";
+
+    const productsElement = document.getElementById("products-data");
+    const useCasesElement = document.getElementById("usecases-data");
+
+    window.__WARA__ = window.__WARA__ || {};
+
+    // Django products
+    try {
+        window.__WARA__.products = productsElement
+            ? JSON.parse(productsElement.textContent)
+            : [];
+    } catch (error) {
+        console.error("WaRa: Could not load Django products.", error);
+        window.__WARA__.products = [];
+    }
+
+    // Django use cases
+    try {
+        window.__WARA__.useCases = useCasesElement
+            ? JSON.parse(useCasesElement.textContent)
+            : [];
+    } catch (error) {
+        console.error("WaRa: Could not load use cases.", error);
+        window.__WARA__.useCases = [];
+    }
+
+    // Ensure the frontend receives arrays.
+    if (!Array.isArray(window.__WARA__.products)) {
+        window.__WARA__.products = [];
+    }
+
+    if (!Array.isArray(window.__WARA__.useCases)) {
+        window.__WARA__.useCases = [];
+    }
+
+})();
+</script>
+
+<!-- Load Django product data before the main frontend application. -->
+<script src="{% static 'web/js/products.js' %}"></script>
+<script src="{% static 'web/js/app.js' %}"></script>

@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart | WaRa BD</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
+</head>
+<body data-page="cart">
+  <div id="site-header"></div>
+
+  <main>
+    <section class="page-banner">
+      <div class="container">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'web:home' %}">Home</a><span class="sep">/</span><span>Cart</span></nav>
+        <h1>Shopping Cart</h1>
+        <p>Review your items, adjust quantities and head to checkout.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:48px">
+      <div class="container">
+        <div class="steps-bar" aria-label="Checkout progress">
+          <div class="sb-step current"><span class="n">1</span><span class="lbl">Cart</span></div>
+          <div class="sb-line"></div>
+          <div class="sb-step"><span class="n">2</span><span class="lbl">Checkout</span></div>
+          <div class="sb-line"></div>
+          <div class="sb-step"><span class="n">3</span><span class="lbl">Order complete</span></div>
+        </div>
+
+        <div id="cartMount"></div>
+
+        <div class="trust-row">
+          <div><i data-icon="shield"></i> Genuine WaRa product</div>
+          <div><i data-icon="cash"></i> Cash on delivery</div>
+          <div><i data-icon="truck"></i> Delivery all over BD</div>
+          <div><i data-icon="award"></i> Official warranty</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+  {% include "web/_products_bridge.html" %}
+</body>
+</html>

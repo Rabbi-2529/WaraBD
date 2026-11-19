@@ -1,0 +1,199 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .ubold-card { background: #fff; border: none; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); margin-bottom: 24px; overflow: hidden; }
+        
+        .page-header-area { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #eef2f7; }
+        .page-title { font-size: 20px; font-weight: 600; color: #313a46; margin: 0; }
+        .page-breadcrumbs { font-size: 13px; color: #98a6ad; }
+        .page-breadcrumbs a { color: #98a6ad; text-decoration: none; }
+        .page-breadcrumbs a:hover { color: #727cf5; }
+        .page-breadcrumbs .separator { margin: 0 6px; }
+
+        /* TOOLBAR FIXED - MATCHING SCREENSHOT */
+        .toolbar-area { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 20px 24px; border-bottom: 1px solid #eef2f7; }
+        .toolbar-search { position: relative; width: 220px; }
+        .toolbar-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #98a6ad; font-size: 16px; }
+        .toolbar-search input { padding-left: 40px; border-radius: 6px; border: 1px solid #eef2f7; font-size: 13px; height: 40px; width: 100%; box-shadow: none; }
+        .filter-label { font-weight: 500; font-size: 14px; color: #313a46; margin-right: 8px; }
+        
+        .filter-select-wrapper { position: relative; display: inline-block; }
+        .filter-select-wrapper i.icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #98a6ad; font-size: 16px; pointer-events: none; }
+        .filter-select-wrapper i.arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #98a6ad; font-size: 14px; pointer-events: none; }
+        .filter-select { appearance: none; padding: 0 32px 0 36px; height: 40px; border-radius: 6px; border: 1px solid #eef2f7; font-size: 13px; font-weight: 500; color: #6c757d; background: #fff; cursor: pointer; min-width: 130px; box-shadow: none; }
+        .filter-select:focus { border-color: #727cf5; outline: none; }
+        .filter-select-sm { min-width: 70px; padding: 0 28px 0 12px; }
+
+        .btn-add-product { background-color: #ff5b5c; color: #fff; height: 40px; font-size: 13px; font-weight: 600; padding: 0 20px; display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; text-decoration: none; box-shadow: 0 2px 6px 0 rgba(255, 91, 92, 0.4); }
+        .btn-add-product:hover { background-color: #e04a4b; color: #fff; }
+
+        /* BULK ACTION BAR */
+        .bulk-toolbar { background-color: #f8f9fa; border-bottom: 1px solid #eef2f7; padding: 12px 24px; }
+        .bulk-toolbar .actions { display: flex; justify-content: space-between; align-items: center; width: 100%; margin: 0; padding: 0; background: transparent; border: none; }
+        .bulk-toolbar select { height: 34px; font-size: 13px; border-radius: 4px; }
+        .bulk-toolbar button { background-color: #0acf97; color: #fff; height: 34px; padding: 0 16px; border-radius: 4px; border: none; font-weight: 600; }
+
+        /* TABLE */
+        .table-custom { width: 100%; border-collapse: collapse; }
+        .table-custom th { background: #fff; color: #98a6ad; font-weight: 600; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #eef2f7; padding: 16px 24px; }
+        .table-custom td { padding: 16px 24px; border-bottom: 1px solid #eef2f7; vertical-align: middle; font-size: 14px; }
+        .avatar-sm { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; }
+        .product-title { font-weight: 600; color: #313a46; text-decoration: none; }
+        .action-btn { display: inline-flex; justify-content: center; align-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid #eef2f7; color: #98a6ad; text-decoration: none; margin-left: 4px; }
+        .action-btn:hover { color: #727cf5; border-color: #727cf5; }
+        
+        /* PAGINATION */
+        .footer-area { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; }
+        .pagination { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; }
+        .page-link { display: flex; justify-content: center; align-items: center; width: 32px; height: 32px; border-radius: 4px; text-decoration: none; color: #6c757d; font-weight: 600; }
+        .page-item.active .page-link { background: #727cf5; color: #fff; }
+        .page-item.disabled .page-link { opacity: 0.5; pointer-events: none; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="ubold-card">
+    <div class="page-header-area">
+        <h1 class="page-title">Products</h1>
+        <div class="page-breadcrumbs">
+            <a href="{% url 'admin:index' %}">UBold</a> <span class="separator">&rsaquo;</span>
+            <a href="#">Ecommerce</a> <span class="separator">&rsaquo;</span>
+            <span>Products</span>
+        </div>
+    </div>
+
+    <!-- FIXED TOOLBAR -->
+    <div class="toolbar-area">
+        <form method="get" class="d-flex flex-wrap align-items-center w-100 gap-3">
+            <div class="toolbar-search">
+                <i class="bx bx-search"></i>
+                <input type="text" name="q" value="{{ cl.query }}" placeholder="Search product...">
+            </div>
+            
+            <span class="filter-label ms-3">Filter By:</span>
+            
+            <div class="filter-select-wrapper">
+                <i class="bx bx-category icon"></i>
+                <select class="filter-select">
+                    <option>Category</option>
+                    <option>Smart Locks</option>
+                </select>
+                <i class="bx bx-chevron-down arrow"></i>
+            </div>
+            
+            <div class="filter-select-wrapper">
+                <i class="bx bx-pulse icon"></i>
+                <select class="filter-select">
+                    <option>Status</option>
+                    <option>Published</option>
+                    <option>Pending</option>
+                </select>
+                <i class="bx bx-chevron-down arrow"></i>
+            </div>
+
+            <div class="filter-select-wrapper">
+                <i class="bx bx-dollar icon"></i>
+                <select class="filter-select">
+                    <option>Price Range</option>
+                </select>
+                <i class="bx bx-chevron-down arrow"></i>
+            </div>
+
+            <div class="filter-select-wrapper">
+                <select class="filter-select filter-select-sm">
+                    <option>8</option>
+                    <option>16</option>
+                    <option>32</option>
+                </select>
+                <i class="bx bx-chevron-down arrow"></i>
+            </div>
+
+            <div class="ms-auto">
+                {% if has_add_permission %}
+                <a href="{% url cl.opts|admin_urlname:'add' %}" class="btn-add-product">
+                    <i class="bx bx-plus"></i> Add Product
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <form id="changelist-form" method="post">
+        {% csrf_token %}
+        
+        <!-- BULK ACTIONS -->
+        {% if action_form and actions_on_top and cl.show_admin_actions %}
+        <div class="bulk-toolbar">{% admin_actions %}</div>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;"><input type="checkbox" id="action-toggle"></th>
+                        <th>PRODUCT</th>
+                        <th>SKU</th>
+                        <th>CATEGORY</th>
+                        <th>STOCK</th>
+                        <th>PRICE</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in cl.result_list %}
+                    <tr>
+                        <td><input class="action-select" type="checkbox" name="_selected_action" value="{{ product.pk }}"></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="avatar-sm">
+                                {% else %}
+                                    <div class="avatar-sm bg-light"></div>
+                                {% endif %}
+                                <a href="{% url 'admin:web_product_change' product.pk %}" class="product-title">{{ product.name }}</a>
+                            </div>
+                        </td>
+                        <td class="text-muted">{{ product.sku|default:"N/A" }}</td>
+                        <td>{{ product.category.name|default:"N/A" }}</td>
+                        <td>{{ product.stock }}</td>
+                        <td class="fw-bold">৳{{ product.current_price }}</td>
+                        <td>
+                            <div class="d-flex justify-content-end">
+                                <a href="/products/{{ product.slug }}/" target="_blank" class="action-btn"><i class="bx bx-show"></i></a>
+                                <a href="{% url 'admin:web_product_change' product.pk %}" class="action-btn"><i class="bx bx-edit"></i></a>
+                                <a href="{% url 'admin:web_product_delete' product.pk %}" class="action-btn text-danger"><i class="bx bx-trash"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-5">No products found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    <!-- PAGINATION -->
+    <div class="footer-area">
+        <div>Showing {{ cl.result_list|length }} products</div>
+        <ul class="pagination">
+            <li class="page-item {% if not cl.has_previous %}disabled{% endif %}">
+                <a class="page-link" href="?p={{ cl.previous_page_number }}{% if cl.query %}&q={{ cl.query }}{% endif %}">&lsaquo;</a>
+            </li>
+            {% for num in cl.paginator.page_range %}
+                <li class="page-item {% if cl.page_num == num %}active{% endif %}">
+                    <a class="page-link" href="?p={{ num }}{% if cl.query %}&q={{ cl.query }}{% endif %}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            <li class="page-item {% if not cl.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?p={{ cl.next_page_number }}{% if cl.query %}&q={{ cl.query }}{% endif %}">&rsaquo;</a>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

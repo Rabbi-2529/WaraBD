@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Successful | {{ site_settings.name|default:"WaRa BD" }}</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
+</head>
+<body data-page="success">
+  <div id="site-header"></div>
+
+  <main>
+    <section class="section" style="padding-top:60px; padding-bottom: 80px;">
+      <div class="container">
+        
+        <!-- The app.js script looks for this exact ID to render the receipt -->
+        <div id="resultMount">
+          <!-- Fallback content if JS is disabled or takes time to load -->
+          <div class="result-head">
+            <div class="result-icon ok" style="background: var(--brand-green-light); color: var(--brand-green); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 32px; height: 32px;"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h1 style="text-align: center; margin-bottom: 12px;">Thank you, {{ order.full_name }}!</h1>
+            <p style="text-align: center; color: var(--text-muted); max-width: 500px; margin: 0 auto 32px;">
+              Your order <strong>#{{ order.order_number }}</strong> has been placed successfully. We will call you shortly to confirm delivery.
+            </p>
+          </div>
+
+          <div class="order-meta" style="display: flex; justify-content: center; gap: 32px; margin-bottom: 40px; padding: 24px; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border-color);">
+            <div><small style="color: var(--text-muted); display: block; margin-bottom: 4px;">Order Number</small><strong style="color: var(--text-main); font-size: 18px;">{{ order.order_number }}</strong></div>
+            <div><small style="color: var(--text-muted); display: block; margin-bottom: 4px;">Total Amount</small><strong style="color: var(--text-main); font-size: 18px;">৳{{ order.total }}</strong></div>
+            <div><small style="color: var(--text-muted); display: block; margin-bottom: 4px;">Payment Method</small><strong style="color: var(--text-main); font-size: 18px;">{{ order.get_status_display }}</strong></div>
+          </div>
+
+          <div style="text-align: center;">
+            <a href="{% url 'web:home' %}" class="btn btn-red">Back to Home</a>
+            <a href="{% url 'web:product_list' %}" class="btn btn-outline">Continue Shopping</a>
+          </div>
+
+          <div id="orderLinesData" hidden>
+            {% for item in order.items.all %}
+            <span data-id="{{ item.product.slug }}" data-name="{{ item.product.name }}" data-model="{{ item.product.model_number }}" data-price="{{ item.price }}" data-qty="{{ item.quantity }}" data-total="{{ item.line_total }}"></span>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
+
+  {% include "web/_site_config.html" %}
+  {% include "web/_products_bridge.html" %}
+  <script src="{% static 'web/js/app.js' %}"></script>
+  
+  <script>
+    // If the user refreshed the page and localStorage was cleared, 
+    // app.js would normally show "No recent order found". 
+    // We manually seed the localStorage with the server's order data 
+    // so the beautiful JS receipt renders correctly.
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!localStorage.getItem('wara_last_order')) {
+            const lines = Array.from(document.querySelectorAll('#orderLinesData span'), item => ({
+              id: item.dataset.id,
+              name: item.dataset.name,
+              model: item.dataset.model,
+              price: item.dataset.price,
+              qty: Number(item.dataset.qty),
+              total: item.dataset.total
+            }));
+
+            const orderData = {
+                id: "{{ order.order_number }}",
+                date: "{{ order.created_at|date:'c' }}",
+                customer: {
+                    name: "{{ order.full_name|escapejs }}",
+                    phone: "{{ order.phone|escapejs }}",
+                    email: "{{ order.email|escapejs }}",
+                    district: "{{ order.city|escapejs }}",
+                    address: "{{ order.address_line1|escapejs }}",
+                    note: "{{ order.notes|escapejs }}"
+                },
+                zone: "inside",
+                payment: {
+                    method: "cod",
+                    label: "{{ order.get_status_display|escapejs }}",
+                    sender: "",
+                    trxId: ""
+                },
+                lines: lines,
+                subtotal: "{{ order.subtotal|escapejs }}",
+                savings: 0,
+                delivery: "{{ order.shipping|escapejs }}",
+                total: "{{ order.total|escapejs }}"
+            };
+            localStorage.setItem('wara_last_order', JSON.stringify(orderData));
+            window.location.reload();
+        }
+    });
+  </script>
+</body>
+</html>
