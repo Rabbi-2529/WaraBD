@@ -3,15 +3,19 @@
 
 import json
 import logging
-import traceback
+import re
 
+from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import JsonResponse
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import validate_email
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from . import product_page
+from .bd import clean_bd_district, normalize_bd_phone
 from .cart import Cart
 from .emails import send_admin_new_order, send_order_confirmation
 from .forms import CheckoutForm, ContactForm
@@ -26,7 +30,7 @@ from .models import (
     UseCase,
     ContactMessage,
 )
-from .services import StockError, cancel_order, place_order
+from .services import cancel_order, place_order
 
 
 logger = logging.getLogger(__name__)
@@ -155,6 +159,8 @@ def _build_use_case_data(use_case):
 
     return {
         "title": use_case.title,
+        # app.js filters and labels portfolio cards by `cat`.
+        "cat": use_case.category,
         "category": use_case.category,
         "mode": use_case.mode,
         "place": use_case.place or "",
@@ -162,6 +168,30 @@ def _build_use_case_data(use_case):
         "icon": use_case.icon or "box",
         "tone": use_case.tone or "",
     }
+
+
+# ==============================================================================
+# SEO: ROBOTS.TXT
+# ==============================================================================
+
+ROBOTS_DISALLOW = (
+    "/admin/",
+    "/admin-invoice/",
+    "/accounts/",
+    "/api/",
+    "/cart/",
+    "/checkout/",
+    "/order/",
+)
+
+
+def robots_txt(request):
+    site_url = (getattr(django_settings, "SITE_URL", "") or "").rstrip("/")
+    sitemap_url = (site_url + "/sitemap.xml") if site_url else request.build_absolute_uri("/sitemap.xml")
+    lines = ["User-agent: *"]
+    lines += [f"Disallow: {path}" for path in ROBOTS_DISALLOW]
+    lines += ["", f"Sitemap: {sitemap_url}", ""]
+    return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
 
 
 # ==============================================================================
@@ -251,28 +281,40 @@ def product_detail(request, slug):
         is_active=True,
     )
 
+    related_qs = (
+        Product.objects
+        .filter(is_active=True)
+        .exclude(pk=product.pk)
+        .select_related("category")
+        .prefetch_related("gallery")
+    )
     if product.category:
-        related = (
-            Product.objects
-            .filter(
-                is_active=True,
-                category=product.category,
-            )
-            .exclude(pk=product.pk)[:4]
-        )
-    else:
-        related = Product.objects.none()
+        related_qs = related_qs.filter(category=product.category)
 
-    return render(request, "web/product.html", {
-        "product": product,
-        "related": related,
-    })
+    related = []
+    for item in related_qs[:4]:
+        current = item.current_price
+        related.append({
+            "product": item,
+            "image": product_page.card_image(item),
+            "price_now": current,
+            "price_old": item.price if current < item.price else None,
+            "save": item.price - current if current < item.price else 0,
+            "can_buy": item.stock_status == Product.STOCK_IN,
+        })
+
+    context = {"product": product, "related": related}
+    context.update(product_page.build_context(product))
+    return render(request, "web/product.html", context)
 
 
 def portfolio(request):
+    use_cases = UseCase.objects.filter(is_active=True)
     return render(request, "web/portfolio.html", {
         "projects": PortfolioProject.objects.filter(is_active=True),
-        "use_cases": UseCase.objects.filter(is_active=True),
+        "use_cases": use_cases,
+        # Read by _products_bridge.html -> app.js (#pfGrid cards).
+        "use_cases_json": [_build_use_case_data(u) for u in use_cases],
     })
 
 
@@ -407,104 +449,155 @@ def checkout(request):
     })
 
 
-@csrf_exempt
-def api_checkout(request):
-    if request.method == "POST":
+def _json_error(message, status=400, errors=None):
+    payload = {"success": False, "error": message}
+    if errors:
+        payload["errors"] = errors
+    return JsonResponse(payload, status=status)
+
+
+def _read_json(request):
+    try:
+        data = json.loads(request.body or b"{}")
+    except (TypeError, ValueError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _clean_text(data, key, max_length):
+    return str(data.get(key) or "").strip()[:max_length]
+
+
+_TRX_RE = re.compile(r"^[A-Z0-9]{6,20}$")
+
+
+def _validate_checkout(data):
+    """Return (cleaned, errors). Every rule here mirrors the form in app.js."""
+    errors = {}
+    cleaned = {}
+
+    cleaned["name"] = _clean_text(data, "name", 200)
+    if len(cleaned["name"]) < 3:
+        errors["name"] = "Please enter your full name."
+
+    try:
+        cleaned["phone"] = normalize_bd_phone(data.get("phone"))
+    except ValueError as exc:
+        errors["phone"] = str(exc)
+
+    cleaned["email"] = _clean_text(data, "email", 254)
+    if cleaned["email"]:
         try:
-            data = json.loads(request.body)
+            validate_email(cleaned["email"])
+        except DjangoValidationError:
+            errors["email"] = "Enter a valid email address."
 
-            customer_data = {
-                "full_name": data.get("name"),
-                "phone": data.get("phone"),
-                "email": data.get("email") or "no-email@warabd.com",
-                "address_line1": data.get("address"),
-                "address_line2": "",
-                "city": data.get("district"),
-                "postal_code": data.get("district"),
-                "country": "Bangladesh",
-                "notes": data.get("note", ""),
-            }
+    try:
+        cleaned["district"] = clean_bd_district(data.get("district"))
+    except ValueError as exc:
+        errors["district"] = str(exc)
 
-            cart = Cart(request)
-            cart.clear()
+    cleaned["address"] = _clean_text(data, "address", 255)
+    if len(cleaned["address"]) < 10:
+        errors["address"] = "Please enter your full address (house, road, area / thana)."
 
-            for item in data.get("lines", []):
-                try:
-                    product = Product.objects.get(
-                        slug=item["id"],
-                    )
+    cleaned["note"] = _clean_text(data, "note", 1000)
 
-                    cart.add(
-                        product,
-                        item["qty"],
-                    )
+    cleaned["zone"] = str(data.get("zone") or Order.ZONE_INSIDE)
+    if cleaned["zone"] not in dict(Order.ZONE_CHOICES):
+        errors["zone"] = "Please choose a delivery area."
 
-                except Product.DoesNotExist:
-                    return JsonResponse({
-                        "success": False,
-                        "error": (
-                            f"Product '{item['id']}' not found."
-                        ),
-                    }, status=400)
+    cleaned["payment"] = str(data.get("payment") or "cod")
+    if cleaned["payment"] not in dict(Order.PAYMENT_METHOD_CHOICES):
+        errors["payment"] = "Please choose a payment method."
 
-            try:
-                order = place_order(
-                    cart=cart,
-                    customer_data=customer_data,
-                    user=(
-                        request.user
-                        if request.user.is_authenticated
-                        else None
-                    ),
-                )
+    cleaned["sender"] = ""
+    cleaned["trx"] = ""
+    if cleaned["payment"] in Order.MOBILE_PAYMENT_METHODS:
+        try:
+            cleaned["sender"] = normalize_bd_phone(data.get("sender"))
+        except ValueError as exc:
+            errors["sender"] = str(exc)
+        cleaned["trx"] = re.sub(r"\s", "", str(data.get("trx") or "")).upper()
+        if not _TRX_RE.match(cleaned["trx"]):
+            errors["trx"] = "Enter the transaction ID (TrxID) from your payment SMS."
 
-            except StockError as e:
-                return JsonResponse({
-                    "success": False,
-                    "error": str(e),
-                }, status=400)
+    lines = data.get("lines")
+    if not isinstance(lines, list) or not lines:
+        errors["lines"] = "Your cart is empty."
+        cleaned["lines"] = []
+    else:
+        cleaned["lines"] = lines
 
-            # Auto-mark payment status based on method.
-            payment_method = data.get("payment", "cod")
+    return cleaned, errors
 
-            order.payment_method = payment_method
-            order.payment_status = (
-                "unpaid"
-                if payment_method == "cod"
-                else "paid"
+
+@require_POST
+def api_checkout(request):
+    data = _read_json(request)
+    if data is None:
+        return _json_error("Invalid request.")
+
+    cleaned, errors = _validate_checkout(data)
+    if errors:
+        return _json_error(next(iter(errors.values())), errors=errors)
+
+    cart = Cart(request)
+    cart.clear()
+
+    for item in cleaned["lines"]:
+        if not isinstance(item, dict):
+            return _json_error("Invalid cart item.")
+        try:
+            qty = int(item.get("qty", 0))
+        except (TypeError, ValueError):
+            return _json_error("Invalid product quantity.")
+        product = Product.objects.filter(slug=str(item.get("id") or "")).first()
+        if product is None:
+            return _json_error(
+                "A product in your cart is no longer available. Please refresh your cart."
             )
+        cart.add(product, qty)
 
-            order.save()
+    try:
+        order = place_order(
+            cart=cart,
+            customer_data={
+                "full_name": cleaned["name"],
+                "phone": cleaned["phone"],
+                "email": cleaned["email"],
+                "address_line1": cleaned["address"],
+                "city": cleaned["district"],
+                "country": "Bangladesh",
+                "notes": cleaned["note"],
+            },
+            user=request.user if request.user.is_authenticated else None,
+            delivery_zone=cleaned["zone"],
+            payment_method=cleaned["payment"],
+            payment_sender=cleaned["sender"],
+            transaction_id=cleaned["trx"],
+        )
+    except DjangoValidationError as exc:  # includes StockError
+        cart.clear()
+        return _json_error(" ".join(exc.messages))
+    except Exception:
+        cart.clear()
+        logger.exception("Checkout failed")
+        return _json_error("Something went wrong. Please try again or call us.", status=500)
 
-            try:
-                send_order_confirmation(order)
-                send_admin_new_order(order)
+    cart.clear()
 
-            except Exception:
-                logger.exception(
-                    "Failed to send email for order %s",
-                    order.order_number,
-                )
-
-            cart.clear()
-
-            return JsonResponse({
-                "success": True,
-                "order_number": order.order_number,
-            })
-
-        except Exception as e:
-            traceback.print_exc()
-
-            return JsonResponse({
-                "success": False,
-                "error": str(e),
-            }, status=500)
+    try:
+        if order.email:
+            send_order_confirmation(order)
+        send_admin_new_order(order)
+    except Exception:
+        logger.exception("Failed to send email for order %s", order.order_number)
 
     return JsonResponse({
-        "success": False,
-        "error": "Invalid request method",
-    }, status=405)
+        "success": True,
+        "order_number": order.order_number,
+    })
 
 
 def order_success(request, order_number):
@@ -541,34 +634,49 @@ def order_failed(request):
     return render(request, "web/order_failed.html")
 
 
-@csrf_exempt
+@require_POST
 def api_contact(request):
-    if request.method == "POST":
+    data = _read_json(request)
+    if data is None:
+        return _json_error("Invalid request.")
+
+    errors = {}
+    name = _clean_text(data, "name", 150)
+    if len(name) < 3:
+        errors["name"] = "Please enter your full name."
+
+    try:
+        phone = normalize_bd_phone(data.get("phone"))
+    except ValueError as exc:
+        errors["phone"] = str(exc)
+        phone = ""
+
+    email = _clean_text(data, "email", 254)
+    if email:
         try:
-            data = json.loads(request.body)
+            validate_email(email)
+        except DjangoValidationError:
+            errors["email"] = "Enter a valid email address."
 
-            ContactMessage.objects.create(
-                name=data.get("name"),
-                email=data.get("email"),
-                phone=data.get("phone", ""),
-                subject=data.get("subject"),
-                message=data.get("message"),
-            )
+    subject = _clean_text(data, "subject", 200)
+    if not subject:
+        errors["subject"] = "Please select an option."
 
-            return JsonResponse({
-                "success": True,
-            })
+    message = _clean_text(data, "message", 5000)
+    if len(message) < 10:
+        errors["message"] = "Please write at least 10 characters."
 
-        except Exception as e:
-            return JsonResponse({
-                "success": False,
-                "error": str(e),
-            }, status=400)
+    if errors:
+        return _json_error(next(iter(errors.values())), errors=errors)
 
-    return JsonResponse({
-        "success": False,
-        "error": "Invalid request",
-    }, status=405)
+    ContactMessage.objects.create(
+        name=name,
+        email=email,
+        phone=phone,
+        subject=subject,
+        message=message,
+    )
+    return JsonResponse({"success": True})
 
 
 # ==============================================================================

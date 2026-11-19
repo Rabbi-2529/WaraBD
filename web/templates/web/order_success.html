@@ -1,4 +1,4 @@
-{% load static %}
+{% load static bd_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,8 +31,8 @@
 
           <div class="order-meta" style="display: flex; justify-content: center; gap: 32px; margin-bottom: 40px; padding: 24px; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border-color);">
             <div><small style="color: var(--text-muted); display: block; margin-bottom: 4px;">Order Number</small><strong style="color: var(--text-main); font-size: 18px;">{{ order.order_number }}</strong></div>
-            <div><small style="color: var(--text-muted); display: block; margin-bottom: 4px;">Total Amount</small><strong style="color: var(--text-main); font-size: 18px;">৳{{ order.total }}</strong></div>
-            <div><small style="color: var(--text-muted); display: block; margin-bottom: 4px;">Payment Method</small><strong style="color: var(--text-main); font-size: 18px;">{{ order.get_status_display }}</strong></div>
+            <div><small style="color: var(--text-muted); display: block; margin-bottom: 4px;">Total Amount</small><strong style="color: var(--text-main); font-size: 18px;">{{ order.total|taka }}</strong></div>
+            <div><small style="color: var(--text-muted); display: block; margin-bottom: 4px;">Payment</small><strong style="color: var(--text-main); font-size: 18px;">{{ order.get_payment_method_display }}{% if order.payment_status == 'verifying' %} · verifying TrxID{% elif order.payment_status == 'paid' %} · paid{% endif %}</strong></div>
           </div>
 
           <div style="text-align: center;">

@@ -21,7 +21,7 @@
         <div class="menu-group-title">Apps</div>
         
         <details class="menu-dropdown ecommerce-dropdown" id="ecommerceMenu" open>
-            <summary class="menu-link {% if 'web' in request.path %}active{% endif %}">
+            <summary class="menu-link {% if '/web/product' in request.path or '/web/category' in request.path or '/web/order' in request.path or '/web/contactmessage' in request.path %}active{% endif %}">
                 <i class="bx bx-store-alt"></i> <span>E-commerce</span>
                 <i class="bx bx-chevron-down chevron"></i>
             </summary>
@@ -82,9 +82,41 @@
             </div></div>
         </details>
 
+        {# WEBSITE CONTENT — everything the storefront pages read from the database #}
+        {% with p=request.path %}
+        <details class="menu-dropdown ecommerce-dropdown" id="contentMenu" {% if '/web/site' in p or '/web/usecase' in p or '/web/timelinestep' in p or '/web/portfolioproject' in p %}open{% endif %}>
+            <summary class="menu-link {% if '/web/site' in p or '/web/usecase' in p or '/web/timelinestep' in p or '/web/portfolioproject' in p %}active{% endif %}">
+                <i class="bx bx-layout"></i> <span>Website Content</span>
+                <i class="bx bx-chevron-down chevron"></i>
+            </summary>
+            <div class="submenu-wrapper"><div class="submenu-inner">
+                <div class="submenu">
+                    <a href="{% url 'admin:web_sitesettings_change' 1 %}" class="submenu-link {% if '/web/sitesettings' in p %}active{% endif %}">
+                        <span class="icon-spacer"></span><span>Site Settings</span>
+                    </a>
+                    <a href="{% url 'admin:web_sitehighlight_changelist' %}" class="submenu-link {% if '/web/sitehighlight' in p %}active{% endif %}">
+                        <span class="icon-spacer"></span><span>Home Highlights</span>
+                    </a>
+                    <a href="{% url 'admin:web_sitefeature_changelist' %}" class="submenu-link {% if '/web/sitefeature' in p %}active{% endif %}">
+                        <span class="icon-spacer"></span><span>Feature Cards</span>
+                    </a>
+                    <a href="{% url 'admin:web_usecase_changelist' %}" class="submenu-link {% if '/web/usecase' in p %}active{% endif %}">
+                        <span class="icon-spacer"></span><span>Use Cases</span>
+                    </a>
+                    <a href="{% url 'admin:web_timelinestep_changelist' %}" class="submenu-link {% if '/web/timelinestep' in p %}active{% endif %}">
+                        <span class="icon-spacer"></span><span>About Timeline</span>
+                    </a>
+                    <a href="{% url 'admin:web_portfolioproject_changelist' %}" class="submenu-link {% if '/web/portfolioproject' in p %}active{% endif %}">
+                        <span class="icon-spacer"></span><span>Portfolio Projects</span>
+                    </a>
+                </div>
+            </div></div>
+        </details>
+        {% endwith %}
+
         {# OTHER APPS #}
         <a href="{% url 'admin:users_user_changelist' %}" class="menu-link"><i class="bx bx-user"></i> <span>Users</span></a>
-        <a href="{% url 'admin:password_change' %}" class="menu-link"><i class="bx bx-lock-alt"></i> <span>Settings</span></a>
+        <a href="{% url 'admin:password_change' %}" class="menu-link"><i class="bx bx-lock-alt"></i> <span>Change Password</span></a>
         
         <form action="{% url 'admin:logout' %}" method="post" class="m-0">
             {% csrf_token %}

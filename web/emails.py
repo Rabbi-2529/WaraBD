@@ -5,6 +5,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
+from .bd import format_taka
+
 
 def send_order_confirmation(order):
     """Send HTML + plaintext confirmation to the customer."""
@@ -26,7 +28,7 @@ def send_order_confirmation(order):
 
 def send_admin_new_order(order):
     """Notify admin staff of a new order."""
-    subject = f"[New Order] {order.order_number} — ${order.total}"
+    subject = f"[New Order] {order.order_number} — {format_taka(order.total)}"
 
     context = {"order": order, "site_url": getattr(settings, "SITE_URL", "http://localhost:8000")}
     html_body = render_to_string("web/emails/admin_new_order.html", context)

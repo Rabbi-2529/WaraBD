@@ -135,7 +135,7 @@
                  {% if line.strip %}<li><i data-icon="check"></i>{{ line }}</li>{% endif %}
               {% endfor %}
             </ul>
-            <p class="best"><strong>Best for:</strong> {{ mode.place }}</p>
+            {% if mode.best_for %}<p class="best"><strong>Best for:</strong> {{ mode.best_for }}</p>{% endif %}
           </div>
           {% endfor %}
         </div>

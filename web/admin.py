@@ -177,12 +177,24 @@ class SiteFeatureAdmin(admin.ModelAdmin):
         "title",
         "section",
         "icon",
+        "badge",
         "order",
         "is_active",
     )
 
     list_filter = (
         "section",
+        "is_active",
+    )
+
+    fields = (
+        "section",
+        "title",
+        "icon",
+        "text",
+        "badge",
+        "best_for",
+        "order",
         "is_active",
     )
 
@@ -453,6 +465,8 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = (
         "status",
         "payment_status",
+        "payment_method",
+        "delivery_zone",
         "created_at",
     )
 
@@ -460,6 +474,8 @@ class OrderAdmin(admin.ModelAdmin):
         "order_number",
         "full_name",
         "email",
+        "phone",
+        "transaction_id",
     )
 
     fields = (
@@ -467,6 +483,8 @@ class OrderAdmin(admin.ModelAdmin):
         "status",
         "payment_status",
         "payment_method",
+        "payment_sender",
+        "transaction_id",
         "notes",
         "full_name",
         "email",
@@ -476,6 +494,7 @@ class OrderAdmin(admin.ModelAdmin):
         "city",
         "postal_code",
         "country",
+        "delivery_zone",
     )
 
     readonly_fields = (

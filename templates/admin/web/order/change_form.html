@@ -126,7 +126,7 @@
 
                         <div class="totals-section">
                             <div class="total-row"><span>Subtotal</span><span>৳{{ original.subtotal }}</span></div>
-                            <div class="total-row"><span>Shipping fee</span><span>৳{{ original.shipping }}</span></div>
+                            <div class="total-row"><span>Delivery fee ({{ original.get_delivery_zone_display }})</span><span>৳{{ original.shipping }}</span></div>
                             <div class="total-row grand"><span>GRAND TOTAL</span><span>৳{{ original.total }}</span></div>
                         </div>
                         <div style="clear:both;"></div>
@@ -147,6 +147,10 @@
                             <label class="status-label">
                                 <input type="radio" name="payment_status" value="unpaid" {% if original.payment_status == 'unpaid' %}checked{% endif %}>
                                 <div class="status-box">⏳ Unpaid</div>
+                            </label>
+                            <label class="status-label">
+                                <input type="radio" name="payment_status" value="verifying" {% if original.payment_status == 'verifying' %}checked{% endif %}>
+                                <div class="status-box">🔎 Verify TrxID</div>
                             </label>
                             <label class="status-label">
                                 <input type="radio" name="payment_status" value="paid" {% if original.payment_status == 'paid' %}checked{% endif %}>
@@ -207,7 +211,7 @@
                         <div class="map-frame">
                             <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://www.google.com/maps?q={{ original.city }},Bangladesh&output=embed"></iframe>
                         </div>
-                        <p><strong>{{ original.full_name }}</strong><br>{{ original.address_line1 }}<br>{{ original.city }}, {{ original.postal_code }}</p>
+                        <p><strong>{{ original.full_name }}</strong><br>{{ original.address_line1 }}<br>{{ original.city }}{% if original.postal_code %}, {{ original.postal_code }}{% endif %}<br>{{ original.phone }} · {{ original.get_delivery_zone_display }}</p>
                         <div id="edit-shipping" class="edit-form">
                             <input type="text" name="address_line1" value="{{ original.address_line1 }}" placeholder="Address">
                             <input type="text" name="city" value="{{ original.city }}" placeholder="City">
@@ -237,9 +241,18 @@
                                 <div><div style="font-weight:700; font-size:14px;">Nagad</div><div style="font-size:12px; color:#64748b;">Mobile payment</div></div>
                             {% endif %}
                             <span class="payment-status-badge {% if original.payment_status == 'paid' %}paid{% else %}pending{% endif %}">
-                                {% if original.payment_status == 'paid' %}Paid{% else %}Pending{% endif %}
+                                {{ original.get_payment_status_display }}
                             </span>
                         </div>
+                        {% if original.transaction_id or original.payment_sender %}
+                        <div style="margin-top:10px; padding:10px 12px; border-radius:6px; background:#fff7ed; border:1px solid #fed7aa; font-size:13px;">
+                            <div><strong>Sender number:</strong> {{ original.payment_sender|default:"—" }}</div>
+                            <div><strong>TrxID:</strong> <code style="font-size:13px;">{{ original.transaction_id|default:"—" }}</code></div>
+                            {% if original.payment_status == 'verifying' %}
+                            <div style="color:#9a3412; margin-top:4px;">Check this TrxID in the {{ original.get_payment_method_display }} merchant app, then mark the order Paid.</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                         <div id="edit-billing" class="edit-form">
                             <input type="text" name="billing_name" value="{{ original.full_name }}" placeholder="Billing Name">
                             <input type="text" name="billing_address" value="{{ original.address_line1 }}" placeholder="Billing Address">

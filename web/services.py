@@ -14,14 +14,26 @@ Responsibilities:
 - Restore stock only once when cancelling an order.
 """
 
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from .models import Order, OrderItem, Product
+from .models import Order, OrderItem, Product, SiteSettings
 
 
 class StockError(ValidationError):
     """Raised when requested quantity exceeds available stock."""
+
+
+def delivery_fee_for(zone):
+    """Delivery fee in BDT for a zone, read from Site Settings."""
+    site = SiteSettings.load()
+    if zone == Order.ZONE_OUTSIDE:
+        return Decimal(site.delivery_outside_fee)
+    if zone == Order.ZONE_INSIDE:
+        return Decimal(site.delivery_inside_fee)
+    raise ValidationError("Please choose a delivery area.")
 
 
 # ==============================================================================
@@ -29,7 +41,16 @@ class StockError(ValidationError):
 # ==============================================================================
 
 @transaction.atomic
-def place_order(*, cart, customer_data, user=None):
+def place_order(
+    *,
+    cart,
+    customer_data,
+    user=None,
+    delivery_zone=Order.ZONE_INSIDE,
+    payment_method="cod",
+    payment_sender="",
+    transaction_id="",
+):
     """
     Create an Order and its OrderItems atomically.
 
@@ -42,6 +63,14 @@ def place_order(*, cart, customer_data, user=None):
 
         user:
             Authenticated user or None.
+
+        delivery_zone:
+            "inside" or "outside" Dhaka. The fee comes from Site Settings,
+            never from the browser.
+
+        payment_method / payment_sender / transaction_id:
+            bKash and Nagad orders keep the sender number and TrxID and
+            start as "Awaiting verification" until staff confirm them.
 
     Returns:
         Order instance.
@@ -143,8 +172,16 @@ def place_order(*, cart, customer_data, user=None):
         start=locked_products[0].current_price * 0,
     )
 
-    shipping = 0
+    shipping = delivery_fee_for(delivery_zone)
     total = subtotal + shipping
+
+    if payment_method not in dict(Order.PAYMENT_METHOD_CHOICES):
+        raise ValidationError("Please choose a payment method.")
+
+    is_mobile_payment = payment_method in Order.MOBILE_PAYMENT_METHODS
+    payment_status = (
+        Order.PAYMENT_VERIFYING if is_mobile_payment else Order.PAYMENT_UNPAID
+    )
 
     # --------------------------------------------------------------------------
     # 5. Create order
@@ -161,16 +198,21 @@ def place_order(*, cart, customer_data, user=None):
         address_line2=customer_data.get("address_line2", ""),
 
         city=customer_data["city"],
-        postal_code=customer_data["postal_code"],
-        country=customer_data["country"],
+        postal_code=customer_data.get("postal_code", ""),
+        country=customer_data.get("country", "Bangladesh"),
 
         notes=customer_data.get("notes", ""),
 
+        delivery_zone=delivery_zone,
         subtotal=subtotal,
         shipping=shipping,
         total=total,
 
         status=Order.STATUS_PENDING,
+        payment_method=payment_method,
+        payment_status=payment_status,
+        payment_sender=payment_sender if is_mobile_payment else "",
+        transaction_id=transaction_id if is_mobile_payment else "",
     )
 
     # --------------------------------------------------------------------------

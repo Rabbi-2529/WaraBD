@@ -54,7 +54,7 @@
                 <h3>Billed To:</h3>
                 <p><strong>{{ order.full_name }}</strong></p>
                 <p>{{ order.address_line1 }}<br>
-                   {{ order.city }}, {{ order.postal_code }}<br>
+                   {{ order.city }}{% if order.postal_code %}, {{ order.postal_code }}{% endif %}<br>
                    {{ order.country }}</p>
             </div>
             <div>
@@ -92,7 +92,7 @@
                     <td class="amount">৳{{ order.subtotal }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Delivery Fee:</td>
+                    <td class="label">Delivery Fee ({{ order.get_delivery_zone_display }}):</td>
                     <td class="amount">৳{{ order.shipping }}</td>
                 </tr>
                 <tr class="grand-total">

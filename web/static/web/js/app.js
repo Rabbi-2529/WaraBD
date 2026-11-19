@@ -56,8 +56,9 @@
   /* ---------- Delivery (DB-driven with fallback) ---------- */
   const deliveryData = (window.__WARA__ && window.__WARA__.site && window.__WARA__.site.delivery) || {};
   const DELIVERY = {
-    inside:  { label: 'Inside Dhaka',  fee: deliveryData.inside?.fee  || 60,  eta: deliveryData.inside?.eta  || '1-2 days' },
-    outside: { label: 'Outside Dhaka', fee: deliveryData.outside?.fee || 120, eta: deliveryData.outside?.eta || '2-4 days' }
+    // `??` (not `||`) so a fee of 0 set in Site Settings means free delivery.
+    inside:  { label: 'Inside Dhaka',  fee: deliveryData.inside?.fee  ?? 60,  eta: deliveryData.inside?.eta  || '1-2 days' },
+    outside: { label: 'Outside Dhaka', fee: deliveryData.outside?.fee ?? 120, eta: deliveryData.outside?.eta || '2-4 days' }
   };
 
   const PAYMENTS = { cod: { label: 'Cash on Delivery' }, bkash: { label: 'bKash' }, nagad: { label: 'Nagad' } };
@@ -157,7 +158,21 @@
     info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
     file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
     wifioff: '<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>',
-    send: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>'
+    send: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+    /* Copied from the original storefront icon set */
+    key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
+    battery: '<rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/><line x1="5" y1="10" x2="5" y2="14"/>',
+    usb: '<circle cx="12" cy="19" r="2.5"/><path d="M12 16.5V3"/><path d="M9 6l3-3 3 3"/><path d="M12 13l-4-2.5V8"/><path d="M12 11l4-2.5V6.5"/><rect x="15" y="4.5" width="2" height="2"/><circle cx="8" cy="7" r="1"/>',
+    book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+    wine: '<path d="M8 22h8"/><path d="M12 15v7"/><path d="M7 2h10v6a5 5 0 0 1-10 0z"/>',
+    keypad: '<circle cx="12" cy="12" r="10"/><circle cx="9" cy="8.5" r=".6"/><circle cx="12" cy="8.5" r=".6"/><circle cx="15" cy="8.5" r=".6"/><circle cx="9" cy="12" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="15" cy="12" r=".6"/><circle cx="9" cy="15.5" r=".6"/><circle cx="12" cy="15.5" r=".6"/><circle cx="15" cy="15.5" r=".6"/>',
+    eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+    eyeoff: '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
+    mobile: '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    heart: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+    tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    ruler: '<path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4z"/><path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/>'
   };
   const icon = (name, cls) => '<svg class="i' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
 
@@ -707,54 +722,34 @@
   }
 
   /* ---------- Product page ---------- */
+  /* ---------- Product page ----------
+     The page is rendered by Django (web/templates/web/product.html);
+     this only adds behaviour: gallery, lightbox, tabs, sticky buy bar. */
   function initProduct() {
-    const mount = $('#productMount');
-    if (!mount) return;
-    const pathMatch = location.pathname.match(/^\/products\/([^/]+)\/?$/);
-    const wanted = params.get('id') || (pathMatch ? decodeURIComponent(pathMatch[1]) : null);
-    const p = wanted ? PRODUCTS[wanted] : PRODUCT;
-    if (!p) {
-      mount.innerHTML = '<div class="section text-center"><h2>Product not found</h2></div>';
-      return;
-    }
+    // Missing or broken photos fall back to the keypad illustration.
+    $$('img[data-fallback]').forEach(img => {
+      const useFallback = () => { img.onerror = null; img.src = FALLBACK_IMG; };
+      if (!img.getAttribute('src')) useFallback(); else img.onerror = useFallback;
+    });
 
-    const st = stockOf(p);
-    const save = p.oldPrice > p.price ? p.oldPrice - p.price : 0;
-    const pct = save ? Math.round(save / p.oldPrice * 100) : 0;
-    const images = p.images && p.images.length ? p.images : [{ src: FALLBACK_IMG, caption: '' }];
+    let images = [];
+    try {
+      const data = $('#product-images');
+      images = data ? JSON.parse(data.textContent) : [];
+    } catch (e) { images = []; }
+    if (!Array.isArray(images) || !images.length) images = [{ src: FALLBACK_IMG, caption: '' }];
 
-    mount.innerHTML = '<section class="section" style="padding-top:44px"><div class="container">' +
-      '<div class="row">' +
-        '<div class="col-md-6">' +
-          '<div class="gallery-main" id="gMain">' +
-            (pct ? '<span class="gallery-badge">Save ' + pct + '%</span>' : '') +
-            productImg(p, 0, '', ' id="gMainImg"') +
-          '</div>' +
-          (images.length > 1 ? '<div class="thumbs" id="gThumbs">' + images.map((im, i) =>
-            '<button type="button" data-i="' + i + '"' + (i === 0 ? ' class="active"' : '') + ' aria-label="View image ' + (i + 1) + '">' + productImg(p, i) + '</button>'
-          ).join('') + '</div>' : '') +
-        '</div>' +
-        '<div class="col-md-6" data-buy-scope data-id="' + esc(p.id) + '">' +
-          '<h1 class="p-title">' + esc(p.name) + '</h1>' +
-          '<div class="p-price"><span class="price-now">' + money(p.price) + '</span>' +
-            (save ? '<span class="price-old">' + money(p.oldPrice) + '</span><span class="price-save">Save ' + money(save) + '</span>' : '') +
-          '</div>' +
-          (p.short ? '<p class="p-short">' + esc(p.short) + '</p>' : '') +
-          (st.buy ? '<div class="buy-row" id="buyRow">' + qtyHTML(1) +
-            '<button type="button" class="btn btn-green" data-add-to-cart>' + icon('cart') + ' Add to Cart</button></div>' : '') +
-        '</div>' +
-      '</div>' +
-    '</div></section>';
-
-    bindContent(mount);
-
+    // Gallery + lightbox
     const main = $('#gMain');
     const thumbs = $('#gThumbs');
     let current = 0;
     const show = i => {
       current = (i + images.length) % images.length;
       const img = $('#gMainImg');
-      if (img) img.src = images[current].src;
+      if (img) {
+        img.src = images[current].src;
+        if (images[current].caption) img.alt = images[current].caption;
+      }
       if (thumbs) $$('button', thumbs).forEach((b, bi) => b.classList.toggle('active', bi === current));
     };
     if (thumbs) {
@@ -764,6 +759,49 @@
       });
     }
     if (main) main.addEventListener('click', () => openLightbox(images, current));
+
+    // Tabs — also opened by #specs, #faq, #warranty … links (e.g. from the footer).
+    const tabBtns = $$('#productTabs .tab-list button');
+    const activate = (name, focus) => {
+      tabBtns.forEach(b => {
+        const on = b.dataset.tab === name;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+        b.tabIndex = on ? 0 : -1;
+        const panel = $('#tab-' + b.dataset.tab);
+        if (panel) panel.classList.toggle('active', on);
+        if (on && focus) b.focus();
+      });
+    };
+    tabBtns.forEach((b, i) => {
+      b.tabIndex = b.classList.contains('active') ? 0 : -1;
+      b.addEventListener('click', () => activate(b.dataset.tab));
+      b.addEventListener('keydown', e => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        const step = e.key === 'ArrowRight' ? 1 : -1;
+        const next = tabBtns[(i + step + tabBtns.length) % tabBtns.length];
+        activate(next.dataset.tab, true);
+      });
+    });
+    const openFromHash = () => {
+      const hash = location.hash.replace('#', '');
+      if (!hash || !tabBtns.some(b => b.dataset.tab === hash)) return;
+      activate(hash);
+      const tabs = $('#productTabs');
+      if (tabs) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+
+    // Mobile sticky buy bar: visible once the main buy buttons scroll off the top.
+    const sticky = $('#stickyBuy');
+    const buyRow = $('#buyRow');
+    if (sticky && buyRow) {
+      const onScroll = () => sticky.classList.toggle('show', buyRow.getBoundingClientRect().bottom < 0);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    }
   }
 
   /* ---------- Portfolio ---------- */
@@ -797,7 +835,7 @@
     ).join('');
     const pG = $('#pfGrid');
     if (pG) pG.innerHTML = USE_CASES.map(u =>
-      '<article class="pf-card" data-cat="' + u.cat + '"><div class="pf-visual ' + u.tone + '"><span class="pf-cat">' + CATS[u.cat] + '</span>' + icon(u.icon, 'big') + '</div><div class="pf-body"><h3>' + u.title + '</h3><p>' + u.text + '</p><span class="pf-mode' + (u.mode === 'public' ? ' red' : '') + '">' + icon(u.mode === 'public' ? 'users' : 'user') + (u.mode === 'public' ? 'Public (visitor) mode' : 'Private mode') + ' · ' + u.place + '</span></div></article>'
+      '<article class="pf-card" data-cat="' + u.cat + '"><div class="pf-visual ' + u.tone + '"><span class="pf-cat">' + CATS[u.cat] + '</span>' + icon(u.icon, 'big') + '</div><div class="pf-body"><h3>' + esc(u.title) + '</h3><p>' + esc(u.text) + '</p><span class="pf-mode' + (u.mode === 'public' ? ' red' : '') + '">' + icon(u.mode === 'public' ? 'users' : 'user') + (u.mode === 'public' ? 'Public (visitor) mode' : 'Private mode') + (u.place ? ' · ' + esc(u.place) : '') + '</span></div></article>'
     ).join('');
 
     if (pF) pF.addEventListener('click', e => {
@@ -838,6 +876,23 @@
     let first = null;
     $$('[data-rule]', form).forEach(i => { if (!checkField(i) && !first) first = i; });
     return first;
+  }
+  // Show field errors returned by the server ({ errors: { phone: '...' } }).
+  function showServerErrors(form, errors) {
+    let first = null;
+    Object.keys(errors || {}).forEach(name => {
+      const input = form.elements[name];
+      const el = input && input.length !== undefined && !input.tagName ? input[0] : input;
+      const wrap = el && el.closest ? el.closest('.field') : null;
+      if (!wrap) return;
+      wrap.classList.add('invalid');
+      el.setAttribute('aria-invalid', 'true');
+      let err = $('.err', wrap);
+      if (!err) { err = document.createElement('div'); err.className = 'err'; wrap.appendChild(err); }
+      err.textContent = errors[name];
+      if (!first) first = el;
+    });
+    if (first) first.focus();
   }
   function liveValidate(form) {
     form.addEventListener('input', e => {
@@ -893,12 +948,13 @@
             if (h) h.focus();
           }
         } else {
-          alert('Error: ' + (result.error || 'Unknown error'));
+          showServerErrors(form, result.errors);
+          toast(result.error || 'Could not send your message.', { type: 'error' });
           btn.innerHTML = originalText;
           btn.disabled = false;
         }
       } catch (err) {
-        alert('Network error. Please try again.');
+        toast('Network error. Please try again.', { type: 'error' });
         btn.innerHTML = originalText;
         btn.disabled = false;
       }
@@ -1022,27 +1078,40 @@
         '<button type="submit" class="btn btn-red btn-block mt-3" id="placeOrder">' + icon('lock') + ' Place order · ' + money(t.total) + '</button>';
     };
 
-    paintSummary();
+    // bKash / Nagad: show the "Send Money" steps, amount, merchant number
+    // and the sender number + TrxID fields only when one is selected.
+    const mobilePay = $('#mobilePay');
+    const paintPayment = () => {
+      if (!mobilePay) return;
+      const p = pay();
+      const isMobile = p === 'bkash' || p === 'nagad';
+      mobilePay.classList.toggle('show', isMobile);
+      if (!isMobile) return;
+      $$('.pay-name', mobilePay).forEach(el => { el.textContent = PAYMENTS[p].label; });
+      $$('.pay-amount', mobilePay).forEach(el => { el.textContent = money(Cart.totals(zone()).total); });
+      const merchant = $('#payMerchant');
+      if (merchant) merchant.textContent = (SITE.merchant && SITE.merchant[p]) || '';
+    };
 
-    const zoneEl = form.elements.zone;
-    if (zoneEl) {
-      const onChange = () => paintSummary();
-      if (zoneEl.length !== undefined) {
-        $$('input[name="zone"]', form).forEach(r => r.addEventListener('change', onChange));
-      } else {
-        zoneEl.addEventListener('change', onChange);
-      }
-    }
+    paintSummary();
+    paintPayment();
+    liveValidate(form);
+
+    $$('input[name="zone"]', form).forEach(r => r.addEventListener('change', () => { paintSummary(); paintPayment(); }));
+    $$('input[name="payment"]', form).forEach(r => r.addEventListener('change', paintPayment));
 
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
+      const bad = validateForm(form);
+      if (bad) { bad.focus(); toast('Please fix the highlighted fields.', { type: 'error' }); return; }
+
       const terms = form.elements.terms;
-      if (!terms || !terms.checked) { alert('Please accept the terms & conditions.'); return; }
+      if (!terms || !terms.checked) { toast('Please confirm your details and accept the delivery & warranty policy.', { type: 'error' }); return; }
 
       const csrfInput = form.querySelector('[name="csrfmiddlewaretoken"]');
-      if (!csrfInput) { alert('CSRF Token missing!'); return; }
-      const csrfToken = csrfInput.value;
+      const csrfToken = csrfInput ? csrfInput.value : '';
+      const isMobile = pay() === 'bkash' || pay() === 'nagad';
 
       const payload = {
         name: form.elements.name.value.trim(),
@@ -1052,6 +1121,8 @@
         address: form.elements.address.value.trim(),
         note: form.elements.note ? form.elements.note.value.trim() : '',
         payment: pay(),
+        sender: isMobile && form.elements.sender ? form.elements.sender.value.trim() : '',
+        trx: isMobile && form.elements.trx ? form.elements.trx.value.trim().toUpperCase() : '',
         zone: zone(),
         lines: Cart.items()
       };
@@ -1073,11 +1144,12 @@
           location.href = URLS.orderSuccess(result.order_number);
         } else {
           if (proc) proc.classList.remove('show');
-          alert('Checkout Failed: ' + (result.error || 'Unknown error'));
+          showServerErrors(form, result.errors);
+          toast(result.error || 'Could not place your order. Please try again.', { type: 'error' });
         }
       } catch (err) {
         if (proc) proc.classList.remove('show');
-        alert('Network error. Please try again.');
+        toast('Network error. Please try again.', { type: 'error' });
       }
     });
   }

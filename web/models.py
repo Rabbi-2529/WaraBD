@@ -1,6 +1,4 @@
 # web/models.py
-from turtle import title
-
 from django.conf import settings as django_settings
 from django.db import models
 from django.urls import reverse
@@ -184,7 +182,7 @@ class PortfolioProject(models.Model):
 
 class ContactMessage(models.Model):
     name = models.CharField(max_length=150)
-    email = models.EmailField()
+    email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)
     subject = models.CharField(max_length=200)
     message = models.TextField()
@@ -212,9 +210,15 @@ class Order(models.Model):
         (STATUS_CANCELLED, "Cancelled"),
     ]
 
+    PAYMENT_UNPAID = "unpaid"
+    PAYMENT_VERIFYING = "verifying"
+    PAYMENT_PAID = "paid"
     PAYMENT_CHOICES = [
-        ("unpaid", "Unpaid"),
-        ("paid", "Paid"),
+        (PAYMENT_UNPAID, "Unpaid"),
+        # bKash / Nagad: customer sent money and gave a TrxID; staff must
+        # check it in the merchant app before marking the order paid.
+        (PAYMENT_VERIFYING, "Awaiting verification"),
+        (PAYMENT_PAID, "Paid"),
         ("refunded", "Refunded"),
     ]
 
@@ -222,6 +226,14 @@ class Order(models.Model):
         ("cod", "Cash on Delivery"),
         ("bkash", "bKash"),
         ("nagad", "Nagad"),
+    ]
+    MOBILE_PAYMENT_METHODS = ("bkash", "nagad")
+
+    ZONE_INSIDE = "inside"
+    ZONE_OUTSIDE = "outside"
+    ZONE_CHOICES = [
+        (ZONE_INSIDE, "Inside Dhaka"),
+        (ZONE_OUTSIDE, "Outside Dhaka"),
     ]
 
     user = models.ForeignKey(
@@ -235,20 +247,23 @@ class Order(models.Model):
     order_number = models.CharField(max_length=32, unique=True, editable=True, blank=True)
     
     full_name = models.CharField(max_length=200)
-    email = models.EmailField()
-    phone = models.CharField(max_length=30)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=30, help_text="Bangladeshi mobile, saved as 01XXXXXXXXX.")
     address_line1 = models.CharField(max_length=255)
     address_line2 = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=100)
-    postal_code = models.CharField(max_length=20)
-    country = models.CharField(max_length=100)
+    city = models.CharField("District", max_length=100)
+    postal_code = models.CharField(max_length=20, blank=True)
+    country = models.CharField(max_length=100, default="Bangladesh")
+    delivery_zone = models.CharField(max_length=10, choices=ZONE_CHOICES, default=ZONE_INSIDE)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    shipping = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    shipping = models.DecimalField("Delivery fee", max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
-    payment_status = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default="unpaid")
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default=PAYMENT_UNPAID)
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default="cod")
+    payment_sender = models.CharField("Sender number", max_length=20, blank=True)
+    transaction_id = models.CharField("Transaction ID (TrxID)", max_length=50, blank=True)
 
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(default=timezone.now)
@@ -345,7 +360,18 @@ class SiteFeature(models.Model):
     title = models.CharField(max_length=100)
     section = models.CharField(max_length=50, choices=SECTION_CHOICES)
     icon = models.CharField(max_length=50, default="check")
-    text = models.TextField(blank=True)
+    text = models.TextField(
+        blank=True,
+        help_text="For Home Mode cards, write one bullet point per line.",
+    )
+    badge = models.CharField(
+        max_length=50, blank=True,
+        help_text="Home Mode only — small label next to the title, e.g. 'Visitor password'.",
+    )
+    best_for = models.CharField(
+        max_length=200, blank=True,
+        help_text="Home Mode only — e.g. 'gyms, spas, hotels, schools, malls'.",
+    )
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
