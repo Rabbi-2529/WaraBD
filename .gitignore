@@ -24,3 +24,6 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Theme demo file with a hard-coded Mapbox token (blocked by GitHub secret scanning)
+rizz/static/js/pages/leaflet-map.init.js
