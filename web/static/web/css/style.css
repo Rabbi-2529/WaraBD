@@ -1214,3 +1214,13 @@ main { margin-bottom: 10px; }
 .form-alert.msg-info { background: #eef6fc; color: #075985; border: 1px solid #c4e2f3; }
 .form-alert.msg-warning { background: #fff7e8; color: #8a4b06; border: 1px solid #f7dcae; }
 .form-alert.msg-error { background: var(--red-tint); color: var(--red); border: 1px solid rgba(215, 24, 42, .25); }
+
+/* Delivery / payment / warranty: one full-width row under the picture and the buy box */
+.delivery-full { grid-column: 1 / -1; }
+@media (min-width: 901px) {
+  .delivery-full { margin-top: -30px; }
+  .delivery-full .row { flex-direction: row; align-items: center; gap: 14px; padding: 18px 20px; }
+  .delivery-full .row svg { width: 28px; height: 28px; flex: none; }
+  .delivery-full .row strong { font-size: 15px; }
+  .delivery-full .row span { font-size: 13px; }
+}

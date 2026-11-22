@@ -75,19 +75,19 @@
             </div>
             {% endif %}
 
-            {# Delivery, payment and warranty in one compact row (2 × 2 on phones). #}
-            <div class="delivery-box delivery-strip">
-              <div class="row"><i data-icon="truck"></i><div><strong>{% translate "Inside Dhaka" %} · {{ site_settings.delivery_inside_fee|taka }}</strong><span>{{ site_settings.delivery_inside_eta }}</span></div></div>
-              <div class="row"><i data-icon="truck"></i><div><strong>{% translate "Outside Dhaka" %} · {{ site_settings.delivery_outside_fee|taka }}</strong><span>{{ site_settings.delivery_outside_eta }}</span></div></div>
-              {% if "cod" in site_settings.payment_methods %}<div class="row"><i data-icon="cash"></i><div><strong>{% translate "Cash on Delivery" %}</strong><span>{% translate "or bKash / Nagad" %}</span></div></div>{% endif %}
-              {% if product.warranty %}<div class="row"><i data-icon="shield"></i><div><strong>{% blocktranslate trimmed with warranty=product.warranty %}{{ warranty }} warranty{% endblocktranslate %}</strong><span>{% translate "Official warranty" %}</span></div></div>{% endif %}
-            </div>
-
             <div class="call-order">
               <i data-icon="phone"></i> {% translate "Prefer to order by phone?" %}
               <a href="tel:{{ site_settings.phone|tel_href }}">{{ site_settings.phone|digits }}</a> {% translate "or" %}
               <a data-href="wa" data-wa-text="{% blocktranslate trimmed with name=product.name %}Hi WaRa BD, I want to order {{ name }}.{% endblocktranslate %}">{% translate "WhatsApp us" %}</a>
             </div>
+          </div>
+
+          {# Delivery, payment and warranty: one row across the full width under picture + buy box (2 × 2 on phones). #}
+          <div class="delivery-box delivery-strip delivery-full">
+            <div class="row"><i data-icon="truck"></i><div><strong>{% translate "Inside Dhaka" %} · {{ site_settings.delivery_inside_fee|taka }}</strong><span>{{ site_settings.delivery_inside_eta }}</span></div></div>
+            <div class="row"><i data-icon="truck"></i><div><strong>{% translate "Outside Dhaka" %} · {{ site_settings.delivery_outside_fee|taka }}</strong><span>{{ site_settings.delivery_outside_eta }}</span></div></div>
+            {% if "cod" in site_settings.payment_methods %}<div class="row"><i data-icon="cash"></i><div><strong>{% translate "Cash on Delivery" %}</strong><span>{% translate "or bKash / Nagad" %}</span></div></div>{% endif %}
+            {% if product.warranty %}<div class="row"><i data-icon="shield"></i><div><strong>{% blocktranslate trimmed with warranty=product.warranty %}{{ warranty }} warranty{% endblocktranslate %}</strong><span>{% translate "Official warranty" %}</span></div></div>{% endif %}
           </div>
         </div>
 
