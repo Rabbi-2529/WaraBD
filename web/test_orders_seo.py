@@ -326,3 +326,33 @@ class InvoiceAndPrivacyTests(TestCase):
         page = self.client.get(f"/admin/web/order/{self.order.pk}/invoice/").content.decode()
         self.assertIn("Sales Person:</b> sara", page)
         self.assertIn(f"/admin/web/order/{self.order.pk}/change/", page)
+
+
+@override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
+class OrderPageTests(TestCase):
+    def setUp(self):
+        self.staff = get_user_model().objects.create_superuser(email="owner@example.com", password="x-test-only")
+        self.client.force_login(self.staff)
+        self.order = _order(thana="Dhanmondi", notes="Gate 2")
+
+    def post(self, **extra):
+        o = self.order
+        data = {"status": "shipped", "payment_status": "unpaid", "notes": o.notes, "full_name": o.full_name,
+                "email": o.email, "phone": o.phone, "address_line1": o.address_line1, "thana": o.thana,
+                "city": o.city, "postal_code": "", "courier": "", "courier_tracking_code": "",
+                "courier_tracking_url": "", "_continue": "1"}
+        data.update(extra)
+        return self.client.post(f"/admin/web/order/{o.pk}/change/", data)
+
+    def test_page_shows_new_layout(self):
+        page = self.client.get(f"/admin/web/order/{self.order.pk}/change/").content.decode()
+        for text in ('class="wf-form od"', "od-track", "Customer &amp; delivery", "To collect:", 'name="status" value="shipped"'):
+            self.assertIn(text, page)
+
+    def test_saving_keeps_everything_and_checks_the_phone(self):
+        self.assertEqual(self.post(phone="+880 1812-345678").status_code, 302)
+        self.order.refresh_from_db()
+        self.assertEqual((self.order.status, self.order.phone, self.order.notes), ("shipped", "01812345678", "Gate 2"))
+        r = self.post(phone="12345")
+        self.assertContains(r, "Not saved")
+        self.assertContains(r, "Bangladeshi mobile number")

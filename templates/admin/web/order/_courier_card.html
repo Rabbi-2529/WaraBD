@@ -1,9 +1,8 @@
 {# Courier card on the order page (Phase 5). Buttons post to admin:web_order_courier via formaction. #}
-<div class="ubold-card courier-card">
-    <div class="card-body">
-        <div class="sidebar-title"><span><i class="bx bxs-truck"></i> Courier</span>
-            {% if original.courier_status %}<span class="chip chip-info">{{ original.courier_status }}</span>{% endif %}
-        </div>
+<section class="wf-card courier-card">
+        <header class="wf-card-head od-head od-head-row"><h2><i class="bx bxs-truck"></i> Courier</h2>
+            {% if original.courier_status %}<span class="od-pill st-shipped">{{ original.courier_status }}</span>{% endif %}
+        </header>
 
         {% if original.courier_consignment_id or original.courier_tracking_code %}
             <dl class="courier-facts">
@@ -35,16 +34,15 @@
 
         <details class="courier-manual" {% if original.courier and original.courier != 'steadfast' and original.courier != 'pathao' %}open{% endif %}>
             <summary>Other courier (type by hand)</summary>
-            <label class="editable-label">Courier name</label>
+            <label class="wf-label">Courier name</label>
             <input type="text" name="courier" value="{{ original.courier }}" placeholder="e.g. RedX, Sundarban, SA Paribahan">
-            <label class="editable-label">Tracking code</label>
+            <label class="wf-label">Tracking code</label>
             <input type="text" name="courier_tracking_code" value="{{ original.courier_tracking_code }}" placeholder="Tracking / CN number">
-            <label class="editable-label">Tracking link</label>
+            <label class="wf-label">Tracking link</label>
             <input type="url" name="courier_tracking_url" value="{{ original.courier_tracking_url }}" placeholder="https://…">
-            <button type="submit" name="_save" class="courier-btn ghost mt-2"><i class="bx bx-save"></i> Save courier details</button>
+            <button type="submit" name="_continue" class="courier-btn ghost mt-2"><i class="bx bx-save"></i> Save courier details</button>
         </details>
-    </div>
-</div>
+</section>
 <style>
     .courier-card .sidebar-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .courier-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 4px 0 12px; font-size: 13.5px; }

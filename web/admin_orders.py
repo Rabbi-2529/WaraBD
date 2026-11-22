@@ -190,7 +190,8 @@ class AdminOrderCreateForm(forms.ModelForm):
 
 
 class AdminOrderChangeForm(forms.ModelForm):
-    """Order edit page: adds the district → thana dropdowns to "Shipping Address"."""
+    """Order page (templates/admin/web/order/change_form.html): district → thana dropdowns,
+    Bangladeshi mobile number check."""
 
     class Meta:
         model = Order
@@ -198,7 +199,13 @@ class AdminOrderChangeForm(forms.ModelForm):
 
     class Media:
         js = ADMIN_SELECT2_JS + ("admin/js/wara-order-address.js",)
-        css = {"screen": ADMIN_SELECT2_CSS}
+        css = {"screen": ADMIN_SELECT2_CSS + ("admin/css/wara-order.css",)}
+
+    def clean_phone(self):
+        try:
+            return normalize_bd_phone(self.cleaned_data.get("phone"))
+        except ValueError:
+            raise forms.ValidationError(str(PHONE_ERROR))
 
 
 def posted_items(request):

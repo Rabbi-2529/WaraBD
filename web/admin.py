@@ -799,6 +799,7 @@ class OrderAdmin(admin.ModelAdmin):
             ok, reason = courier.ready()
             context.update({
                 "delivery_locations": locations_payload(),
+                "phone_orders": Order.objects.filter(phone=obj.phone).count(),
                 "courier_ready": ok,
                 "courier_reason": reason,
                 "courier_name": courier.NAMES.get(courier.provider(), ""),

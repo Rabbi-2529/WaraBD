@@ -1,279 +1,226 @@
 {% extends "admin/change_form.html" %}
-{% load i18n admin_urls static admin_modify %}
-
-{% block extrastyle %}
-    {{ block.super }}
-    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111827; }
-        
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .page-title { font-size: 24px; font-weight: 700; margin: 0; }
-        .breadcrumbs { font-size: 13px; color: #6b7280; }
-        
-        .ubold-card { background: #fff; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); margin-bottom: 24px; overflow: hidden; }
-        .card-body { padding: 24px; }
-        
-        /* Buttons */
-        .btn-modify { background: #d7182a; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-        .btn-modify:hover { background: #b31322; }
-        .btn-delete { background: #dc2626; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-delete:hover { background: #e04a4b; }
-        .btn-print { background: #1e293b; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-print:hover { background: #0f172a; }
-        
-        /* Badges */
-        .badge { padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-        .badge-paid { background: #e6f5eb; color: #12924a; }
-        .badge-shipped { background: #e0f2fe; color: #0284c7; }
-        .badge-pending { background: #fff3cd; color: #d97706; }
-        .badge-cancelled { background: #fee2e2; color: #dc2626; }
-        .badge-unpaid { background: #f1f5f9; color: #64748b; }
-        .payment-status-badge { margin-left: auto; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 4px; }
-        .payment-status-badge.paid { background: #e6f5eb; color: #12924a; }
-        .payment-status-badge.pending { background: #fff3cd; color: #d97706; }
-        
-        /* Table */
-        .table-summary { width: 100%; border-collapse: collapse; margin-top: 24px; }
-        .table-summary th { border-top: 1px solid #eef2f7; border-bottom: 1px solid #eef2f7; padding: 12px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #6b7280; text-align: left; }
-        .table-summary td { padding: 16px 0; border-bottom: 1px solid #eef2f7; font-size: 14px; vertical-align: middle; }
-        .table-summary th:last-child, .table-summary td:last-child { text-align: right; }
-        
-        .totals-section { width: 50%; float: right; margin-top: 16px; }
-        .total-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eef2f7; font-size: 14px; color: #64748b; }
-        .total-row.grand { background: #f8fafc; padding: 16px; border-bottom: none; font-size: 18px; font-weight: 800; color: #111827; margin-top: 8px; border-radius: 6px; }
-        
-        .sidebar-title { font-size: 16px; font-weight: 700; margin: 0 0 16px 0; display: flex; justify-content: space-between; align-items: center; }
-        .sidebar-title i { cursor: pointer; color: #6b7280; }
-        
-        .editable-label { font-weight: 600; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 6px; display: block; }
-        
-        /* Edit Form (Pencil) */
-        .edit-form { display: none; margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; }
-        .edit-form.active { display: block; }
-        .edit-form input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 8px; font-size: 13px; }
-        .edit-form button { background: #12924a; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; width: 100%; }
-        
-        .map-frame { width: 100%; height: 160px; border-radius: 8px; border: 1px solid #eef2f7; overflow: hidden; margin-bottom: 16px; }
-        
-        /* Native Radio Buttons */
-        .status-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .status-label { position: relative; cursor: pointer; display: block; }
-        .status-label input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
-        .status-box { padding: 12px; border-radius: 6px; border: 2px solid #e2e8f0; background: #fff; font-weight: 600; font-size: 13px; text-align: center; transition: all 0.2s; color: #64748b; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .status-label input[type="radio"]:hover + .status-box { border-color: #cbd5e1; background: #f8fafc; }
-        .status-label input[value="pending"]:checked + .status-box { border-color: #d97706; background: #fff3cd; color: #92400e; }
-        .status-label input[value="paid"]:checked + .status-box { border-color: #12924a; background: #e6f5eb; color: #12924a; }
-        .status-label input[value="shipped"]:checked + .status-box { border-color: #0284c7; background: #e0f2fe; color: #0284c7; }
-        .status-label input[value="delivered"]:checked + .status-box { border-color: #12924a; background: #d1fae5; color: #065f46; }
-        .status-label input[value="cancelled"]:checked + .status-box { border-color: #dc2626; background: #fee2e2; color: #991b1b; }
-        .status-label input[value="unpaid"]:checked + .status-box { border-color: #cbd5e1; background: #f1f5f9; color: #64748b; }
-    </style>
-{% endblock %}
+{% load i18n admin_urls static admin_modify bd_tags %}
+{# Admin → Orders → one order. Styles: static/admin/css/wara-order.css (.od-*). Every field in   #}
+{# OrderAdmin.CHANGE_PAGE_FIELDS must be posted from here, or saving would blank it.               #}
 
 {% block content %}
-<div id="content-main">
-    <form method="post" id="{{ opts.model_name }}_form" novalidate>
-        {% csrf_token %}
-        
-        <div class="page-header">
-            <h1 class="page-title">Order #{{ original.order_number }}</h1>
-            <a href="{% url 'admin:web_order_changelist' %}" class="breadcrumbs">&larr; All orders</a>
-        </div>
+{% with o=original f=adminform.form %}
+<form method="post" id="{{ opts.model_name }}_form" class="wf-form od" novalidate>
+    {% csrf_token %}
 
-        <div class="d-flex gap-2 mb-4">
-            <button type="submit" name="_save" class="btn-modify"><i class="bx bx-save"></i> Save</button>
-            <a href="{% url 'admin:web_order_delete' original.pk %}" class="btn-delete"><i class="bx bx-trash"></i> Delete</a>
-            <a href="{% url 'admin:web_order_invoice' original.pk %}" target="_blank" class="btn-print"><i class="bx bx-printer"></i> Print</a>
-        </div>
-
-        <div class="row">
-            <!-- LEFT COLUMN -->
-            <div class="col-md-8">
-                <div class="ubold-card">
-                    <div class="card-body">
-                        <div class="header-badges mb-4" style="display:flex; gap:8px;">
-                            <span class="badge badge-{{ original.payment_status }}">💳 {{ original.get_payment_status_display }}</span>
-                            <span class="badge badge-{{ original.status }}">📦 {{ original.get_status_display }}</span>
-                        </div>
-
-                        <h4 class="sidebar-title">Order Summary</h4>
-                        <table class="table-summary">
-                            <thead><tr><th>PRODUCT</th><th>PRICE</th><th>QTY</th><th>TOTAL</th></tr></thead>
-                            <tbody>
-                                {% for item in original.items.all %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-3">
-                                            {% if item.product.image %}
-                                                <img src="{{ item.product.image.url }}" style="width:40px; height:40px; border-radius:6px; object-fit:cover;">
-                                            {% else %}
-                                                <div style="width:40px; height:40px; background:#e2e8f0; border-radius:6px;"></div>
-                                            {% endif %}
-                                            <div>
-                                                <div style="font-weight:700; color:#111827;">{{ item.product.name }}</div>
-                                                <div style="font-size:12px; color:#6b7280;">by: {{ item.product.brand|default:"WaRa" }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>৳{{ item.price }}</td>
-                                    <td>{{ item.quantity }}</td>
-                                    <td>৳{{ item.line_total }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-
-                        <div class="totals-section">
-                            <div class="total-row"><span>Subtotal</span><span>৳{{ original.subtotal }}</span></div>
-                            {% if original.discount %}<div class="total-row"><span>Discount</span><span>− ৳{{ original.discount }}</span></div>{% endif %}
-                            <div class="total-row"><span>Delivery fee ({{ original.get_delivery_zone_display }})</span><span>৳{{ original.shipping }}</span></div>
-                            <div class="total-row grand"><span>GRAND TOTAL</span><span>৳{{ original.total }}</span></div>
-                        </div>
-                        <div style="clear:both;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RIGHT COLUMN -->
-            <div class="col-md-4">
-                
-                <!-- STATUS MANAGER -->
-                <div class="ubold-card">
-                    <div class="card-body">
-                        <div class="sidebar-title"><span><i class="bx bx-check-square"></i> Order Manager</span></div>
-                        
-                        <label class="editable-label">Payment Status</label>
-                        <div class="status-group">
-                            <label class="status-label">
-                                <input type="radio" name="payment_status" value="unpaid" {% if original.payment_status == 'unpaid' %}checked{% endif %}>
-                                <div class="status-box">⏳ Unpaid</div>
-                            </label>
-                            <label class="status-label">
-                                <input type="radio" name="payment_status" value="verifying" {% if original.payment_status == 'verifying' %}checked{% endif %}>
-                                <div class="status-box">🔎 Verify TrxID</div>
-                            </label>
-                            <label class="status-label">
-                                <input type="radio" name="payment_status" value="paid" {% if original.payment_status == 'paid' %}checked{% endif %}>
-                                <div class="status-box">✅ Paid</div>
-                            </label>
-                        </div>
-
-                        <label class="editable-label mt-3">Delivery Status</label>
-                        <div class="status-group">
-                            <label class="status-label">
-                                <input type="radio" name="status" value="pending" {% if original.status == 'pending' %}checked{% endif %}>
-                                <div class="status-box">⏳ Pending</div>
-                            </label>
-                            <label class="status-label">
-                                <input type="radio" name="status" value="shipped" {% if original.status == 'shipped' %}checked{% endif %}>
-                                <div class="status-box">📦 Shipped</div>
-                            </label>
-                            <label class="status-label">
-                                <input type="radio" name="status" value="delivered" {% if original.status == 'delivered' %}checked{% endif %}>
-                                <div class="status-box">✅ Delivered</div>
-                            </label>
-                            <label class="status-label">
-                                <input type="radio" name="status" value="cancelled" {% if original.status == 'cancelled' %}checked{% endif %}>
-                                <div class="status-box">❌ Cancelled</div>
-                            </label>
-                        </div>
-
-                        <label class="editable-label mt-3">Internal Notes</label>
-                        {{ adminform.form.notes }}
-                    </div>
-                </div>
-
-                <!-- COURIER (Phase 5) -->
-                {% include "admin/web/order/_courier_card.html" %}
-
-                <!-- CUSTOMER DETAILS -->
-                <div class="ubold-card">
-                    <div class="card-body">
-                        <div class="sidebar-title">
-                            <span>Customer Details</span>
-                            <i class="bx bx-pencil" onclick="document.getElementById('edit-customer').classList.toggle('active')"></i>
-                        </div>
-                        <h5>{{ original.full_name }}</h5>
-                        <p>{{ original.email }}<br>{{ original.phone }}</p>
-                        <div id="edit-customer" class="edit-form">
-                            <input type="text" name="full_name" value="{{ original.full_name }}" placeholder="Full Name">
-                            <input type="email" name="email" value="{{ original.email }}" placeholder="Email">
-                            <input type="text" name="phone" value="{{ original.phone }}" placeholder="Phone">
-                            <button type="submit" name="_save">Save Customer</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SHIPPING ADDRESS -->
-                <div class="ubold-card">
-                    <div class="card-body">
-                        <div class="sidebar-title">
-                            <span>Shipping Address</span>
-                            <i class="bx bx-pencil" onclick="document.getElementById('edit-shipping').classList.toggle('active')"></i>
-                        </div>
-                        <div class="map-frame">
-                            <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://www.google.com/maps?q={{ original.city }},Bangladesh&output=embed"></iframe>
-                        </div>
-                        <p><strong>{{ original.full_name }}</strong><br>{{ original.address_line1 }}<br>{% if original.thana %}{{ original.thana }}, {% endif %}{{ original.city }}{% if original.postal_code %}, {{ original.postal_code }}{% endif %}<br>{{ original.phone }} · {{ original.get_delivery_zone_display }}</p>
-                        <div id="edit-shipping" class="edit-form">
-                            <input type="text" name="address_line1" value="{{ original.address_line1 }}" placeholder="Address">
-                            <select name="city" data-order-district data-selected="{{ original.city }}" aria-label="District"><option value="{{ original.city }}">{{ original.city }}</option></select>
-                            <select name="thana" data-order-thana data-selected="{{ original.thana }}" aria-label="Thana / upazila"><option value="{{ original.thana }}">{{ original.thana }}</option></select>
-                            <input type="text" name="postal_code" value="{{ original.postal_code }}" placeholder="Postal Code">
-                            <button type="submit" name="_save">Save Shipping</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BILLING -->
-                <div class="ubold-card">
-                    <div class="card-body">
-                        <div class="sidebar-title">
-                            <span>Billing Details</span>
-                            <i class="bx bx-pencil" onclick="document.getElementById('edit-billing').classList.toggle('active')"></i>
-                        </div>
-                        <p><strong>{{ original.full_name }}</strong><br>{{ original.address_line1 }}<br>{{ original.city }}</p>
-                        <div style="display:flex; align-items:center; gap:12px; background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0; margin-top:12px;">
-                            {% if original.payment_method == 'cod' %}
-                                <i class="bx bx-money" style="font-size:32px; color:#12924a;"></i>
-                                <div><div style="font-weight:700; font-size:14px;">Cash on Delivery</div><div style="font-size:12px; color:#64748b;">Pay when it arrives</div></div>
-                            {% elif original.payment_method == 'bkash' %}
-                                <i class="bx bxs-wallet" style="font-size:32px; color:#e11d48;"></i>
-                                <div><div style="font-weight:700; font-size:14px;">bKash</div><div style="font-size:12px; color:#64748b;">Mobile payment</div></div>
-                            {% elif original.payment_method == 'nagad' %}
-                                <i class="bx bxs-wallet" style="font-size:32px; color:#ea580c;"></i>
-                                <div><div style="font-weight:700; font-size:14px;">Nagad</div><div style="font-size:12px; color:#64748b;">Mobile payment</div></div>
-                            {% endif %}
-                            <span class="payment-status-badge {% if original.payment_status == 'paid' %}paid{% else %}pending{% endif %}">
-                                {{ original.get_payment_status_display }}
-                            </span>
-                        </div>
-                        {% if original.transaction_id or original.payment_sender %}
-                        <div style="margin-top:10px; padding:10px 12px; border-radius:6px; background:#fff7ed; border:1px solid #fed7aa; font-size:13px;">
-                            <div><strong>Sender number:</strong> {{ original.payment_sender|default:"—" }}</div>
-                            <div><strong>TrxID:</strong> <code style="font-size:13px;">{{ original.transaction_id|default:"—" }}</code></div>
-                            {% if original.payment_status == 'verifying' %}
-                            <div style="color:#9a3412; margin-top:4px;">Check this TrxID in the {{ original.get_payment_method_display }} merchant app, then mark the order Paid.</div>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-                        <div id="edit-billing" class="edit-form">
-                            <input type="text" name="billing_name" value="{{ original.full_name }}" placeholder="Billing Name">
-                            <input type="text" name="billing_address" value="{{ original.address_line1 }}" placeholder="Billing Address">
-                            <button type="submit" name="_save">Save Billing</button>
-                        </div>
-                    </div>
-                </div>
+    {# ── Header: order number, status, actions ── #}
+    <div class="wf-bar">
+        <div class="wf-bar-title">
+            <span class="wf-bar-icon"><i class="bx bx-receipt"></i></span>
+            <div>
+                <h2>Order {{ o.order_number }}</h2>
+                <p>
+                    <span>{{ o.created_at|date:"d M Y, h:i A" }}</span>
+                    <span class="od-pill st-{{ o.status }}">{{ o.get_status_display }}</span>
+                    <span class="od-pill pay-{{ o.payment_status }}">{{ o.get_payment_status_display }}</span>
+                    <span class="od-muted">{% if o.created_by %}by {{ o.sales_person }}{% else %}Website order{% endif %}</span>
+                </p>
             </div>
         </div>
-
-        {{ delivery_locations|json_script:"order-locations" }}
-
-        <!-- HIDDEN SAVE BUTTON -->
-        <div class="submit-row" style="display:none;">
-            {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
+        <div class="wf-bar-actions">
+            <a class="wf-btn" href="{% url 'admin:web_order_changelist' %}"><i class="bx bx-arrow-back"></i> All orders</a>
+            <a class="wf-btn" href="{% url 'admin:web_order_invoice' o.pk %}" target="_blank" rel="noopener"><i class="bx bx-printer"></i> Invoice</a>
+            <a class="wf-btn od-del" href="{% url 'admin:web_order_delete' o.pk %}" title="Delete this order" aria-label="Delete this order"><i class="bx bx-trash"></i></a>
+            <button type="submit" name="_continue" class="wf-btn wf-btn-primary"><i class="bx bx-check"></i> Save changes</button>
         </div>
-    </form>
-</div>
+    </div>
+
+    {% if errors %}
+        <div class="wf-errors">
+            <i class="bx bx-error-circle"></i>
+            <div>
+                <strong>Not saved — please fix:</strong>
+                <ul>{% for field in f %}{% for e in field.errors %}<li><b>{{ field.label }}:</b> {{ e }}</li>{% endfor %}{% endfor %}
+                    {% for e in f.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            </div>
+        </div>
+    {% endif %}
+
+    {# ── Progress ── #}
+    <div class="wf-card od-track">
+        {% if o.status == "cancelled" %}
+            <div class="od-step done"><span><i class="bx bx-check"></i></span><b>Placed</b><small>{{ o.created_at|date:"d M, h:i A" }}</small></div>
+            <div class="od-line"></div>
+            <div class="od-step bad"><span><i class="bx bx-x"></i></span><b>Cancelled</b><small>{{ o.updated_at|date:"d M, h:i A" }}</small></div>
+        {% else %}
+            <div class="od-step done"><span><i class="bx bx-check"></i></span><b>Placed</b><small>{{ o.created_at|date:"d M, h:i A" }}</small></div>
+            <div class="od-line{% if o.status == 'shipped' or o.status == 'delivered' %} done{% endif %}"></div>
+            <div class="od-step{% if o.status == 'shipped' or o.status == 'delivered' %} done{% else %} now{% endif %}"><span><i class="bx bx-package"></i></span><b>Shipped</b><small>{% if o.courier_sent_at %}{{ o.courier_sent_at|date:"d M, h:i A" }}{% elif o.status == 'shipped' or o.status == 'delivered' %}Done{% else %}Waiting{% endif %}</small></div>
+            <div class="od-line{% if o.status == 'delivered' %} done{% endif %}"></div>
+            <div class="od-step{% if o.status == 'delivered' %} done{% elif o.status == 'shipped' %} now{% endif %}"><span><i class="bx bx-home-heart"></i></span><b>Delivered</b><small>{% if o.delivered_at %}{{ o.delivered_at|date:"d M, h:i A" }}{% else %}Waiting{% endif %}</small></div>
+            <div class="od-line{% if o.payment_status == 'paid' %} done{% endif %}"></div>
+            <div class="od-step{% if o.payment_status == 'paid' %} done{% elif o.payment_status == 'verifying' %} now{% endif %}"><span><i class="bx bx-wallet"></i></span><b>Paid</b><small>{{ o.get_payment_status_display }}</small></div>
+        {% endif %}
+    </div>
+
+    <div class="od-layout">
+        <div class="od-main">
+
+            {# ── Products & totals ── #}
+            <section class="wf-card">
+                <header class="wf-card-head od-head"><h2><i class="bx bx-shopping-bag"></i> Products <span class="od-count">{{ o.items.count }}</span></h2></header>
+                <div class="od-items">
+                    {% for item in o.items.all %}
+                    <div class="od-item">
+                        <a class="od-thumb" href="{% url 'admin:web_product_change' item.product.pk %}" title="Edit product">
+                            {% if item.product.image %}<img src="{{ item.product.image.url }}" alt="">{% else %}<i class="bx bx-image"></i>{% endif %}
+                        </a>
+                        <div class="od-item-info">
+                            <a href="{% url 'admin:web_product_change' item.product.pk %}"><strong>{{ item.product.name }}</strong></a>
+                            <span>{% firstof item.product.model_number item.product.sku "" %}{% if item.product.warranty %}{% if item.product.model_number or item.product.sku %} · {% endif %}{{ item.product.warranty }} warranty{% endif %}</span>
+                        </div>
+                        <div class="od-item-price">{{ item.price|taka }} <em>× {{ item.quantity }}</em></div>
+                        <div class="od-item-total">{{ item.line_total|taka }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="od-empty"><i class="bx bx-cart"></i> No products on this order.</div>
+                    {% endfor %}
+                </div>
+                <div class="od-totals">
+                    <div><span>Subtotal</span><b>{{ o.subtotal|taka }}</b></div>
+                    {% if o.discount %}<div class="od-disc"><span>Discount</span><b>− {{ o.discount|taka }}</b></div>{% endif %}
+                    <div><span>Delivery <small>{% if o.thana %}{{ o.thana }}, {% endif %}{{ o.city }} · {{ o.get_delivery_zone_display }}</small></span><b>{{ o.shipping|taka }}</b></div>
+                    <div class="od-grand"><span>Total</span><b>{{ o.total|taka }}</b></div>
+                    <div class="od-due{% if o.payment_status == 'paid' %} ok{% endif %}">
+                        {% if o.payment_status == "paid" %}<i class="bx bx-check-circle"></i> Paid in full
+                        {% elif o.payment_status == "refunded" %}<i class="bx bx-undo"></i> Refunded
+                        {% else %}<i class="bx bx-time-five"></i> To collect: <b>{{ courier_cod|taka }}</b>{% endif %}
+                    </div>
+                </div>
+            </section>
+
+            {# ── Customer & delivery address ── #}
+            <section class="wf-card">
+                <header class="wf-card-head od-head od-head-row">
+                    <h2><i class="bx bx-user"></i> Customer &amp; delivery</h2>
+                    <button type="button" class="wf-btn od-edit-btn" data-toggle-edit aria-expanded="{% if errors %}true{% else %}false{% endif %}">{% if errors %}<i class="bx bx-x"></i> Close{% else %}<i class="bx bx-pencil"></i> Edit{% endif %}</button>
+                </header>
+                <div class="od-people{% if errors %} editing{% endif %}" id="odPeople">
+                    <div class="od-view">
+                        <div class="od-col">
+                            <div class="od-person">
+                                <span class="od-avatar">{{ o.full_name|first|upper }}</span>
+                                <div>
+                                    <strong>{{ o.full_name }}</strong>
+                                    {% if o.customer %}<a href="{% url 'admin:customers_customer_change' o.customer.pk %}">Customer account</a>{% else %}<span class="od-muted">Guest</span>{% endif %}
+                                </div>
+                            </div>
+                            <p class="od-line-item"><i class="bx bx-phone"></i> <a href="tel:+88{{ o.phone }}">{{ o.phone }}</a>
+                                <a class="od-wa" href="https://wa.me/88{{ o.phone }}" target="_blank" rel="noopener" title="WhatsApp"><i class="bx bxl-whatsapp"></i></a></p>
+                            {% if o.email %}<p class="od-line-item"><i class="bx bx-envelope"></i> <a href="mailto:{{ o.email }}">{{ o.email }}</a></p>{% endif %}
+                            <p class="od-line-item"><i class="bx bx-history"></i> {{ phone_orders }} order{{ phone_orders|pluralize }} with this number</p>
+                        </div>
+                        <div class="od-col">
+                            <span class="od-label">Delivery address</span>
+                            <p class="od-address">{{ o.address_line1 }}{% if o.address_line2 %}<br>{{ o.address_line2 }}{% endif %}<br>{% if o.thana %}{{ o.thana }}, {% endif %}{{ o.city }}{% if o.postal_code %} – {{ o.postal_code }}{% endif %}</p>
+                            <a class="od-map" href="https://www.google.com/maps/search/?api=1&amp;query={{ o.address_line1|urlencode }}%2C%20{{ o.thana|urlencode }}%2C%20{{ o.city|urlencode }}%2C%20Bangladesh" target="_blank" rel="noopener"><i class="bx bx-map"></i> Open in Google Maps</a>
+                        </div>
+                    </div>
+                    <div class="od-form wf-grid">
+                        <div class="wf-field{% if f.full_name.errors %} has-error{% endif %}"><label class="wf-label" for="id_full_name">Customer name</label><input type="text" name="full_name" id="id_full_name" value="{{ f.full_name.value|default:'' }}" maxlength="200"></div>
+                        <div class="wf-field{% if f.phone.errors %} has-error{% endif %}"><label class="wf-label" for="id_phone">Mobile number</label><input type="tel" name="phone" id="id_phone" value="{{ f.phone.value|default:'' }}" inputmode="numeric" maxlength="16" placeholder="01XXXXXXXXX" data-digits></div>
+                        <div class="wf-field wf-wide{% if f.email.errors %} has-error{% endif %}"><label class="wf-label" for="id_email">Email</label><input type="email" name="email" id="id_email" value="{{ f.email.value|default:'' }}" maxlength="254"></div>
+                        <div class="wf-field wf-wide{% if f.address_line1.errors %} has-error{% endif %}"><label class="wf-label" for="id_address_line1">Address</label><input type="text" name="address_line1" id="id_address_line1" value="{{ f.address_line1.value|default:'' }}" maxlength="255"></div>
+                        <div class="wf-field{% if f.city.errors %} has-error{% endif %}"><label class="wf-label">District</label><select name="city" data-order-district data-selected="{{ f.city.value|default:'' }}" aria-label="District"><option value="{{ f.city.value|default:'' }}">{{ f.city.value|default:'' }}</option></select></div>
+                        <div class="wf-field{% if f.thana.errors %} has-error{% endif %}"><label class="wf-label">Thana / upazila</label><select name="thana" data-order-thana data-selected="{{ f.thana.value|default:'' }}" aria-label="Thana / upazila"><option value="{{ f.thana.value|default:'' }}">{{ f.thana.value|default:'' }}</option></select></div>
+                        <div class="wf-field{% if f.postal_code.errors %} has-error{% endif %}"><label class="wf-label" for="id_postal_code">Postal code</label><input type="text" name="postal_code" id="id_postal_code" value="{{ f.postal_code.value|default:'' }}" maxlength="20"></div>
+                        <div class="wf-field od-form-save"><button type="submit" name="_continue" class="wf-btn wf-btn-primary"><i class="bx bx-check"></i> Save customer &amp; address</button></div>
+                    </div>
+                </div>
+            </section>
+
+            {# ── Note ── #}
+            <section class="wf-card">
+                <header class="wf-card-head od-head"><h2><i class="bx bx-note"></i> Note</h2><p class="wf-desc">The customer's note from checkout, or anything staff need to remember.</p></header>
+                <textarea name="notes" id="id_notes" rows="3" placeholder="No note yet">{{ f.notes.value|default:'' }}</textarea>
+            </section>
+        </div>
+
+        <aside class="od-side">
+            {# ── Status ── #}
+            <section class="wf-card">
+                <header class="wf-card-head od-head"><h2><i class="bx bx-task"></i> Status</h2></header>
+                <span class="od-label">Order status</span>
+                <div class="od-choices">
+                    {% with st=f.status.value %}
+                    {% for value, label in f.fields.status.choices %}{% if value %}
+                    <label><input type="radio" name="status" value="{{ value }}"{% if st == value %} checked{% endif %}><span class="st-{{ value }}">{{ label }}</span></label>
+                    {% endif %}{% endfor %}
+                    {% endwith %}
+                </div>
+                <span class="od-label">Payment status</span>
+                <div class="od-choices">
+                    {% with ps=f.payment_status.value %}
+                    {% for value, label in f.fields.payment_status.choices %}{% if value %}
+                    <label><input type="radio" name="payment_status" value="{{ value }}"{% if ps == value %} checked{% endif %}><span class="pay-{{ value }}">{{ label }}</span></label>
+                    {% endif %}{% endfor %}
+                    {% endwith %}
+                </div>
+                <button type="submit" name="_continue" class="wf-btn wf-btn-primary od-save"><i class="bx bx-check"></i> Save status</button>
+            </section>
+
+            {# ── Payment ── #}
+            <section class="wf-card">
+                <header class="wf-card-head od-head"><h2><i class="bx bx-credit-card"></i> Payment</h2></header>
+                <div class="od-pay">
+                    <span class="od-pay-logo {{ o.payment_method }}"><i class="bx {% if o.payment_method == 'cod' %}bx-money{% else %}bxs-wallet{% endif %}"></i></span>
+                    <div><strong>{{ o.get_payment_method_display }}</strong><span>{% if o.payment_method == 'cod' %}Paid to the rider on delivery{% else %}Mobile payment{% endif %}</span></div>
+                    <span class="od-pill pay-{{ o.payment_status }}">{{ o.get_payment_status_display }}</span>
+                </div>
+                {% if o.transaction_id or o.payment_sender %}
+                <dl class="od-facts">
+                    <dt>Sender number</dt><dd>{{ o.payment_sender|default:"—" }}</dd>
+                    <dt>TrxID</dt><dd><code>{{ o.transaction_id|default:"—" }}</code></dd>
+                </dl>
+                {% if o.payment_status == 'verifying' %}<p class="od-hint"><i class="bx bx-info-circle"></i> Check this TrxID in the {{ o.get_payment_method_display }} merchant app, then set Payment status to Paid.</p>{% endif %}
+                {% endif %}
+            </section>
+
+            {# ── Courier ── #}
+            {% include "admin/web/order/_courier_card.html" %}
+
+            {# ── Order info ── #}
+            <section class="wf-card">
+                <header class="wf-card-head od-head"><h2><i class="bx bx-info-circle"></i> Order info</h2></header>
+                <dl class="od-facts">
+                    <dt>Order ID</dt><dd>{{ o.order_number }}</dd>
+                    <dt>Placed</dt><dd>{{ o.created_at|date:"d M Y, h:i A" }}</dd>
+                    <dt>Sales person</dt><dd>{{ o.sales_person }}</dd>
+                    <dt>Delivered</dt><dd>{% if o.delivered_at %}{{ o.delivered_at|date:"d M Y" }}{% else %}—{% endif %}</dd>
+                    <dt>Last change</dt><dd>{{ o.updated_at|date:"d M Y, h:i A" }}</dd>
+                </dl>
+                <a class="od-link" href="{% url 'admin:web_order_history' o.pk %}"><i class="bx bx-history"></i> Change history</a>
+            </section>
+        </aside>
+    </div>
+
+    {{ delivery_locations|json_script:"order-locations" }}
+    <div class="submit-row" style="display:none;">{% block submit_buttons_bottom %}{% submit_row %}{% endblock %}</div>
+</form>
+<script>
+(function () {
+    /* "Edit" shows the customer / address boxes; they are always in the form, so nothing is lost. */
+    var btn = document.querySelector("[data-toggle-edit]"), box = document.getElementById("odPeople");
+    if (btn && box) btn.addEventListener("click", function () {
+        var on = box.classList.toggle("editing");
+        btn.setAttribute("aria-expanded", String(on));
+        btn.innerHTML = on ? '<i class="bx bx-x"></i> Close' : '<i class="bx bx-pencil"></i> Edit';
+    });
+    /* Mobile number: digits only (Bangla digits become English, +880 is dropped). */
+    document.querySelectorAll("input[data-digits]").forEach(function (input) {
+        input.addEventListener("input", function () {
+            var s = input.value.replace(/[০-৯]/g, function (d) { return "০১২৩৪৫৬৭৮৯".indexOf(d); }).replace(/\D/g, "");
+            if (/^8801/.test(s)) s = s.slice(2);
+            s = s.slice(0, 11);
+            if (s !== input.value) input.value = s;
+        });
+    });
+})();
+</script>
+{% endwith %}
 {% endblock %}
