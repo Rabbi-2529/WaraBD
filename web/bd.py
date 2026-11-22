@@ -6,6 +6,7 @@ database only ever holds one format.
 """
 
 import re
+import unicodedata
 from decimal import Decimal
 
 from django.utils.translation import gettext_lazy as _lazy
@@ -14,19 +15,24 @@ _ASCII_DIGITS = str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789")
 
 
 # Mobile numbers: 11 digits, starting 013–019 (GP, Banglalink, Robi,
-# Airtel, Teletalk). Accepts +880 / 880 / 0 prefixes, spaces and dashes.
-_BD_MOBILE_RE = re.compile(r"^(?:\+?88)?(01[3-9]\d{8})$")
+# Airtel, Teletalk). Accepts +880 / 880 / 0 prefixes, spaces and dashes,
+# and the 10 digits without the first 0 (1XXXXXXXXX), as people often type it.
+_BD_MOBILE_RE = re.compile(r"^(?:\+?88)?0?(1[3-9]\d{8})$")
 
 PHONE_ERROR = _lazy("Enter a valid Bangladeshi mobile number (01XXXXXXXXX).")
 
 
 def normalize_bd_phone(value):
     """Return the number as 01XXXXXXXXX, or raise ValueError."""
-    raw = re.sub(r"[\s\-().]", "", str(value or "").translate(_ASCII_DIGITS))
+    text = str(value or "").translate(_ASCII_DIGITS)
+    # Numbers copied from WhatsApp / Contacts often carry invisible direction marks
+    # (U+200E, U+202A …): drop every invisible "format" character before checking.
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
+    raw = re.sub(r"[\s\-().]", "", text)
     match = _BD_MOBILE_RE.match(raw)
     if not match:
         raise ValueError(str(PHONE_ERROR))
-    return match.group(1)
+    return "0" + match.group(1)
 
 
 def is_bd_phone(value):

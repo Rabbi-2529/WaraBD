@@ -24,6 +24,10 @@ msgstr "ইমেইল (ঐচ্ছিক)"
 msgid "New mobile number"
 msgstr "নতুন মোবাইল নম্বর"
 
+#: customers/forms.py
+msgid "Your correct mobile number"
+msgstr "আপনার সঠিক মোবাইল নম্বর"
+
 #: customers/forms.py customers/models.py
 msgid "e.g. Home, Office"
 msgstr "যেমন বাসা, অফিস"
@@ -192,7 +196,7 @@ msgstr "আপনার মোবাইল নম্বর দিন। আম�
 msgid "New here?"
 msgstr "নতুন?"
 
-#: customers/templates/customers/login.html customers/templates/customers/otp.html customers/templates/customers/register.html
+#: customers/templates/customers/login.html customers/templates/customers/otp_change.html customers/templates/customers/register.html
 msgid "Send code"
 msgstr "কোড পাঠান"
 
@@ -233,16 +237,20 @@ msgid "We sent a 6-digit code by SMS to <strong>%(phone)s</strong>."
 msgstr "আমরা <strong>%(phone)s</strong> নম্বরে এসএমএস-এ একটি ৬ সংখ্যার কোড পাঠিয়েছি।"
 
 #: customers/templates/customers/otp.html
-msgid "We will send a new code to this number."
-msgstr "এই নম্বরে একটি নতুন কোড পাঠানো হবে।"
-
-#: customers/templates/customers/otp.html
-msgid "Your correct mobile number"
-msgstr "আপনার সঠিক মোবাইল নম্বর"
-
-#: customers/templates/customers/otp.html
 msgid "Your order is placed as soon as you enter it."
 msgstr "কোডটি দিলেই আপনার অর্ডার নেওয়া হবে।"
+
+#: customers/templates/customers/otp_change.html
+msgid "Back to the code page"
+msgstr "কোডের পাতায় ফিরে যান"
+
+#: customers/templates/customers/otp_change.html
+msgid "Change mobile number"
+msgstr "মোবাইল নম্বর বদলান"
+
+#: customers/templates/customers/otp_change.html
+msgid "The code was sent to <strong>%(phone)s</strong>. Type the right number and we will send a new code to it."
+msgstr "কোডটি <strong>%(phone)s</strong> নম্বরে পাঠানো হয়েছিল। সঠিক নম্বরটি লিখুন, সেই নম্বরে নতুন কোড পাঠানো হবে।"
 
 #: customers/templates/customers/profile.html
 msgid "Send code to new number"
@@ -481,6 +489,10 @@ msgid "Bandarban"
 msgstr "বান্দরবান"
 
 #: web/static/web/js/app.js
+msgid "Bangladeshi mobile numbers start with 01."
+msgstr "বাংলাদেশি মোবাইল নম্বর ০১ দিয়ে শুরু হয়।"
+
+#: web/static/web/js/app.js
 msgid "Barguna"
 msgstr "বরগুনা"
 
@@ -585,12 +597,16 @@ msgid "Enlarge"
 msgstr "বড় করে দেখুন"
 
 #: web/static/web/js/app.js
-msgid "Enter a valid Bangladeshi mobile number."
-msgstr "সঠিক বাংলাদেশি মোবাইল নম্বর দিন।"
+msgid "Enter all 11 digits (%(n)s entered)."
+msgstr "১১টি সংখ্যাই দিন (%(n)sটি দেওয়া হয়েছে)।"
 
 #: web/static/web/js/app.js
 msgid "Enter the transaction ID from your payment SMS."
 msgstr "পেমেন্ট এসএমএস থেকে ট্রানজেকশন আইডি লিখুন।"
+
+#: web/static/web/js/app.js
+msgid "Enter your mobile number."
+msgstr "আপনার মোবাইল নম্বর দিন।"
 
 #: web/static/web/js/app.js
 msgid "Entering code…"
@@ -711,6 +727,10 @@ msgstr "প্রতি অর্ডারে সর্বোচ্চ %(n)sট�
 #: web/static/web/js/app.js
 msgid "Meherpur"
 msgstr "মেহেরপুর"
+
+#: web/static/web/js/app.js
+msgid "Mobile numbers start with 013 to 019."
+msgstr "মোবাইল নম্বর ০১৩ থেকে ০১৯ দিয়ে শুরু হয়।"
 
 #: web/static/web/js/app.js
 msgid "More WaRa products coming soon"
@@ -2039,6 +2059,3 @@ msgstr "কমপক্ষে ১০টি অক্ষর লিখুন।"
 #: web/views.py
 msgid "Thanks! Your message has been sent."
 msgstr "ধন্যবাদ! আপনার বার্তা পাঠানো হয়েছে।"
-
-#~ msgid "Qty"
-#~ msgstr "পরিমাণ"

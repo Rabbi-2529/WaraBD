@@ -1,0 +1,32 @@
+{% extends "web/layout.html" %}
+{% load i18n bd_tags %}
+{# Code page → "Change number": only the mobile number. A new code goes to it; the rest of the form is kept. #}
+
+{% block title %}{% translate "Change mobile number" %} | {{ site_settings.name }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block alternates %}{% endblock %}
+{% block page %}otp{% endblock %}
+
+{% block content %}
+<section class="section auth-section">
+  <div class="container">
+    <div class="form-card auth-card">
+      <div class="auth-icon"><i data-icon="phone"></i></div>
+      <h1>{% translate "Change mobile number" %}</h1>
+      <p class="auth-lead">
+        {% blocktranslate trimmed with phone=otp.phone|digits %}The code was sent to <strong>{{ phone }}</strong>. Type the right number and we will send a new code to it.{% endblocktranslate %}
+      </p>
+
+      <form method="post" action="{% url 'customers:otp_change_number' %}" novalidate>
+        {% csrf_token %}
+        {% include "customers/_field.html" with field=form.phone %}
+        <button type="submit" class="btn btn-red btn-block"><i data-icon="send"></i> {% translate "Send code" %}</button>
+      </form>
+
+      <div class="otp-actions">
+        <a class="link-btn" href="{% url 'customers:otp' %}"><i data-icon="back"></i> {% translate "Back to the code page" %}</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

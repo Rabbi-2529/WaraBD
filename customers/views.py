@@ -10,12 +10,11 @@ from django.views.decorators.http import require_POST
 
 from web.checkout import place_checkout_order
 from web.delivery import locations_payload
-from web.bd import normalize_bd_phone
 from web.models import Order, SiteSettings
 from web.views import order_progress
 
 from .auth import customer_required, login_customer, logout_customer
-from .forms import AddressForm, ChangePhoneForm, LoginForm, OtpForm, ProfileForm, RegisterForm
+from .forms import AddressForm, ChangePhoneForm, LoginForm, NewNumberForm, OtpForm, ProfileForm, RegisterForm
 from .models import Customer, CustomerAddress, OtpCode
 from .otp import (
     OtpError,
@@ -44,25 +43,19 @@ def _draft(request, purpose):
     return draft.get("data", {}) if draft.get("purpose") == purpose else {}
 
 
-def _send_to_new_number(request, otp, raw_phone):
-    """Re-send the pending code's purpose to another number; the old code stays valid if this fails."""
-    try:
-        phone = normalize_bd_phone(raw_phone)
-    except ValueError as exc:
-        messages.error(request, str(exc))
-        return redirect("customers:otp")
+def _send_to_new_number(request, otp, phone):
+    """Send the pending code's purpose to another number (already 01XXXXXXXXX).
+
+    Returns an error message, or None when the new code was sent. If anything
+    fails, the old code stays valid."""
     if phone == otp.phone:
-        messages.info(request, _("That is the same number. Enter the code we sent, or tap Resend code."))
-        return redirect("customers:otp")
+        return _("That is the same number. Enter the code we sent, or tap Resend code.")
     if otp.purpose == OtpCode.PURPOSE_LOGIN and not Customer.objects.filter(phone=phone, is_active=True).exists():
-        messages.error(request, _("No account uses this number yet. Create an account instead."))
-        return redirect("customers:otp")
+        return _("No account uses this number yet. Create an account instead.")
     if otp.purpose == OtpCode.PURPOSE_REGISTER and Customer.objects.filter(phone=phone).exists():
-        messages.error(request, _("This number already has an account. Please log in."))
-        return redirect("customers:otp")
+        return _("This number already has an account. Please log in.")
     if otp.purpose == OtpCode.PURPOSE_CHANGE_PHONE and Customer.objects.filter(phone=phone).exists():
-        messages.error(request, _("This number already belongs to another account."))
-        return redirect("customers:otp")
+        return _("This number already belongs to another account.")
 
     payload = dict(otp.payload or {})
     if otp.purpose == OtpCode.PURPOSE_CHECKOUT and isinstance(payload.get("checkout"), dict):
@@ -70,12 +63,11 @@ def _send_to_new_number(request, otp, raw_phone):
     try:
         request_otp(request, phone=phone, purpose=otp.purpose, payload=payload)
     except OtpError as exc:
-        messages.error(request, str(exc))
-        return redirect("customers:otp")
+        return str(exc)
     otp.cancelled = True
     otp.save(update_fields=["cancelled"])
     messages.success(request, _("A new code has been sent to %(phone)s.") % {"phone": phone})
-    return redirect("customers:otp")
+    return None
 
 
 # ------------------------------------------------------------------------------
@@ -223,18 +215,28 @@ def otp_resend(request):
     return redirect("customers:otp")
 
 
-@require_POST
 def otp_change_number(request):
-    """Wrong number on the code page.
+    """Code page → "Change number": a page with only the mobile number box.
 
-    With a new number (typed on the code page): send a code to it and stay on the page.
-    Without one: cancel the code and go back to the form the customer came from.
+    A new code goes to the new number and the customer is back on the code page;
+    everything else they typed (name, address, cart …) is kept.
     """
     otp = pending_otp(request)
     if otp is None:
         return redirect("customers:login")
-    if request.POST.get("phone"):
-        return _send_to_new_number(request, otp, request.POST["phone"])
+    if request.method == "POST" and "phone" not in request.POST:
+        return _cancel_and_go_back(request, otp)
+    form = NewNumberForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        error = _send_to_new_number(request, otp, form.cleaned_data["phone"])
+        if error is None:
+            return redirect("customers:otp")
+        form.add_error("phone", error)
+    return render(request, "customers/otp_change.html", {"form": form, "otp": otp})
+
+
+def _cancel_and_go_back(request, otp):
+    """Old "Change number" behaviour: cancel the code and return to the form the customer came from."""
     otp.cancelled = True
     otp.save(update_fields=["cancelled"])
     clear_pending(request)

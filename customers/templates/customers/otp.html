@@ -37,19 +37,9 @@
             <i data-icon="refresh"></i> <span data-label="{% translate 'Resend code' %}" data-wait-label="{% translate 'Resend code in %(s)s' %}">{% translate "Resend code" %}</span>
           </button>
         </form>
-        <button type="button" class="link-btn" id="otpChangeToggle" aria-controls="otpChange" aria-expanded="false"><i data-icon="phone"></i> {% translate "Change number" %}</button>
+        {# Wrong number? Its own page with only the mobile number box. #}
+        <a class="link-btn" href="{% url 'customers:otp_change_number' %}"><i data-icon="phone"></i> {% translate "Change number" %}</a>
       </div>
-
-      {# Wrong number? Type the right one here: a new code goes to it, without leaving this page. #}
-      <form method="post" action="{% url 'customers:otp_change_number' %}" class="otp-change" id="otpChange" hidden novalidate>
-        {% csrf_token %}
-        <label for="otpNewPhone">{% translate "Your correct mobile number" %}</label>
-        <div class="otp-change-row">
-          <input id="otpNewPhone" name="phone" type="tel" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="01XXXXXXXXX" required>
-          <button type="submit" class="btn btn-dark btn-sm"><i data-icon="send"></i> {% translate "Send code" %}</button>
-        </div>
-        <p class="hint">{% translate "We will send a new code to this number." %}</p>
-      </form>
     </div>
   </div>
 </section>

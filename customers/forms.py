@@ -42,6 +42,12 @@ class RegisterForm(forms.Form):
                              widget=forms.EmailInput(attrs={"autocomplete": "email", "placeholder": "you@example.com"}))
 
 
+class NewNumberForm(forms.Form):
+    """Code page → "Change number": only the mobile number, a new code goes to it."""
+
+    phone = PhoneField(label=_("Your correct mobile number"))
+
+
 class OtpForm(forms.Form):
     code = forms.CharField(label=_("6-digit code"), max_length=12, widget=forms.TextInput(attrs={
         "inputmode": "numeric", "autocomplete": "one-time-code", "pattern": "[0-9০-৯ ]*",

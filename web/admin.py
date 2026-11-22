@@ -969,10 +969,16 @@ class OrderAdmin(admin.ModelAdmin):
 # ============================================================
 
 @admin.register(ContentBlock)
-class ContentBlockAdmin(DataTablesAdminMixin, TranslationAdmin):
+class ContentBlockAdmin(TranslationAdmin):
     """Every heading/paragraph on the storefront. Rows come from the templates
     (`manage.py sync_content`), so they can be edited but not added here.
-    Clearing a value shows the built-in text again."""
+    Clearing a value shows the built-in text again.
+
+    The list is a text editor (templates/admin/web/contentblock/editor.html):
+    English and Bangla side by side, saved as you type (quick_save_view)."""
+
+    PAGE_URLS = {"home": "web:home", "about": "web:about", "portfolio": "web:portfolio", "contact": "web:contact",
+                 "products": "web:product_list", "cart": "web:cart", "footer": "web:home"}
 
     list_display = ("key", "page", "preview_en", "preview_bn", "updated_at")
     list_filter = ("page",)
@@ -991,6 +997,60 @@ class ContentBlockAdmin(DataTablesAdminMixin, TranslationAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    def get_urls(self):
+        return [
+            path("<int:pk>/quick-save/", self.admin_site.admin_view(self.quick_save_view),
+                 name="web_contentblock_quick_save"),
+        ] + super().get_urls()
+
+    def changelist_view(self, request, extra_context=None):
+        blocks = list(ContentBlock.objects.order_by("page", "key"))
+        groups = []
+        for code, name in ContentBlock.PAGE_CHOICES:
+            rows = [b for b in blocks if b.page == code]
+            if not rows:
+                continue
+            for b in rows:
+                parts = b.key.split(".")
+                b.section = parts[1].replace("_", " ").replace("-", " ").title() if len(parts) > 2 else ""
+                b.search = " ".join([b.key, b.label, b.value_en or "", b.value_bn or ""]).lower()
+            groups.append({"code": code, "name": name, "rows": rows, "url": reverse(self.PAGE_URLS.get(code, "web:home")),
+                           "missing_bn": sum(1 for b in rows if not (b.value_bn or "").strip())})
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Page text",
+            "opts": self.model._meta,
+            "groups": groups,
+            "total": len(blocks),
+            "missing_bn": sum(g["missing_bn"] for g in groups),
+            "has_change_permission": self.has_change_permission(request),
+            **(extra_context or {}),
+        }
+        return TemplateResponse(request, "admin/web/contentblock/editor.html", context)
+
+    def quick_save_view(self, request, pk):
+        """POST value_en / value_bn → saved at once (from the Page text editor)."""
+        from django.http import JsonResponse
+        from django.shortcuts import get_object_or_404
+
+        if request.method != "POST":
+            return JsonResponse({"ok": False, "error": "POST only"}, status=405)
+        block = get_object_or_404(ContentBlock, pk=pk)
+        if not self.has_change_permission(request, block):
+            return JsonResponse({"ok": False, "error": "You may not change page text."}, status=403)
+        changed = []
+        for field in ("value_en", "value_bn"):
+            if field in request.POST:
+                value = request.POST[field].replace("\r\n", "\n").strip()[:5000]
+                if value != (getattr(block, field) or ""):
+                    setattr(block, field, value)
+                    changed.append(field)
+        if changed:
+            block.save(update_fields=changed + ["updated_at"])
+            self.log_change(request, block, [{"changed": {"fields": changed}}])
+        return JsonResponse({"ok": True, "changed": changed,
+                             "updated": timezone.localtime(block.updated_at).strftime("%d %b, %I:%M %p")})
 
 
 @admin.register(ContentItem)

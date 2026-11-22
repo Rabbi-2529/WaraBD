@@ -356,3 +356,24 @@ class OrderPageTests(TestCase):
         r = self.post(phone="12345")
         self.assertContains(r, "Not saved")
         self.assertContains(r, "Bangladeshi mobile number")
+
+
+class PhoneFormatTests(TestCase):
+    def test_copied_numbers_with_invisible_marks_are_accepted(self):
+        from .bd import normalize_bd_phone
+
+        for value in ("01958666966", "০১৯৫৮৬৬৬৯৬৬", "+880 1958-666966", "01958666966‎",
+                      "‪+8801958666966‬", "﻿01958666966"):
+            self.assertEqual(normalize_bd_phone(value), "01958666966", repr(value))
+        for bad in ("0195866696", "01258666966", "abc"):
+            with self.assertRaises(ValueError):
+                normalize_bd_phone(bad)
+
+    def test_number_typed_without_the_first_zero(self):
+        from .bd import normalize_bd_phone
+
+        for value in ("1958666966", "+880 1958666966", "88 1958666966", "১৯৫৮৬৬৬৯৬৬"):
+            self.assertEqual(normalize_bd_phone(value), "01958666966", repr(value))
+        for bad in ("958666966", "1258666966", "19586669661"):
+            with self.assertRaises(ValueError):
+                normalize_bd_phone(bad)

@@ -49,7 +49,9 @@ class OtpTestCase(TestCase):
         self.gateway_body = '{"status":"success"}'
 
     def _fake_urlopen(self, request, timeout=None):
-        self.sent.append({"url": request.full_url, **dict(urllib.parse.parse_qsl(request.data.decode()))})
+        parts = urllib.parse.urlsplit(request.full_url)
+        self.sent.append({"url": f"{parts.scheme}://{parts.netloc}{parts.path}", "method": request.get_method(),
+                          **dict(urllib.parse.parse_qsl(parts.query))})
         return FakeResponse(self.gateway_body)
 
     def last_code(self):
@@ -65,6 +67,7 @@ class GatewayTests(OtpTestCase):
         self.assertRedirects(r, "/account/verify/", fetch_redirect_response=False)
         call = self.sent[0]
         self.assertEqual(call["url"], "http://sms.iglweb.com/api/v1/send")
+        self.assertEqual(call["method"], "GET")  # the values travel in the URL, as the gateway reads them
         self.assertEqual(call["api_key"], "test-key")
         self.assertEqual(call["senderid"], "WaRaBD")
         self.assertEqual(call["contacts"], "8801712345678")
@@ -78,6 +81,12 @@ class GatewayTests(OtpTestCase):
         SiteSettings.objects.update(sms_number_format="0")
         self.client.post("/account/register/", {"name": "Rahim Uddin", "phone": "+8801712345678"})
         self.assertEqual(self.sent[0]["contacts"], "01712345678")
+
+    def test_igl_error_code_counts_as_failed(self):
+        self.gateway_body = '{"code":"445010","message":"Missing api key"}'
+        r = self.client.post("/account/register/", {"name": "Rahim Uddin", "phone": "01712345678"})
+        self.assertContains(r, "We couldn&#x27;t send the SMS")
+        self.assertEqual(SmsLog.objects.get().status, SmsLog.STATUS_FAILED)
 
     def test_gateway_error_is_reported_and_not_counted(self):
         self.gateway_body = '{"status":"error","message":"Invalid API key"}'
@@ -339,7 +348,7 @@ class AccountPagesTests(OtpTestCase):
 
 
 class CodePageChangeNumberTests(OtpTestCase):
-    """“Change number” on the code page: a new code goes to the new number, same page."""
+    """“Change number” on the code page opens its own page with only the mobile number box."""
 
     def test_checkout_code_moves_to_the_new_number(self):
         Product.objects.create(name="Test Lock", slug="test-lock", price=Decimal("1000"), stock=10)
@@ -356,17 +365,36 @@ class CodePageChangeNumberTests(OtpTestCase):
     def test_login_to_unknown_number_keeps_the_old_code(self):
         Customer.objects.create(phone="01712345678", name="Rahim")
         self.client.post("/account/login/", {"phone": "01712345678"})
-        r = self.client.post("/account/verify/change-number/", {"phone": "01812345678"}, follow=True)
+        r = self.client.post("/account/verify/change-number/", {"phone": "01812345678"})
+        self.assertEqual(r.status_code, 200)
         self.assertContains(r, "No account uses this number yet")
         self.assertEqual(OtpCode.objects.filter(cancelled=False).get().phone, "01712345678")
 
-    def test_page_has_inline_change_form_and_five_minute_wait(self):
+    def test_bad_number_stays_on_the_change_page(self):
+        Customer.objects.create(phone="01712345678", name="Rahim")
+        self.client.post("/account/login/", {"phone": "01712345678"})
+        r = self.client.post("/account/verify/change-number/", {"phone": "12345"})
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Enter a valid Bangladeshi mobile number")
+        self.assertEqual(OtpCode.objects.filter(cancelled=False).get().phone, "01712345678")
+
+    def test_code_page_links_to_the_change_page_and_waits_five_minutes(self):
         Customer.objects.create(phone="01712345678", name="Rahim")
         site = SiteSettings.load()
         site.otp_resend_seconds = 300
         site.save()
         self.client.post("/account/login/", {"phone": "01712345678"})
         page = self.client.get("/account/verify/").content.decode()
-        self.assertIn('id="otpChange"', page)
+        self.assertIn('href="/account/verify/change-number/"', page)
+        self.assertNotIn('id="otpChange"', page)
         self.assertRegex(page, r'data-wait="(29\d|300)"')
         self.assertEqual(SiteSettings._meta.get_field("otp_resend_seconds").default, 300)
+        change = self.client.get("/account/verify/change-number/")
+        self.assertEqual(change.status_code, 200)
+        self.assertContains(change, "Change mobile number")
+        self.assertContains(change, 'name="phone"')
+        self.assertContains(change, 'href="/account/verify/"')
+
+    def test_change_page_without_a_pending_code_goes_to_login(self):
+        self.assertRedirects(self.client.get("/account/verify/change-number/"), "/account/login/",
+                             fetch_redirect_response=False)

@@ -392,7 +392,18 @@
   const cleanPhoneInput = v => {
     let s = toAsciiDigits(v).replace(/\D/g, '');
     if (/^8801/.test(s)) s = s.slice(2);  // +880 1XXX… → 01XXX…
+    else if (/^881[3-9]/.test(s)) s = '0' + s.slice(2);  // +88 1XXX… → 01XXX…
+    if (/^1[3-9]\d{8}$/.test(s)) s = '0' + s;  // typed without the first 0
     return s.slice(0, 11);
+  };
+  // What is wrong with a mobile number ('' = nothing), in words the customer understands.
+  const phoneProblem = v => {
+    const s = cleanPhoneInput(v);
+    if (!s) return T('Enter your mobile number.');
+    if (s.length >= 2 && s.slice(0, 2) !== '01') return T('Bangladeshi mobile numbers start with 01.');
+    if (s.length >= 3 && !/^01[3-9]/.test(s)) return T('Mobile numbers start with 013 to 019.');
+    if (s.length < 11) return TF('Enter all 11 digits (%(n)s entered).', { n: num(s.length) });
+    return '';
   };
   function initPhoneInputs(root) {
     $$('input[type="tel"]', root).forEach(input => {
@@ -419,7 +430,10 @@
     }, true);
     document.addEventListener('focusout', e => {
       const t = e.target;
-      if (t.matches && t.matches('input[type="tel"]') && t.value.trim()) checkField(t);
+      if (!t.matches || !t.matches('input[type="tel"]') || !t.value.trim()) return;
+      const clean = cleanPhoneInput(t.value);
+      if (clean !== t.value) t.value = clean;
+      checkField(t);
     });
     document.addEventListener('change', e => {
       const wrap = e.target.closest && e.target.closest('.qty');
@@ -863,7 +877,7 @@
   const RULES = {
     name: v => v.trim().length >= 3 || T('Please enter your full name.'),
     // Bangla digits typed on a Bangla keyboard are accepted and converted.
-    phone: v => /^01[3-9]\d{8}$/.test(cleanPhoneInput(v)) || T('Enter a valid Bangladeshi mobile number.'),
+    phone: v => phoneProblem(v) || true,
     email: v => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || T('Enter a valid email address.'),
     address: v => v.trim().length >= 10 || T('Please enter your full address.'),
     required: v => v.trim().length > 0 || T('This field is required.'),
@@ -1504,23 +1518,6 @@
       input.addEventListener('input', () => {
         const digits = toAsciiDigits(input.value).replace(/\D/g, '');
         if (digits.length === 6 && input.form) { input.value = digits; input.form.requestSubmit(); }
-      });
-    }
-    // "Change number": type the right number here; a new code is sent to it.
-    const toggle = $('#otpChangeToggle'), change = $('#otpChange');
-    if (toggle && change) {
-      const box = $('input', change);
-      toggle.addEventListener('click', () => {
-        change.hidden = !change.hidden;
-        toggle.setAttribute('aria-expanded', String(!change.hidden));
-        if (!change.hidden) box.focus();
-      });
-      box.addEventListener('input', () => {
-        const c = toAsciiDigits(box.value).replace(/\D/g, '').slice(0, 11);
-        if (c !== box.value) box.value = c;
-      });
-      change.addEventListener('submit', e => {
-        if (!/^01[3-9]\d{8}$/.test(box.value)) { e.preventDefault(); toast(T('Enter a valid Bangladeshi mobile number.'), { type: 'error' }); box.focus(); }
       });
     }
     const resend = $('#otpResend');

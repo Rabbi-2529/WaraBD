@@ -2,8 +2,8 @@
 
 Default gateway: IGL Web SMS
     http://sms.iglweb.com/api/v1/send?api_key=…&contacts=…&senderid=…&msg=…
-(GET and POST are both accepted; POST is used so the message and key are
-not written into URL logs.)
+The four values go in the URL exactly like that: the gateway does not read a
+POST body (it answers {"code":"445010","message":"Missing api key"}).
 
 While "Send real SMS" is off, or the API key / sender ID are empty, nothing
 is sent: the SMS is logged with status "test" so the whole flow can be
@@ -26,6 +26,10 @@ logger = logging.getLogger(__name__)
 
 TIMEOUT_SECONDS = 15
 _FAIL_WORDS = {"error", "failed", "failure", "false", "invalid"}
+# Gateway answers such as {"code":"445010","message":"Missing api key"}: only a
+# message that says the SMS went out counts as sent.
+_OK_MESSAGE = re.compile(r"success|submitted|sent|queued|accepted|delivered", re.I)
+_BAD_MESSAGE = re.compile(r"missing|invalid|error|fail|insufficient|denied|expired|blocked|wrong|not ", re.I)
 
 
 def gateway_ready(site=None):
@@ -50,6 +54,11 @@ def _looks_failed(body):
         for key in ("status", "success", "result"):
             if str(data.get(key, "")).strip().lower() in _FAIL_WORDS:
                 return True
+        message = str(data.get("message") or data.get("msg") or "")
+        if message and _BAD_MESSAGE.search(message):
+            return True
+        if "code" in data and not _OK_MESSAGE.search(message):
+            return True
     return False
 
 
@@ -67,14 +76,15 @@ def send_sms(phone, message, *, purpose="", ip=None, log_message=None):
                                      status=SmsLog.STATUS_TEST, ip=ip,
                                      response="Test mode — SMS gateway is switched off in Site Settings.")
 
-    data = urllib.parse.urlencode({
-        "api_key": site.sms_api_key,
+    query = urllib.parse.urlencode({
+        "api_key": site.sms_api_key.strip(),
         "contacts": _number(phone, site),
-        "senderid": site.sms_sender_id,
+        "senderid": site.sms_sender_id.strip(),
         "msg": message,
-    }).encode()
-    request = urllib.request.Request(site.sms_api_url, data=data, method="POST",
-                                     headers={"Content-Type": "application/x-www-form-urlencoded"})
+    })
+    base = site.sms_api_url.strip()
+    url = base + ("&" if "?" in base else "?") + query
+    request = urllib.request.Request(url, method="GET")
     try:
         with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as resp:
             body = resp.read(2000).decode("utf-8", "replace")

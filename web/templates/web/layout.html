@@ -45,7 +45,8 @@
   <main>
     {% if messages %}
     <div class="container" style="padding-top:16px">
-      {% for message in messages %}<div class="form-alert show" role="status">{{ message }}</div>{% endfor %}
+      {# Green = done, red = error, amber = warning, blue = information. #}
+      {% for message in messages %}<div class="form-alert show msg-{{ message.level_tag|default:'info' }}" role="{% if message.level_tag == 'error' %}alert{% else %}status{% endif %}"><i data-icon="{% if message.level_tag == 'success' %}check{% elif message.level_tag == 'error' %}x{% elif message.level_tag == 'warning' %}alert{% else %}info{% endif %}"></i><span>{{ message }}</span></div>{% endfor %}
     </div>
     {% endif %}
     {% block content %}{% endblock %}

@@ -1207,3 +1207,10 @@ main { margin-bottom: 10px; }
 }
 .steps-bar { margin-bottom: 24px; }
 .trust-row { margin-top: 24px; }
+
+/* Messages after an action: green = done, red = error, amber = warning, blue = information */
+.form-alert svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+.form-alert.msg-success { background: var(--green-tint); color: var(--green-dark); border: 1px solid rgba(18, 146, 74, .25); }
+.form-alert.msg-info { background: #eef6fc; color: #075985; border: 1px solid #c4e2f3; }
+.form-alert.msg-warning { background: #fff7e8; color: #8a4b06; border: 1px solid #f7dcae; }
+.form-alert.msg-error { background: var(--red-tint); color: var(--red); border: 1px solid rgba(215, 24, 42, .25); }
