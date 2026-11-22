@@ -1331,10 +1331,7 @@
       keys.slice(0, Math.max(0, keys.length - 3)).forEach(k => delete all[k]);  // keep the last 3 numbers
       store.set(PROFILES_KEY, all);
     };
-    if (phoneEl) {
-      phoneEl.addEventListener('input', onPhone);
-      onPhone();
-    }
+    if (phoneEl) phoneEl.addEventListener('input', onPhone);
 
     const summaryMount = $('#coSummary');
     const pay = () => {
@@ -1361,13 +1358,22 @@
       if (!summaryMount) return;
       const t = Cart.totals();
       const fee = deliveryFee();
+      // Each line: picture, name, unit price, quantity box, line total and a remove button.
       summaryMount.innerHTML = '<h3>' + T('Your order') + '</h3>' +
-        t.lines.map(l => '<div class="sum-item"><a class="sum-img" href="' + productUrl(l.product) + '">' + productImg(l.product) + '</a><div class="meta"><h4>' + esc(l.product.name) + '</h4><span>' + T('Qty') + ': ' + num(l.qty) + ' × ' + money(l.product.price) + '</span></div><div class="price">' + money(l.total) + '</div></div>').join('') +
-        '<div class="sum-row"><span>' + T('Subtotal') + '</span><span>' + money(t.subtotal) + '</span></div>' +
+        (t.lines.length ? '' : '<div class="sum-empty">' + icon('cart') + '<p>' + T('Your cart is empty. Add a product first.') + '</p>' +
+          '<a class="btn btn-outline btn-sm" href="' + URLS.products + '">' + icon('bag') + ' ' + T('Browse products') + '</a></div>') +
+        t.lines.map(l => '<div class="sum-item" data-id="' + esc(l.id) + '"><a class="sum-img" href="' + productUrl(l.product) + '">' + productImg(l.product) + '</a>' +
+          '<div class="meta"><h4>' + esc(l.product.name) + '</h4><span class="sum-price"><strong>' + money(l.product.price) + '</strong>' +
+          (l.product.oldPrice ? ' <del>' + money(l.product.oldPrice) + '</del>' : '') + '</span></div>' +
+          '<div class="sum-qty">' + qtyHTML(l.qty, 'sm') + '</div>' +
+          '<div class="sum-side"><div class="price">' + money(l.total) + '</div>' +
+          '<button type="button" class="sum-remove" data-remove="' + esc(l.id) + '" aria-label="' + T('Remove') + '" title="' + T('Remove') + '">' + icon('trash') + '</button></div></div>').join('') +
+        (t.lines.length ? '<div class="sum-row"><span>' + T('Subtotal') + '</span><span>' + money(t.subtotal) + '</span></div>' +
         '<div class="sum-row"><span>' + T('Delivery') + (loc && loc.district() ? ' (' + esc(loc.placeLabel()) + ')' : '') + '</span><span>' +
           (fee == null ? T('Select district') : money(fee)) + '</span></div>' +
-        '<div class="sum-row total"><span>' + T('Total') + '</span><span>' + money(orderTotal()) + '</span></div>' +
-        '<button type="submit" class="btn btn-red btn-block mt-3" id="placeOrder">' + icon('lock') + ' ' + T('Place order') + ' · ' + money(orderTotal()) + '</button>';
+        '<div class="sum-row total"><span>' + T('Total') + '</span><span>' + money(orderTotal()) + '</span></div>' : '') +
+        '<button type="submit" class="btn btn-red btn-block mt-3" id="placeOrder"' + (t.lines.length ? '' : ' disabled') + '>' +
+          icon('lock') + ' ' + T('Place order') + (t.lines.length ? ' · ' + money(orderTotal()) : '') + '</button>';
     };
 
     // bKash / Nagad: show the "Send Money" steps, amount, merchant number
@@ -1389,13 +1395,32 @@
     paintPayment();
     paintQuote();
     liveValidate(form);
+    // A number already in the box (logged-in customer, saved draft): look it up only now,
+    // after the summary is drawn — filling the district repaints it.
+    if (phoneEl && phoneEl.value) onPhone();
 
     $$('input[name="payment"]', form).forEach(r => r.addEventListener('change', paintPayment));
+    // Change quantities or remove products right in "Your order".
+    if (summaryMount) {
+      summaryMount.addEventListener('change', e => {
+        const row = e.target.closest('.sum-item');
+        if (row && e.target.matches('.qty input')) Cart.setQty(row.dataset.id, e.target.value);
+      });
+      summaryMount.addEventListener('click', e => {
+        const rm = e.target.closest('[data-remove]');
+        if (!rm) return;
+        const snapshot = Cart.items();
+        Cart.remove(rm.dataset.remove);
+        toast(T('Item removed from cart'), { actionText: T('Undo'), onAction: () => Cart.restore(snapshot) });
+      });
+      document.addEventListener('cart:change', () => { paintSummary(); paintPayment(); });
+    }
     const termsInput = form.elements.terms;
     if (termsInput) termsInput.addEventListener('change', () => { if (termsInput.checked) $('#coTerms').classList.remove('invalid'); });
 
     form.addEventListener('submit', async e => {
       e.preventDefault();
+      if (!Cart.count()) { toast(T('Your cart is empty. Add a product first.'), { type: 'error' }); return; }
 
       const bad = validateForm(form);
       const terms = form.elements.terms;

@@ -857,10 +857,6 @@ msgid "Public Spaces"
 msgstr "পাবলিক স্থান"
 
 #: web/static/web/js/app.js
-msgid "Qty"
-msgstr "পরিমাণ"
-
-#: web/static/web/js/app.js
 msgid "Rajbari"
 msgstr "রাজবাড়ী"
 
@@ -2043,3 +2039,6 @@ msgstr "কমপক্ষে ১০টি অক্ষর লিখুন।"
 #: web/views.py
 msgid "Thanks! Your message has been sent."
 msgstr "ধন্যবাদ! আপনার বার্তা পাঠানো হয়েছে।"
+
+#~ msgid "Qty"
+#~ msgstr "পরিমাণ"

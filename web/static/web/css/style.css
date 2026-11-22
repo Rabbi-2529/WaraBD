@@ -1140,3 +1140,70 @@ body.mc-lock .cart-float { display: none; }
 /* Checkout summary: product pictures */
 .sum-item .sum-img { flex: none; display: block; }
 .sum-item .sum-img img { width: 58px; height: 58px; object-fit: contain; background: var(--white); }
+
+/* Checkout "Your order": quantity box and remove button per product */
+/* One row per product: picture · name + price · quantity · total + remove */
+.summary .sum-item { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto auto; grid-template-areas: "img meta qty side"; gap: 10px 12px; align-items: center; }
+.summary .sum-item .sum-img { grid-area: img; }
+.summary .sum-item .meta { grid-area: meta; }
+.summary .sum-item .sum-qty { grid-area: qty; margin: 0; }
+.summary .sum-item .sum-side { grid-area: side; }
+.summary .sum-qty .qty.sm button { width: 30px; height: 34px; }
+.summary .sum-qty .qty.sm input { width: 36px; height: 34px; font-size: 14px; }
+@media (max-width: 420px) {
+  .summary .sum-item { grid-template-columns: 58px minmax(0, 1fr) auto; grid-template-areas: "img meta side" "img qty side"; }
+  .summary .sum-item .sum-qty { justify-self: start; }
+}
+.summary .sum-item .meta > span { font-size: 13px; color: var(--muted); }
+.sum-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.sum-remove { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--white); color: var(--muted); display: grid; place-items: center; cursor: pointer; transition: all .2s; }
+.sum-remove:hover { background: var(--red); border-color: var(--red); color: var(--white); }
+.sum-remove svg { width: 15px; height: 15px; }
+.sum-empty { text-align: center; padding: 18px 8px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.sum-empty > svg { width: 34px; height: 34px; color: var(--red); }
+.sum-empty p { margin: 6px 0 12px; font-size: 14px; }
+#placeOrder[disabled] { background: #b9b9b9; box-shadow: none; cursor: not-allowed; }
+
+/* Side cart: one row per product, like checkout — picture · name + price · quantity · total + remove */
+.mc-body .ci { grid-template-columns: 58px minmax(0, 1fr) auto auto; grid-template-areas: "img info qty total" "img info qty rm"; gap: 6px 12px; align-items: center; padding: 14px 18px; }
+.mc-body .ci-img { width: 58px; height: 58px; align-self: center; }
+.mc-body .ci-info h3 { font-size: 14px; margin-bottom: 4px; }
+.mc-body .ci-price { font-size: 13px; }
+.mc-body .ci-qty { align-self: center; }
+.mc-body .ci-qty .qty.sm button { width: 30px; height: 34px; }
+.mc-body .ci-qty .qty.sm input { width: 36px; height: 34px; font-size: 14px; }
+.mc-body .ci-total { justify-self: end; align-self: end; }
+.mc-body .ci-total strong { font-size: 15px; }
+.mc-body .ci-remove { justify-self: end; align-self: start; width: 30px; height: 30px; }
+@media (max-width: 440px) {
+  .mc-body .ci { grid-template-columns: 58px minmax(0, 1fr) auto; grid-template-areas: "img info total" "img qty rm"; }
+  .mc-body .ci-total { align-self: start; }
+  .mc-body .ci-remove { align-self: center; }
+  .mc-body .ci-qty { justify-self: start; }
+}
+
+/* Selling price in red, old price grey and struck through (cart page, side cart, checkout) */
+.ci-price strong, .sum-price strong { color: var(--red); font-weight: 800; }
+.ci-price del, .sum-price del { color: #9a9a9a; font-weight: 500; text-decoration-color: #9a9a9a; }
+.summary .sum-item .meta > .sum-price { color: inherit; font-size: 13px; }
+.ci-total strong, .sum-side .price { color: var(--ink); }
+
+/* Even less empty space: 10px between the page box and the footer, tighter sections */
+main { margin-bottom: 10px; }
+@media (min-width: 641px) { main { margin-bottom: 10px; } }
+.section { padding: 40px 0; }
+.section-sm { padding: 28px 0; }
+.section-head { margin-bottom: 24px; }
+.hero { padding: 16px 0 40px; }
+.page-banner { padding: 32px 0 28px; }
+.tabs { margin-top: 28px; }
+@media (max-width: 991px) {
+  .section { padding: 32px 0; }
+  .section-head { margin-bottom: 20px; }
+}
+@media (max-width: 640px) {
+  .section { padding: 24px 0; }
+  .section-sm { padding: 20px 0; }
+}
+.steps-bar { margin-bottom: 24px; }
+.trust-row { margin-top: 24px; }
