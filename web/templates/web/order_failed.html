@@ -1,33 +1,29 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Not Completed | WaRa BD</title>
-  <meta name="robots" content="noindex">
-  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
-</head>
-<body data-page="failed">
-  <div id="site-header"></div>
+{% extends "web/layout.html" %}
+{% load i18n bd_tags %}
 
-  <main>
+{% block title %}{% translate "Order not completed" %} | {{ site_settings.name }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block alternates %}{% endblock %}
+{% block page %}failed{% endblock %}
+
+{% block content %}
     <section class="section" style="padding-top:48px">
       <div class="container">
-        <div class="steps-bar" aria-label="Checkout progress">
-          <div class="sb-step done"><span class="n"><i data-icon="check"></i></span><span class="lbl">Cart</span></div>
-          <div class="sb-line done"></div>
-          <div class="sb-step current"><span class="n"><i data-icon="x"></i></span><span class="lbl">Checkout</span></div>
-          <div class="sb-line"></div>
-          <div class="sb-step"><span class="n">3</span><span class="lbl">Order complete</span></div>
+        {% include "web/partials/steps_bar.html" with step=2 failed=True %}
+
+        <div class="result-wrap">
+          <div class="result-head">
+            <div class="result-icon fail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+            <h1>{% translate "Your order was not completed" %}</h1>
+            <p>{% translate "The order was not placed and nothing has been charged. Your cart is still saved — try again, or call us and we will take the order by phone." %}</p>
+          </div>
+
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a class="btn btn-red" href="{% url 'web:checkout' %}"><i data-icon="refresh"></i> {% translate "Try again" %}</a>
+            <a class="btn btn-outline" href="tel:{{ site_settings.phone|tel_href }}"><i data-icon="phone"></i> {% translate "Call us" %}</a>
+            <a class="btn btn-green" data-href="wa"><i data-icon="message"></i> {% translate "WhatsApp us" %}</a>
+          </div>
         </div>
-        <div class="result-wrap" id="resultMount"></div>
       </div>
     </section>
-  </main>
-
-  <div id="site-footer"></div>
-  {% include "web/_products_bridge.html" %}
-</body>
-</html>
+{% endblock %}

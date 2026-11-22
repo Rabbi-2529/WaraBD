@@ -8,20 +8,24 @@ database only ever holds one format.
 import re
 from decimal import Decimal
 
+from django.utils.translation import gettext_lazy as _lazy
+
+_ASCII_DIGITS = str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789")
+
 
 # Mobile numbers: 11 digits, starting 013–019 (GP, Banglalink, Robi,
 # Airtel, Teletalk). Accepts +880 / 880 / 0 prefixes, spaces and dashes.
 _BD_MOBILE_RE = re.compile(r"^(?:\+?88)?(01[3-9]\d{8})$")
 
-PHONE_ERROR = "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)."
+PHONE_ERROR = _lazy("Enter a valid Bangladeshi mobile number (01XXXXXXXXX).")
 
 
 def normalize_bd_phone(value):
     """Return the number as 01XXXXXXXXX, or raise ValueError."""
-    raw = re.sub(r"[\s\-().]", "", str(value or ""))
+    raw = re.sub(r"[\s\-().]", "", str(value or "").translate(_ASCII_DIGITS))
     match = _BD_MOBILE_RE.match(raw)
     if not match:
-        raise ValueError(PHONE_ERROR)
+        raise ValueError(str(PHONE_ERROR))
     return match.group(1)
 
 
@@ -56,14 +60,14 @@ BD_DISTRICTS = (
 
 _DISTRICT_LOOKUP = {d.casefold(): d for d in BD_DISTRICTS}
 
-DISTRICT_ERROR = "Please select your district."
+DISTRICT_ERROR = _lazy("Please select your district.")
 
 
 def clean_bd_district(value):
     """Return the canonical district name, or raise ValueError."""
     district = _DISTRICT_LOOKUP.get(str(value or "").strip().casefold())
     if not district:
-        raise ValueError(DISTRICT_ERROR)
+        raise ValueError(str(DISTRICT_ERROR))
     return district
 
 

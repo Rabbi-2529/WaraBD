@@ -4,7 +4,9 @@
 import csv
 from datetime import datetime
 
+from django import forms
 from django.contrib import admin
+from django.template.response import TemplateResponse
 from django.db.models import Count
 from django.http import HttpResponse
 from django.urls import path, reverse
@@ -13,6 +15,11 @@ from django.utils.html import format_html
 
 from .models import (
     Category,
+    ContentBlock,
+    ContentItem,
+    District,
+    PageSeo,
+    Page,
     Product,
     ProductImage,
     PortfolioProject,
@@ -20,6 +27,7 @@ from .models import (
     Order,
     OrderItem,
     SiteSettings,
+    Thana,
     SiteHighlight,
     SiteFeature,
     UseCase,
@@ -34,8 +42,14 @@ from .admin_filters import (
     ReadStatusFilter,
 )
 
-from .forms import ProductOrganizeForm
+from modeltranslation.admin import TranslationAdmin, TranslationTabularInline
+
+from django.db import models as dj_models
+
+from .admin_datatables import DataTablesAdminMixin
+from .forms import PRODUCT_LIST_FIELDS, PRODUCT_TEXT_FIELDS, ProductOrganizeForm, product_form_fields
 from .views import admin_invoice_view
+from .widgets import RichTextarea
 
 
 # ============================================================
@@ -71,7 +85,7 @@ class ExportCsvMixin:
 # ============================================================
 
 @admin.register(SiteSettings)
-class SiteSettingsAdmin(admin.ModelAdmin):
+class SiteSettingsAdmin(TranslationAdmin):
 
     fieldsets = (
         (
@@ -104,6 +118,8 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         (
             "Delivery Settings",
             {
+                "description": 'Charges customers pay now come from <a href="../../../district/">Delivery → District charges</a>. '
+                               "These two numbers are only the product page's “Inside / Outside Dhaka” lines.",
                 "fields": (
                     "delivery_inside_fee",
                     "delivery_outside_fee",
@@ -132,15 +148,142 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "SEO Metadata",
+            "SEO & sharing",
             {
+                "description": "Home page title and description for Google, and the picture shown when a link is shared. "
+                               'Each page has its own SEO in <a href="../../../pageseo/">Website → Page SEO</a>; each product in its own form.',
                 "fields": (
                     "meta_title",
                     "meta_description",
+                    "share_image",
+                    "google_site_verification",
                 )
             },
         ),
+        (
+            "Branding",
+            {"fields": ("logo", "favicon")},
+        ),
+        (
+            "Phone login / OTP",
+            {
+                "description": "Customers log in and confirm orders with a 6-digit SMS code. "
+                               "The daily limits stop the same number getting many SMS in one day.",
+                "fields": (
+                    "otp_for_orders",
+                    "sms_daily_limit_per_number",
+                    "sms_daily_limit_per_ip",
+                    "otp_valid_minutes",
+                    "otp_resend_seconds",
+                    "otp_max_attempts",
+                    "otp_sms_text",
+                ),
+            },
+        ),
+        (
+            "SMS gateway",
+            {
+                "description": 'IGL Web SMS (api_key, contacts, senderid, msg). Save, then '
+                               '<a href="sms-test/">send a test SMS</a> to check the key and sender ID.',
+                "fields": (
+                    "sms_enabled",
+                    "sms_api_url",
+                    "sms_api_key",
+                    "sms_sender_id",
+                    "sms_number_format",
+                ),
+            },
+        ),
+        (
+            "Courier",
+            {
+                "description": 'Book parcels straight from an order with “Send to courier”. Save, then '
+                               '<a href="courier-test/">test the courier keys</a>. '
+                               "Pathao also needs its city / zone numbers: on Delivery → District charges choose "
+                               "“Match Pathao cities & zones”.",
+                "fields": (
+                    "courier_provider",
+                    "steadfast_api_url",
+                    "steadfast_api_key",
+                    "steadfast_secret_key",
+                    "pathao_api_url",
+                    "pathao_client_id",
+                    "pathao_client_secret",
+                    "pathao_username",
+                    "pathao_password",
+                    "pathao_store_id",
+                    "pathao_item_weight",
+                    "courier_sms_on_dispatch",
+                    "courier_dispatch_sms_text",
+                ),
+            },
+        ),
     )
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name in ("sms_api_key", "steadfast_api_key", "steadfast_secret_key", "pathao_client_secret",
+                             "pathao_password"):
+            kwargs["widget"] = forms.PasswordInput(render_value=True, attrs={"autocomplete": "off", "class": "vTextField"})
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+    def get_urls(self):
+        custom = [
+            path("<path:object_id>/sms-test/", self.admin_site.admin_view(self.sms_test_view),
+                 name="web_sitesettings_sms_test"),
+            path("<path:object_id>/courier-test/", self.admin_site.admin_view(self.courier_test_view),
+                 name="web_sitesettings_courier_test"),
+        ]
+        return custom + super().get_urls()
+
+    def sms_test_view(self, request, object_id):
+        """Send one test SMS with the saved gateway settings and show the gateway's answer."""
+        from customers.sms import gateway_ready, send_sms
+        from .bd import normalize_bd_phone
+
+        result = None
+        error = ""
+        phone_value = request.POST.get("phone", "")
+        if request.method == "POST":
+            try:
+                phone = normalize_bd_phone(phone_value)
+            except ValueError as exc:
+                error = str(exc)
+            else:
+                result = send_sms(phone, "WaRa BD test message. Your SMS gateway is working.", purpose="test")
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Send a test SMS",
+            "ready": gateway_ready(),
+            "result": result,
+            "error": error,
+            "phone_value": phone_value,
+            "opts": self.model._meta,
+        }
+        return TemplateResponse(request, "admin/web/sitesettings/sms_test.html", context)
+
+    def courier_test_view(self, request, object_id):
+        """Check the saved courier keys (Steadfast: balance, Pathao: login) and report back."""
+        from django.contrib import messages
+        from django.shortcuts import redirect
+
+        from . import courier
+
+        site = SiteSettings.load()
+        ok, reason = courier.ready(site)
+        back = redirect("admin:web_sitesettings_change", object_id)
+        if not ok:
+            messages.error(request, reason)
+            return back
+        try:
+            if site.courier_provider == courier.STEADFAST:
+                balance = courier.steadfast_balance(site)
+                messages.success(request, f"Steadfast keys work. Current balance: ৳{balance}.")
+            else:
+                courier.pathao_token(site, fresh=True)
+                messages.success(request, "Pathao login works. Next: match Pathao cities & zones on the District charges list.")
+        except courier.CourierError as exc:
+            messages.error(request, f"Courier test failed: {exc}")
+        return back
 
     def has_add_permission(self, request):
         return not SiteSettings.objects.exists()
@@ -149,12 +292,17 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         return False
 
 
+# CKEditor for every long text box (descriptions, page bodies, card text).
+RICH_TEXT = {dj_models.TextField: {"widget": RichTextarea}}
+RICH_TEXT_COMPACT = {dj_models.TextField: {"widget": RichTextarea(compact=True)}}
+
+
 # ============================================================
 # HOMEPAGE CONTENT BLOCKS
 # ============================================================
 
 @admin.register(SiteHighlight)
-class SiteHighlightAdmin(admin.ModelAdmin):
+class SiteHighlightAdmin(TranslationAdmin):
 
     list_display = (
         "title",
@@ -171,7 +319,8 @@ class SiteHighlightAdmin(admin.ModelAdmin):
 
 
 @admin.register(SiteFeature)
-class SiteFeatureAdmin(admin.ModelAdmin):
+class SiteFeatureAdmin(TranslationAdmin):
+    formfield_overrides = RICH_TEXT_COMPACT
 
     list_display = (
         "title",
@@ -205,7 +354,8 @@ class SiteFeatureAdmin(admin.ModelAdmin):
 
 
 @admin.register(UseCase)
-class UseCaseAdmin(admin.ModelAdmin):
+class UseCaseAdmin(TranslationAdmin):
+    formfield_overrides = RICH_TEXT_COMPACT
 
     list_display = (
         "title",
@@ -229,7 +379,8 @@ class UseCaseAdmin(admin.ModelAdmin):
 
 
 @admin.register(TimelineStep)
-class TimelineStepAdmin(admin.ModelAdmin):
+class TimelineStepAdmin(TranslationAdmin):
+    formfield_overrides = RICH_TEXT_COMPACT
 
     list_display = (
         "title",
@@ -248,7 +399,7 @@ class TimelineStepAdmin(admin.ModelAdmin):
 # PRODUCTS
 # ============================================================
 
-class ProductImageInline(admin.TabularInline):
+class ProductImageInline(TranslationTabularInline):
 
     model = ProductImage
     extra = 3
@@ -276,7 +427,7 @@ class ProductAdmin(admin.ModelAdmin):
     ]
 
     prepopulated_fields = {
-        "slug": ("name",),
+        "slug": ("name_en",),
     }
 
     form = ProductOrganizeForm
@@ -289,23 +440,22 @@ class ProductAdmin(admin.ModelAdmin):
         "admin/web/product/add_form.html"
     )
 
-    fields = (
-        "name",
-        "slug",
-        "sku",
-        "stock",
-        "stock_status",
-        "description",
-        "image",
-        "price",
-        "discount_type",
-        "discount_price",
-        "brand",
-        "category",
-        "sub_category",
-        "is_active",
-        "tags",
-    )
+    # Every field here must be rendered by add_form.html, otherwise saving
+    # the form would blank it. The list lives next to the form definition.
+    fields = product_form_fields()
+
+    def render_change_form(self, request, context, *args, **kwargs):
+        # English/Bangla pairs for the "Product page content" card.
+        form = context["adminform"].form
+        context["text_rows"] = [
+            (label, form[f"{field}_en"], form[f"{field}_bn"])
+            for field, label, _widget in PRODUCT_TEXT_FIELDS
+        ]
+        context["list_rows"] = [
+            (label, form[f"{field}_en"], form[f"{field}_bn"])
+            for field, label, _cls in PRODUCT_LIST_FIELDS
+        ]
+        return super().render_change_form(request, context, *args, **kwargs)
 
     def save_model(self, request, obj, form, change):
         super().save_model(
@@ -321,7 +471,8 @@ class ProductAdmin(admin.ModelAdmin):
 # ============================================================
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(TranslationAdmin):
+    formfield_overrides = RICH_TEXT
 
     list_display = (
         "name",
@@ -346,7 +497,8 @@ class CategoryAdmin(admin.ModelAdmin):
 # ============================================================
 
 @admin.register(PortfolioProject)
-class PortfolioProjectAdmin(admin.ModelAdmin):
+class PortfolioProjectAdmin(TranslationAdmin):
+    formfield_overrides = RICH_TEXT
 
     list_display = (
         "title",
@@ -399,7 +551,8 @@ class ContactMessageAdmin(admin.ModelAdmin):
         "is_read",
     )
 
-    date_hierarchy = "created_at"
+    # No date_hierarchy: on MySQL/MariaDB without time-zone tables (XAMPP's
+    # default) it crashes the list page. The created_at filter covers it.
 
     fieldsets = (
         (
@@ -492,9 +645,13 @@ class OrderAdmin(admin.ModelAdmin):
         "address_line1",
         "address_line2",
         "city",
+        "thana",
         "postal_code",
         "country",
         "delivery_zone",
+        "courier",
+        "courier_tracking_code",
+        "courier_tracking_url",
     )
 
     readonly_fields = (
@@ -512,11 +669,99 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
     actions = [
+        "send_to_courier",
+        "refresh_courier_status",
         "mark_paid",
         "mark_shipped",
         "mark_delivered",
         "mark_cancelled",
     ]
+
+    @admin.action(description="🚚 Send selected orders to the courier")
+    def send_to_courier(self, request, queryset):
+        from django.contrib import messages
+
+        from . import courier
+
+        sent, failed = 0, []
+        for order in queryset.order_by("created_at"):
+            try:
+                courier.book(order)
+                sent += 1
+            except courier.CourierError as exc:
+                failed.append(f"{order.order_number}: {exc}")
+        if sent:
+            messages.success(request, f"{sent} order(s) sent to the courier.")
+        for line in failed[:10]:
+            messages.error(request, line)
+
+    @admin.action(description="🔄 Refresh courier status")
+    def refresh_courier_status(self, request, queryset):
+        from django.contrib import messages
+
+        from . import courier
+
+        done, failed = 0, []
+        for order in queryset.exclude(courier_consignment_id=""):
+            try:
+                courier.refresh(order)
+                done += 1
+            except courier.CourierError as exc:
+                failed.append(f"{order.order_number}: {exc}")
+        messages.info(request, f"Courier status checked for {done} order(s).")
+        for line in failed[:10]:
+            messages.error(request, line)
+
+    def courier_view(self, request, object_id, action):
+        """POST from the order page: action = send | refresh."""
+        from django.contrib import messages
+        from django.shortcuts import get_object_or_404, redirect
+
+        from . import courier
+
+        order = get_object_or_404(Order, pk=object_id)
+        back = redirect("admin:web_order_change", order.pk)
+        if request.method != "POST" or not self.has_change_permission(request, order):
+            return back
+        try:
+            if action == "send":
+                courier.book(order)
+                messages.success(request, f"Sent to {courier.courier_label(order)}. Tracking code: "
+                                          f"{order.courier_tracking_code or order.courier_consignment_id}.")
+            else:
+                status = courier.refresh(order)
+                messages.info(request, f"Courier status: {status}.")
+        except courier.CourierError as exc:
+            messages.error(request, str(exc))
+        return back
+
+    # Fields the custom order page (admin/web/order/change_form.html) actually posts.
+    CHANGE_PAGE_FIELDS = (
+        "status", "payment_status", "notes", "full_name", "email", "phone",
+        "address_line1", "thana", "city", "postal_code",
+        "courier", "courier_tracking_code", "courier_tracking_url",
+    )
+
+    def get_fields(self, request, obj=None):
+        if obj is not None:
+            return self.CHANGE_PAGE_FIELDS
+        return super().get_fields(request, obj)
+
+    def render_change_form(self, request, context, *args, **kwargs):
+        from . import courier
+
+        obj = context.get("original")
+        if obj is not None:
+            ok, reason = courier.ready()
+            context.update({
+                "courier_ready": ok,
+                "courier_reason": reason,
+                "courier_name": courier.NAMES.get(courier.provider(), ""),
+                "courier_label": courier.courier_label(obj),
+                "courier_link": courier.tracking_url(obj),
+                "courier_cod": courier.cod_amount(obj),
+            })
+        return super().render_change_form(request, context, *args, **kwargs)
 
     @admin.action(
         description="✅ Mark selected orders as PAID"
@@ -589,6 +834,8 @@ class OrderAdmin(admin.ModelAdmin):
                 ),
                 name="web_order_invoice",
             ),
+            path("<path:object_id>/courier/<str:action>/",
+                 self.admin_site.admin_view(self.courier_view), name="web_order_courier"),
         ]
 
         return custom_urls + urls
@@ -631,3 +878,201 @@ class OrderAdmin(admin.ModelAdmin):
             request,
             extra_context=extra_context,
         )
+
+
+# ============================================================
+# PAGE TEXT, PAGE LISTS & POLICY PAGES (Phase 3)
+# ============================================================
+
+@admin.register(ContentBlock)
+class ContentBlockAdmin(DataTablesAdminMixin, TranslationAdmin):
+    """Every heading/paragraph on the storefront. Rows come from the templates
+    (`manage.py sync_content`), so they can be edited but not added here.
+    Clearing a value shows the built-in text again."""
+
+    list_display = ("key", "page", "preview_en", "preview_bn", "updated_at")
+    list_filter = ("page",)
+    search_fields = ("key", "label", "value_en", "value_bn")
+    readonly_fields = ("key", "page", "allow_html")
+    fields = ("key", "page", "label", "value", "allow_html")
+    list_per_page = 100
+
+    @admin.display(description="English")
+    def preview_en(self, obj):
+        return (obj.value_en or "")[:70]
+
+    @admin.display(description="বাংলা")
+    def preview_bn(self, obj):
+        return (obj.value_bn or "—")[:70]
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(ContentItem)
+class ContentItemAdmin(TranslationAdmin):
+    formfield_overrides = RICH_TEXT_COMPACT
+    list_display = ("group", "order", "icon", "value", "title", "is_active")
+    list_display_links = ("title",)
+    list_editable = ("order", "is_active")
+    list_filter = ("group", "is_active")
+    search_fields = ("title_en", "title_bn", "text_en", "text_bn")
+    fields = ("group", "order", "icon", "value", "title", "text", "is_active")
+
+
+@admin.register(Page)
+class PageAdmin(TranslationAdmin):
+    formfield_overrides = RICH_TEXT
+    list_display = ("title", "slug", "kind", "show_in_footer", "is_active", "order", "updated_at")
+    list_editable = ("show_in_footer", "is_active", "order")
+    prepopulated_fields = {"slug": ("title",)}
+    fields = ("title", "slug", "kind", "intro", "body", "seo_title", "meta_description", "share_image",
+              "show_in_footer", "is_active", "order")
+
+
+@admin.register(PageSeo)
+class PageSeoAdmin(TranslationAdmin):
+    """Google title / description and share picture for Home, Products, Portfolio, About and Contact."""
+
+    list_display = ("page", "title_used", "description_used", "has_image", "noindex")
+    fields = ("page", "title", "description", "share_image", "noindex")
+    readonly_fields = ("page",)
+
+    @admin.display(description="Title")
+    def title_used(self, obj):
+        return obj.title or "— built-in —"
+
+    @admin.display(description="Description")
+    def description_used(self, obj):
+        return (obj.description[:80] + "…") if len(obj.description) > 80 else (obj.description or "— built-in —")
+
+    @admin.display(description="Share image", boolean=True)
+    def has_image(self, obj):
+        return bool(obj.share_image)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+# ============================================================
+# DELIVERY CHARGES: DISTRICTS & THANAS (DataTables, inline fee editing)
+# ============================================================
+
+def _fee_input(url, value, placeholder=""):
+    return format_html(
+        '<input type="number" min="0" step="5" class="dt-fee" value="{}" placeholder="{}" data-url="{}" '
+        'aria-label="Delivery charge">',
+        "" if value is None else value, placeholder, url,
+    )
+
+
+class _SetFeeMixin:
+    """POST <pk>/set-fee/ with fee=<number> (empty = use district charge, thanas only)."""
+
+    fee_can_be_empty = False
+
+    def get_urls(self):
+        info = self.model._meta.app_label, self.model._meta.model_name
+        return [
+            path("<int:pk>/set-fee/", self.admin_site.admin_view(self.set_fee_view), name="%s_%s_set_fee" % info),
+        ] + super().get_urls()
+
+    def set_fee_view(self, request, pk):
+        from django.http import JsonResponse
+
+        obj = self.get_object(request, str(pk))
+        if request.method != "POST" or obj is None or not self.has_change_permission(request, obj):
+            return JsonResponse({"ok": False, "error": "Not allowed"}, status=403)
+        raw = (request.POST.get("fee") or "").strip()
+        if raw == "" and self.fee_can_be_empty:
+            obj.delivery_fee = None
+        else:
+            try:
+                fee = int(raw)
+                if fee < 0:
+                    raise ValueError
+            except ValueError:
+                return JsonResponse({"ok": False, "error": "Enter a whole number of taka (0 or more)."}, status=400)
+            obj.delivery_fee = fee
+        obj.save(update_fields=["delivery_fee"])
+        self.log_change(request, obj, f"Delivery charge set to {obj.delivery_fee}")
+        return JsonResponse({"ok": True, "fee": obj.delivery_fee})
+
+
+class ThanaInline(TranslationTabularInline):
+    model = Thana
+    extra = 1
+    fields = ("name", "delivery_fee", "is_active", "pathao_zone_id")
+
+
+@admin.register(District)
+class DistrictAdmin(_SetFeeMixin, DataTablesAdminMixin, TranslationAdmin):
+    list_display = ("name", "division", "fee_column", "delivery_eta", "thana_count", "is_active")
+    list_filter = ("division", "is_active")
+    search_fields = ("name_en", "name_bn")
+    ordering = ("name_en",)
+    fields = ("name", "division", "delivery_fee", "delivery_eta", "is_active", "pathao_city_id")
+    inlines = [ThanaInline]
+    actions = ["match_pathao"]
+
+    @admin.action(description="Match Pathao cities & zones (all districts)")
+    def match_pathao(self, request, queryset):
+        from django.contrib import messages
+
+        from . import courier
+
+        try:
+            summary = courier.match_pathao_locations()
+        except courier.CourierError as exc:
+            messages.error(request, f"Pathao: {exc}")
+            return
+        messages.success(request, f"Pathao numbers saved for {summary['districts']} districts and {summary['thanas']} thanas.")
+        if summary["missing_districts"] or summary["missing_thanas"]:
+            messages.warning(request, "Not matched — type these numbers by hand: "
+                             + ", ".join(summary["missing_districts"][:15])
+                             + (f" · {summary['missing_thanas']} thanas" if summary["missing_thanas"] else ""))
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(_thanas=Count("thanas"))
+
+    @admin.display(description="Delivery charge (৳)", ordering="delivery_fee")
+    def fee_column(self, obj):
+        return _fee_input(reverse("admin:web_district_set_fee", args=[obj.pk]), obj.delivery_fee)
+
+    @admin.display(description="Thanas", ordering="_thanas")
+    def thana_count(self, obj):
+        url = reverse("admin:web_thana_changelist") + f"?district__id__exact={obj.pk}"
+        return format_html('<a href="{}">{}</a>', url, obj._thanas)
+
+    def has_delete_permission(self, request, obj=None):
+        return False  # untick "active" instead; orders refer to districts by name
+
+
+@admin.register(Thana)
+class ThanaAdmin(_SetFeeMixin, DataTablesAdminMixin, TranslationAdmin):
+    fee_can_be_empty = True
+    list_display = ("name", "district", "fee_column", "charge_used", "is_active")
+    list_filter = ("district__division", "district", "is_active")
+    search_fields = ("name_en", "name_bn", "district__name_en", "district__name_bn")
+    list_select_related = ("district",)
+    ordering = ("district__name_en", "name_en")
+    fields = ("district", "name", "delivery_fee", "is_active", "pathao_zone_id")
+    autocomplete_fields = ()
+
+    @admin.display(description="Own charge (৳) — empty = district's", ordering="delivery_fee")
+    def fee_column(self, obj):
+        return _fee_input(reverse("admin:web_thana_set_fee", args=[obj.pk]), obj.delivery_fee,
+                          placeholder=str(obj.district.delivery_fee))
+
+    @admin.display(description="Customer pays")
+    def charge_used(self, obj):
+        return f"৳{obj.effective_fee}"
+
+
+# Admin titles (browser tab, dashboard heading).
+admin.site.site_header = "WaRa BD"
+admin.site.site_title = "WaRa Admin"
+admin.site.index_title = "Dashboard"

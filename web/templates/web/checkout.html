@@ -1,35 +1,29 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout | WaRa BD</title>
-  <meta name="robots" content="noindex">
-  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
-</head>
-<body data-page="checkout">
-  <div id="site-header"></div>
+{% extends "web/layout.html" %}
+{% load i18n bd_tags cms_tags %}
 
-  <main>
+{% block title %}{% translate "Checkout" %} | {{ site_settings.name }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block alternates %}{% endblock %}
+{% block page %}checkout{% endblock %}
+{% block extra_head %}{% include "web/partials/select2_head.html" %}{% endblock %}
+{% block extra_js %}{% include "web/partials/select2_js.html" %}{% endblock %}
+
+{% block content %}
     <section class="page-banner">
       <div class="container">
-        <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'web:home' %}">Home</a><span class="sep">/</span><a href="{% url 'web:cart' %}">Cart</a><span class="sep">/</span><span>Checkout</span></nav>
-        <h1>Checkout</h1>
-        <p>Just a few details and your WaRa lock is on its way.</p>
+        <nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}">
+          <a href="{% url 'web:home' %}">{% translate "Home" %}</a><span class="sep">/</span>
+          <a href="{% url 'web:cart' %}">{% translate "Cart" %}</a><span class="sep">/</span>
+          <span>{% translate "Checkout" %}</span>
+        </nav>
+        <h1>{% cms "checkout.banner.title" %}{% translate "Checkout" %}{% endcms %}</h1>
+        <p>{% cms "checkout.banner.text" %}{% translate "Just a few details and your WaRa lock is on its way." %}{% endcms %}</p>
       </div>
     </section>
 
     <section class="section" style="padding-top:48px">
       <div class="container">
-        <div class="steps-bar" aria-label="Checkout progress">
-          <div class="sb-step done"><span class="n"><i data-icon="check"></i></span><span class="lbl">Cart</span></div>
-          <div class="sb-line done"></div>
-          <div class="sb-step current"><span class="n">2</span><span class="lbl">Checkout</span></div>
-          <div class="sb-line"></div>
-          <div class="sb-step"><span class="n">3</span><span class="lbl">Order complete</span></div>
-        </div>
+        {% include "web/partials/steps_bar.html" with step=2 %}
 
         <div id="checkoutMount">
           <form id="checkoutForm" class="checkout-layout" novalidate>
@@ -37,89 +31,95 @@
             <div>
               <!-- Contact -->
               <div class="co-block">
-                <h2><span class="n">1</span> Contact information</h2>
+                <h2><span class="n">{{ 1|digits }}</span> {% translate "Contact information" %}</h2>
+                {% if customer %}
+                  <p class="co-note"><i data-icon="check"></i> {% blocktranslate trimmed with name=customer.name %}Logged in as {{ name }} — no SMS code needed.{% endblocktranslate %}</p>
+                {% elif site_settings.otp_for_orders %}
+                  <p class="co-note"><i data-icon="mobile"></i> {% translate "We will send a 6-digit code by SMS to confirm your mobile number before placing the order." %}
+                    <a href="{% url 'customers:login' %}?next={% url 'web:checkout' %}">{% translate "Have an account? Log in" %}</a></p>
+                {% endif %}
                 <div class="form-grid">
                   <div class="field">
-                    <label for="coName">Full name <span class="req">*</span></label>
-                    <input id="coName" name="name" type="text" autocomplete="name" placeholder="Your full name" data-rule="name">
+                    <label for="coName">{% translate "Full name" %} <span class="req">*</span></label>
+                    <input id="coName" name="name" type="text" autocomplete="name" placeholder="{% translate 'Your full name' %}" data-rule="name" value="{% firstof checkout_address.name customer.name '' %}">
                   </div>
                   <div class="field">
-                    <label for="coPhone">Mobile number <span class="req">*</span></label>
-                    <input id="coPhone" name="phone" type="tel" autocomplete="tel" placeholder="01XXXXXXXXX" data-rule="phone">
+                    <label for="coPhone">{% translate "Mobile number" %} <span class="req">*</span></label>
+                    <input id="coPhone" name="phone" type="tel" autocomplete="tel" placeholder="01XXXXXXXXX" data-rule="phone" value="{% firstof checkout_address.phone customer.phone '' %}">
                   </div>
                   <div class="field full">
-                    <label for="coEmail">Email <span style="color:var(--muted);font-weight:400">(optional — for the invoice)</span></label>
-                    <input id="coEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" data-rule="email">
+                    <label for="coEmail">{% translate "Email" %} <span style="color:var(--muted);font-weight:400">{% translate "(optional — for the invoice)" %}</span></label>
+                    <input id="coEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" data-rule="email" value="{{ customer.email|default:'' }}">
                   </div>
                 </div>
               </div>
 
               <!-- Delivery -->
               <div class="co-block">
-                <h2><span class="n">2</span> Delivery address</h2>
+                <h2><span class="n">{{ 2|digits }}</span> {% translate "Delivery address" %}</h2>
                 <div class="form-grid">
-                  <div class="field full">
-                    <label for="coDistrict">District <span class="req">*</span></label>
-                    <select id="coDistrict" name="district" data-rule="choice">
-                      <option value="">Select your district</option>
+                  {# District → thana (Select2). The delivery charge follows the choice automatically. #}
+                  <div class="field">
+                    <label for="coDistrict">{% translate "District" %} <span class="req">*</span></label>
+                    <select id="coDistrict" name="district" data-rule="choice" data-district-select
+                            data-selected="{{ checkout_address.district|default:'' }}">
+                      <option value="">{% translate "Select your district" %}</option>
                     </select>
                   </div>
-                  <div class="field full">
-                    <label for="coAddress">Full address <span class="req">*</span></label>
-                    <textarea id="coAddress" name="address" autocomplete="street-address" placeholder="House, road, area / thana" style="min-height:90px" data-rule="address"></textarea>
+                  <div class="field">
+                    <label for="coThana">{% translate "Thana / Upazila" %} <span class="req">*</span></label>
+                    <select id="coThana" name="thana" data-rule="choice" data-thana-select
+                            data-selected="{{ checkout_address.thana|default:'' }}">
+                      <option value="">{% translate "Select district first" %}</option>
+                    </select>
                   </div>
-                  <div class="full">
-                    <label style="display:block;font-weight:700;font-size:14px;margin-bottom:9px">Delivery area <span style="color:var(--red)">*</span></label>
-                    <div class="opt-grid">
-                      <div class="opt">
-                        <input type="radio" name="zone" id="zInside" value="inside" checked>
-                        <label for="zInside"><span class="radio"></span><span><strong>Inside Dhaka</strong><small data-bind="inside-eta"></small></span><span class="fee" data-bind="inside-fee"></span></label>
-                      </div>
-                      <div class="opt">
-                        <input type="radio" name="zone" id="zOutside" value="outside">
-                        <label for="zOutside"><span class="radio"></span><span><strong>Outside Dhaka</strong><small data-bind="outside-eta"></small></span><span class="fee" data-bind="outside-fee"></span></label>
-                      </div>
-                    </div>
+                  <div class="full delivery-quote" id="deliveryQuote" aria-live="polite">
+                    <i data-icon="truck"></i>
+                    <span data-quote-text>{% translate "Choose your district to see the delivery charge." %}</span>
                   </div>
                   <div class="field full">
-                    <label for="coNote">Order note <span style="color:var(--muted);font-weight:400">(optional)</span></label>
-                    <textarea id="coNote" name="note" placeholder="Landmark, preferred delivery time, etc." style="min-height:80px"></textarea>
+                    <label for="coAddress">{% translate "Full address" %} <span class="req">*</span></label>
+                    <textarea id="coAddress" name="address" autocomplete="street-address" placeholder="{% translate 'House, road, area' %}" style="min-height:90px" data-rule="address">{% if checkout_address %}{{ checkout_address.address }}{% endif %}</textarea>
+                  </div>
+                  <div class="field full">
+                    <label for="coNote">{% translate "Order note" %} <span style="color:var(--muted);font-weight:400">{% translate "(optional)" %}</span></label>
+                    <textarea id="coNote" name="note" placeholder="{% translate 'Landmark, preferred delivery time, etc.' %}" style="min-height:80px"></textarea>
                   </div>
                 </div>
               </div>
 
               <!-- Payment -->
               <div class="co-block">
-                <h2><span class="n">3</span> Payment method</h2>
+                <h2><span class="n">{{ 3|digits }}</span> {% translate "Payment method" %}</h2>
                 <div class="opt-grid three">
                   <div class="opt">
                     <input type="radio" name="payment" id="pCod" value="cod" checked>
-                    <label for="pCod"><span class="pay-logo"><i data-icon="cash"></i></span><span><strong>Cash on Delivery</strong><small>Pay when it arrives</small></span></label>
+                    <label for="pCod"><span class="pay-logo"><i data-icon="cash"></i></span><span><strong>{% translate "Cash on Delivery" %}</strong><small>{% translate "Pay when it arrives" %}</small></span></label>
                   </div>
                   <div class="opt">
                     <input type="radio" name="payment" id="pBkash" value="bkash">
-                    <label for="pBkash"><span class="pay-logo red"><i data-icon="mobile"></i></span><span><strong>bKash</strong><small>Mobile payment</small></span></label>
+                    <label for="pBkash"><span class="pay-logo red"><i data-icon="mobile"></i></span><span><strong>{% translate "bKash" %}</strong><small>{% translate "Mobile payment" %}</small></span></label>
                   </div>
                   <div class="opt">
                     <input type="radio" name="payment" id="pNagad" value="nagad">
-                    <label for="pNagad"><span class="pay-logo green"><i data-icon="mobile"></i></span><span><strong>Nagad</strong><small>Mobile payment</small></span></label>
+                    <label for="pNagad"><span class="pay-logo green"><i data-icon="mobile"></i></span><span><strong>{% translate "Nagad" %}</strong><small>{% translate "Mobile payment" %}</small></span></label>
                   </div>
                 </div>
 
                 <div class="mobile-pay" id="mobilePay">
                   <ol>
-                    <li>Open your <strong class="pay-name"></strong> app and choose <strong>Send Money</strong>.</li>
-                    <li>Send <strong class="pay-amount"></strong> to <strong id="payMerchant"></strong>.</li>
-                    <li>Enter your <span class="pay-name"></span> number and the Transaction ID (TrxID) from the SMS below.</li>
+                    <li>{% blocktranslate trimmed %}Open your <strong class="pay-name"></strong> app and choose <strong>Send Money</strong>.{% endblocktranslate %}</li>
+                    <li>{% blocktranslate trimmed %}Send <strong class="pay-amount"></strong> to <strong id="payMerchant"></strong>.{% endblocktranslate %}</li>
+                    <li>{% blocktranslate trimmed %}Enter your <span class="pay-name"></span> number and the Transaction ID (TrxID) from the SMS below.{% endblocktranslate %}</li>
                   </ol>
                   <div class="form-grid">
                     <div class="field">
-                      <label for="coSender"><span class="pay-name"></span> number <span class="req">*</span></label>
+                      <label for="coSender">{% blocktranslate trimmed %}<span class="pay-name"></span> number{% endblocktranslate %} <span class="req">*</span></label>
                       <input id="coSender" name="sender" type="tel" placeholder="01XXXXXXXXX" data-rule="phone">
                     </div>
                     <div class="field">
-                      <label for="coTrx">Transaction ID <span class="req">*</span></label>
-                      <input id="coTrx" name="trx" type="text" placeholder="e.g. 9A7K3M2Q8T" autocomplete="off" style="text-transform:uppercase" data-rule="trx">
+                      <label for="coTrx">{% translate "Transaction ID" %} <span class="req">*</span></label>
+                      <input id="coTrx" name="trx" type="text" placeholder="{% translate 'e.g. 9A7K3M2Q8T' %}" autocomplete="off" style="text-transform:uppercase" data-rule="trx">
                     </div>
                   </div>
                 </div>
@@ -127,7 +127,8 @@
 
               <label class="check">
                 <input type="checkbox" name="terms">
-                <span>I confirm my details are correct and agree to the <a href="{% url 'web:product_list' %}#warranty" style="color:var(--red);font-weight:700">delivery &amp; warranty policy</a>.</span>
+                {% url 'web:page' 'warranty-delivery' as policy_url %}
+                <span>{% blocktranslate trimmed with url=policy_url %}I confirm my details are correct and agree to the <a href="{{ url }}" target="_blank" style="color:var(--red);font-weight:700">delivery &amp; warranty policy</a>.{% endblocktranslate %}</span>
               </label>
             </div>
 
@@ -136,15 +137,12 @@
         </div>
       </div>
     </section>
-  </main>
+{% endblock %}
 
+{% block after_main %}
   <div class="processing" id="processing" role="status" aria-live="assertive">
     <div class="spinner"></div>
-    <h2>Placing your order…</h2>
-    <p>Please don't close or refresh this page.</p>
+    <h2>{% translate "Placing your order…" %}</h2>
+    <p>{% translate "Please don't close or refresh this page." %}</p>
   </div>
-
-  <div id="site-footer"></div>
-  {% include "web/_products_bridge.html" %}
-</body>
-</html>
+{% endblock %}

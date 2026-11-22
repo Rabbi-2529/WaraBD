@@ -1,0 +1,31 @@
+{% extends "web/layout.html" %}
+{% load i18n %}
+{# Shared frame for My Account pages: banner + side menu. #}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block alternates %}{% endblock %}
+{% block page %}account{% endblock %}
+
+{% block content %}
+<section class="page-banner">
+  <div class="container">
+    <nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}"><a href="{% url 'web:home' %}">{% translate "Home" %}</a><span class="sep">/</span><span>{% translate "My account" %}</span></nav>
+    <h1>{% block heading %}{% translate "My account" %}{% endblock %}</h1>
+    <p>{% blocktranslate trimmed with name=customer.name %}Hello, {{ name }}{% endblocktranslate %}</p>
+  </div>
+</section>
+<section class="section">
+  <div class="container account-layout">
+    <aside class="account-nav" aria-label="{% translate 'My account' %}">
+      <a href="{% url 'customers:account' %}"{% if section == "dashboard" %} class="active"{% endif %}><i data-icon="home"></i> {% translate "Overview" %}</a>
+      <a href="{% url 'customers:orders' %}"{% if section == "orders" %} class="active"{% endif %}><i data-icon="bag"></i> {% translate "My orders" %}</a>
+      <a href="{% url 'customers:addresses' %}"{% if section == "addresses" %} class="active"{% endif %}><i data-icon="pin"></i> {% translate "Addresses" %}</a>
+      <a href="{% url 'customers:profile' %}"{% if section == "profile" %} class="active"{% endif %}><i data-icon="user"></i> {% translate "Profile" %}</a>
+      <form method="post" action="{% url 'customers:logout' %}">
+        {% csrf_token %}
+        <button type="submit"><i data-icon="x"></i> {% translate "Log out" %}</button>
+      </form>
+    </aside>
+    <div class="account-main">{% block account %}{% endblock %}</div>
+  </div>
+</section>
+{% endblock %}

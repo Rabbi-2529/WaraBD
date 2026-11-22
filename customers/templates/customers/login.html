@@ -1,0 +1,26 @@
+{% extends "web/layout.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Log in" %} | {{ site_settings.name }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block alternates %}{% endblock %}
+{% block page %}login{% endblock %}
+
+{% block content %}
+<section class="section auth-section">
+  <div class="container">
+    <div class="form-card auth-card">
+      <div class="auth-icon"><i data-icon="user"></i></div>
+      <h1>{% translate "Log in" %}</h1>
+      <p class="auth-lead">{% translate "Enter your mobile number. We will send you a 6-digit code by SMS — no password needed." %}</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% include "customers/_field.html" with field=form.phone %}
+        <button type="submit" class="btn btn-red btn-block"><i data-icon="send"></i> {% translate "Send code" %}</button>
+      </form>
+      <p class="auth-switch">{% translate "New here?" %} <a href="{% url 'customers:register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% translate "Create an account" %}</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

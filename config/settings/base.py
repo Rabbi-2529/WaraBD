@@ -97,7 +97,13 @@ ALLOWED_HOSTS = env_list(
 
 TIME_ZONE = "Asia/Dhaka"
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en"
+
+# English is served at "/", Bangla at "/bn/" (see config/urls.py).
+LANGUAGES = [
+    ("en", "English"),
+    ("bn", "বাংলা"),
+]
 
 USE_I18N = True
 
@@ -106,6 +112,12 @@ USE_TZ = True
 LOCALE_PATHS = [
     str(BASE_DIR / "locale"),
 ]
+
+# django-modeltranslation: every translated model field gets an _en and a
+# _bn column; an empty Bangla value falls back to English.
+MODELTRANSLATION_DEFAULT_LANGUAGE = "en"
+MODELTRANSLATION_LANGUAGES = ("en", "bn")
+MODELTRANSLATION_FALLBACK_LANGUAGES = ("en",)
 
 SITE_ID = 1
 
@@ -154,6 +166,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ==============================================================================
 
 DJANGO_APPS = [
+    "modeltranslation",  # must come before django.contrib.admin
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -177,6 +190,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "users",
     "web",
+    "customers",
 ]
 
 INSTALLED_APPS = (
@@ -265,6 +279,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "customers.middleware.CustomerMiddleware",
 ]
 
 
@@ -346,6 +361,8 @@ TEMPLATES = [
                 "web.context_processors.cart_summary",
                 "web.context_processors.site_settings",
                 "web.context_processors.products_json",
+                "web.context_processors.i18n_links",
+                "customers.context_processors.customer",
             ],
         },
     },
@@ -479,11 +496,10 @@ ACCOUNT_ALLOW_REGISTRATION = env_bool(
     default=True,
 )
 
-ACCOUNT_AUTHENTICATION_METHOD = "email"
+# allauth 65 names (staff accounts log in with email + password).
+ACCOUNT_LOGIN_METHODS = {"email"}
 
-ACCOUNT_EMAIL_REQUIRED = True
-
-ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 

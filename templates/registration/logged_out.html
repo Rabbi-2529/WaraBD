@@ -1,0 +1,9 @@
+{% extends "admin/auth_layout.html" %}
+{% block title %}Signed out | WaRa Admin{% endblock %}
+{% block card %}
+<div class="notice notice-ok"><i class="bx bx-check-circle"></i><span>You have been signed out safely.</span></div>
+<h2>See you soon</h2>
+<p class="lead">Thanks for looking after the store today.</p>
+<a class="btn" href="{% url 'admin:login' %}"><i class="bx bx-log-in"></i> Sign in again</a>
+<a class="back" href="/"><i class="bx bx-arrow-back"></i> Back to the store</a>
+{% endblock %}

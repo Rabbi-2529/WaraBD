@@ -3,9 +3,10 @@
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
     <meta charset="utf-8">
-    <title>{% block title %}{{ title }} | WaRa Admin{% endblock %}</title>
+    <title>{% block title %}{% if cl %}{{ cl.opts.verbose_name_plural|capfirst }}{% else %}{{ title }}{% endif %} | WaRa Admin{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <link rel="icon" href="{% if site_settings.favicon %}{{ site_settings.favicon.url }}{% else %}{% static 'images/favicon.ico' %}{% endif %}">
+    <meta name="robots" content="noindex, nofollow">
 
     {# Django Core CSS #}
     <link rel="stylesheet" href="{% static 'admin/css/base.css' %}">
@@ -15,15 +16,20 @@
     {# Rizz Theme CSS #}
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" type="text/css">
     
-    {# 🟢 FIX 1: Added Boxicons CDN to guarantee icons load #}
     <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
     {# Our Custom Theme #}
     <link href="{% static 'admin/css/rizz-admin-bridge.css' %}" rel="stylesheet" type="text/css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="{% static 'admin/css/wara-admin.css' %}" rel="stylesheet" type="text/css">
     
     {% block extrastyle %}{% endblock %}
+    {# Django admin puts form media here (inline "Add another", date pickers, slug prefill). #}
+    {% block extrahead %}{% endblock %}
 </head>
-<body>
+<body class="{% block bodyclass %}{% endblock %}">
+<div id="container" class="d-contents">{# Django admin JS looks for #container #}
 
 <div class="admin-wrapper">
     {% include "admin/partials/startbar.html" %}
@@ -49,5 +55,24 @@
         </main>
     </div>
 </div>
+</div>
+{% block footer %}{% endblock %}
+<script>
+/* Mobile menu: buttons with data-sidebar-toggle open/close the sidebar. */
+document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-sidebar-toggle]")) document.body.classList.toggle("sidebar-open");
+});
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") document.body.classList.remove("sidebar-open");
+});
+/* Message close buttons (no Bootstrap JS on admin pages). */
+document.addEventListener("click", function (e) {
+    var x = e.target.closest(".alert .btn-close"); if (x) x.closest(".alert").remove();
+});
+/* Close the user menu when clicking elsewhere. */
+document.addEventListener("click", function (e) {
+    document.querySelectorAll("details.user-menu[open]").forEach(function (d) { if (!d.contains(e.target)) d.removeAttribute("open"); });
+});
+</script>
 </body>
 </html>

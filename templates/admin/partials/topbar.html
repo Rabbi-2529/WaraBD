@@ -1,18 +1,48 @@
-{% load i18n %}
+{% load i18n admin_urls %}
 <header class="admin-topbar">
     <div class="topbar-left">
-        <span class="topbar-greeting">Welcome back!</span>
+        <button type="button" class="topbar-menu" data-sidebar-toggle aria-label="Open menu" aria-controls="adminSidebar"><i class="bx bx-menu"></i></button>
+        <div class="topbar-title">
+            <h1>{% if cl %}{{ cl.opts.verbose_name_plural|capfirst }}{% elif title %}{{ title }}{% else %}Dashboard{% endif %}</h1>
+            {% if not is_popup and request.path != '/admin/' %}
+            <nav class="topbar-crumbs" aria-label="Breadcrumb">
+                <a href="{% url 'admin:index' %}">Dashboard</a>
+                {% if opts %}
+                    <i class="bx bx-chevron-right"></i>
+                    {% if original or add %}
+                        <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+                        <i class="bx bx-chevron-right"></i><span>{% if add %}Add{% else %}{{ original|truncatechars:40 }}{% endif %}</span>
+                    {% else %}
+                        <span>{{ opts.verbose_name_plural|capfirst }}</span>
+                    {% endif %}
+                {% endif %}
+            </nav>
+            {% endif %}
+        </div>
     </div>
 
     <div class="topbar-right">
+        <a href="/" target="_blank" rel="noopener" class="topbar-btn" title="Open the store in a new tab"><i class="bx bx-store"></i><span>Store</span></a>
         {% if request.user.is_authenticated %}
-            <div class="user-profile">
-                <div class="user-avatar">{{ request.user.email|first|upper }}</div>
-                <div class="user-info">
-                    <span class="user-name">{{ request.user.get_short_name|default:request.user.email }}</span>
-                    <span class="user-role">Administrator</span>
-                </div>
+        <details class="user-menu">
+            <summary class="user-profile">
+                <span class="user-avatar">{{ request.user.email|first|upper }}</span>
+                <span class="user-info">
+                    <span class="user-name">{{ request.user.get_short_name|default:request.user.email|truncatechars:24 }}</span>
+                    <span class="user-role">{% if request.user.is_superuser %}Owner{% else %}Staff{% endif %}</span>
+                </span>
+                <i class="bx bx-chevron-down"></i>
+            </summary>
+            <div class="user-dropdown">
+                <div class="user-dropdown-head">{{ request.user.email }}</div>
+                <a href="{% url 'admin:password_change' %}"><i class="bx bx-lock-alt"></i> Change password</a>
+                <a href="{% url 'admin:web_sitesettings_change' 1 %}"><i class="bx bx-cog"></i> Site settings</a>
+                <form action="{% url 'admin:logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit"><i class="bx bx-log-out"></i> Log out</button>
+                </form>
             </div>
+        </details>
         {% endif %}
     </div>
 </header>

@@ -8,14 +8,14 @@
 
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-light: #eef2ff;
+            --primary: #d7182a;
+            --primary-light: #fdecee;
             --text: #1e293b;
             --muted: #64748b;
             --border: #e2e8f0;
             --background: #f8fafc;
             --danger: #ef4444;
-            --success: #10b981;
+            --success: #12924a;
         }
 
         body {
@@ -369,7 +369,7 @@
             cursor: pointer;
         }
 
-        .gallery-browse:hover { background: #4338ca; }
+        .gallery-browse:hover { background: #b31322; }
 
         .gallery-upload-input { display: none !important; }
 
@@ -385,8 +385,8 @@
             margin-top: 13px;
             padding: 10px 12px;
             border-radius: 8px;
-            background: #eef2ff;
-            color: #4338ca;
+            background: #fdecee;
+            color: #b31322;
             font-size: 12px;
         }
 
@@ -605,7 +605,7 @@
         .action-discard:hover { background: #dc2626; }
         .action-draft { background: #3b82f6; }
         .action-draft:hover { background: #2563eb; }
-        .action-publish { background: #10b981; }
+        .action-publish { background: #12924a; }
         .action-publish:hover { background: #059669; }
 
         .product-action:disabled {
@@ -642,6 +642,64 @@
             }
         }
     </style>
+    <style>
+        /* ── Product form redesign ───────────────────────── */
+        .pf-bar { position: sticky; top: var(--topbar-height, 68px); z-index: 20; display: grid; grid-template-columns: 1fr auto; gap: 10px 16px;
+            align-items: center; margin: -8px 0 20px; padding: 16px 20px 0; background: rgba(255,255,255,.96); backdrop-filter: blur(8px);
+            border: 1px solid #e7e9ee; border-radius: 14px; box-shadow: 0 6px 20px rgba(17,24,39,.05); }
+        .pf-bar-title { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .pf-bar-icon { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: #fdecee; color: #d7182a; font-size: 22px; }
+        .pf-bar h1 { margin: 0; font-size: 19px !important; font-weight: 800; color: #111827 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52vw; }
+        .pf-bar p { margin: 3px 0 0; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #6b7280; }
+        .pf-status { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .pf-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+        .pf-status.on { background: #e8f6ee; color: #15803d; }
+        .pf-status.off { background: #f1f2f5; color: #6b7280; }
+        .pf-view { color: #d7182a !important; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .pf-bar .product-actions { position: static; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .pf-bar .product-action { height: 40px; padding: 0 16px; border-radius: 10px; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; cursor: pointer; border: 1px solid #d6dae1; background: #fff; color: #374151 !important; }
+        .pf-bar .product-action:hover { background: #f8f9fb; }
+        .pf-bar .action-publish { background: #d7182a !important; border-color: #d7182a !important; color: #fff !important; box-shadow: 0 6px 16px rgba(215,24,42,.25); }
+        .pf-bar .action-publish:hover { background: #b31322 !important; }
+        .pf-nav { grid-column: 1 / -1; display: flex; gap: 2px; overflow-x: auto; margin: 4px -20px 0; padding: 0 14px; border-top: 1px solid #eef0f3; scrollbar-width: none; }
+        .pf-nav a { padding: 11px 12px; font-size: 13px; font-weight: 600; color: #6b7280 !important; text-decoration: none !important; border-bottom: 2px solid transparent; white-space: nowrap; }
+        .pf-nav a:hover { color: #111827 !important; }
+        .pf-nav a.active { color: #d7182a !important; border-bottom-color: #d7182a; }
+        .product-card, .gallery-card { scroll-margin-top: 190px; border: 1px solid #e7e9ee !important; border-radius: 14px !important; box-shadow: 0 1px 2px rgba(17,24,39,.04), 0 4px 16px rgba(17,24,39,.04) !important; }
+        .card-heading { display: grid; grid-template-columns: 40px 1fr; column-gap: 12px; align-items: center; padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid #eef0f3; }
+        .card-heading .sec-icon { grid-row: span 2; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: #f8f9fb; border: 1px solid #e7e9ee; color: #d7182a; font-size: 20px; }
+        .card-heading h2 { margin: 0 !important; font-size: 16px !important; }
+        .card-heading p { margin: 2px 0 0 !important; }
+        .product-layout > div:last-child { align-self: start; }
+        .url-field { display: flex; align-items: stretch; border: 1px solid #cfd6e0; border-radius: 8px; overflow: hidden; background: #fff; }
+        .url-field span { display: flex; align-items: center; padding: 0 12px; background: #f8f9fb; color: #6b7280; font-size: 13px; border-right: 1px solid #e7e9ee; white-space: nowrap; }
+        .admin-content .url-field input { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+        .lang-tabs { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 12px; background: #f3f4f7; border-radius: 10px; }
+        .admin-content .lang-tabs button { display: inline-flex !important; align-items: center; gap: 8px; padding: 7px 14px !important; border: 0 !important; border-radius: 8px !important; background: transparent !important; color: #6b7280 !important; font-size: 13.5px !important; font-weight: 600 !important; }
+        .admin-content .lang-tabs button span { font-size: 10.5px; padding: 1px 5px; border-radius: 4px; background: #e2e5ea; color: #4b5563; }
+        .admin-content .lang-tabs button.active { background: #fff !important; color: #111827 !important; box-shadow: 0 1px 3px rgba(17,24,39,.12) !important; }
+        .admin-content .lang-tabs button.active span { background: #d7182a; color: #fff; }
+        .lang-pane { display: none; }
+        .lang-pane.active { display: block; }
+        .lang-note { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 13px; color: #6b7280; }
+        .price-preview { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 6px; padding: 14px 16px; border-radius: 12px; background: linear-gradient(135deg, #fff7f8, #fdecee); border: 1px solid #f6c4ca; }
+        .price-preview span { width: 100%; font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #9b1c27; }
+        .price-preview strong { font-size: 26px; font-weight: 800; color: #111827; }
+        .price-preview del { color: #9ca3af; font-size: 15px; }
+        .price-preview em { font-style: normal; font-size: 12px; font-weight: 700; color: #15803d; background: #e8f6ee; padding: 2px 8px; border-radius: 999px; }
+        .upload-zone { border: 2px dashed #e1c3c7 !important; background: #fffafa !important; border-radius: 14px !important; }
+        .upload-zone:hover { border-color: #d7182a !important; background: #fff5f6 !important; }
+        @media (max-width: 1199px) {
+            .product-layout > div:last-child { position: static; }
+            .pf-bar h1 { max-width: 60vw; }
+        }
+        @media (max-width: 768px) {
+            .pf-bar { grid-template-columns: 1fr; top: 0; padding: 12px 14px 0; }
+            .pf-bar .product-actions { justify-content: stretch; }
+            .pf-bar .product-action { flex: 1; justify-content: center; }
+            .pf-nav { margin: 4px -14px 0; }
+        }
+    </style>
 {% endblock %}
 
 
@@ -668,27 +726,77 @@
             </div>
         {% endif %}
 
+        <!-- ACTION BAR -->
+        <div class="pf-bar">
+            <div class="pf-bar-title">
+                <span class="pf-bar-icon"><i class="bx {% if original %}bx-edit{% else %}bx-package{% endif %}"></i></span>
+                <div>
+                    <h1 id="pf-title">{% if original %}{{ original.name }}{% else %}New product{% endif %}</h1>
+                    <p>
+                        <span class="pf-status" id="pf-status"></span>
+                        {% if original %}<a href="{{ original.get_absolute_url }}" target="_blank" rel="noopener" class="pf-view"><i class="bx bx-link-external"></i> View on site</a>{% else %}<span>Fields marked <b>*</b> are required.</span>{% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="product-actions">
+                <a href="{% url 'admin:web_product_changelist' %}" class="product-action action-discard">
+                    <i class="bx bx-x"></i> Discard
+                </a>
+                <button type="submit" name="_save" value="1" class="product-action action-draft" id="save-draft">
+                    <i class="bx bx-save"></i> Save as draft
+                </button>
+                <button type="submit" name="_save" value="1" class="product-action action-publish" id="publish-product">
+                    <i class="bx bx-check-circle"></i> {% if original %}Save &amp; publish{% else %}Publish product{% endif %}
+                </button>
+            </div>
+            <nav class="pf-nav" aria-label="Form sections">
+                <a href="#sec-basics">Basics</a>
+                <a href="#sec-description">Description</a>
+                <a href="#sec-content">Page content</a>
+                <a href="#sec-seo">SEO</a>
+                <a href="#sec-image">Images</a>
+                <a href="#sec-pricing">Price</a>
+                <a href="#sec-organize">Organize</a>
+            </nav>
+        </div>
+
         <div class="product-layout">
 
             <!-- LEFT COLUMN -->
             <div>
 
-                <section class="product-card">
+                <section class="product-card" id="sec-basics">
                     <div class="card-heading">
-                        <h2>Product Information</h2>
-                        <p>Provide the necessary details about your product.</p>
+                        <span class="sec-icon"><i class="bx bx-info-circle"></i></span>
+                        <h2>Basic information</h2>
+                        <p>Name, stock and the product's web address.</p>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label for="{{ adminform.form.name_en.id_for_label }}">
+                                Product Name (English) <span class="required-mark">*</span>
+                            </label>
+                            {{ adminform.form.name_en }}
+                            {{ adminform.form.name_en.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label for="{{ adminform.form.name_bn.id_for_label }}">
+                                Product Name (বাংলা) <span class="optional-mark">(shown on /bn/ pages)</span>
+                            </label>
+                            {{ adminform.form.name_bn }}
+                            {{ adminform.form.name_bn.errors }}
+                        </div>
                     </div>
 
                     <div class="field-group">
-                        <label for="{{ adminform.form.name.id_for_label }}">
-                            Product Name <span class="required-mark">*</span>
+                        <label for="{{ adminform.form.slug.id_for_label }}">
+                            Web address <span class="optional-mark">(empty = made from the name and model, e.g. wara-lock-FT-SCL029)</span>
                         </label>
-                        {{ adminform.form.name }}
-                        {{ adminform.form.name.errors }}
-                    </div>
-
-                    <div style="display:none">
-                        {{ adminform.form.slug }}
+                        <div class="url-field">
+                            <span>{{ request.get_host }}/</span>
+                            {{ adminform.form.slug }}
+                        </div>
                         {{ adminform.form.slug.errors }}
                     </div>
 
@@ -711,18 +819,139 @@
                     </div>
 
                     <div class="field-group">
-                        <label for="{{ adminform.form.description.id_for_label }}">
-                            Product Description
-                            <span class="optional-mark">(Optional)</span>
+                        <label for="{{ adminform.form.model_number.id_for_label }}">
+                            Model Number <span class="optional-mark">(e.g. FT-SCL029)</span>
                         </label>
-                        {{ adminform.form.description }}
-                        {{ adminform.form.description.errors }}
+                        {{ adminform.form.model_number }}
+                        {{ adminform.form.model_number.errors }}
+                    </div>
+
+                </section>
+
+                <!-- DESCRIPTION (CKEditor, English / Bangla tabs) -->
+                <section class="product-card" id="sec-description">
+                    <div class="card-heading">
+                        <span class="sec-icon"><i class="bx bx-paragraph"></i></span>
+                        <h2>Description</h2>
+                        <p>The main text on the product page. Use headings, lists, tables and pictures.</p>
+                    </div>
+                    <div class="lang-tabs" role="tablist" data-lang-tabs>
+                        <button type="button" role="tab" class="active" data-lang="en"><span>EN</span> English</button>
+                        <button type="button" role="tab" data-lang="bn"><span>BN</span> বাংলা</button>
+                    </div>
+                    <div class="lang-pane active" data-lang-pane="en">
+                        {{ adminform.form.description_en }}
+                        {{ adminform.form.description_en.errors }}
+                    </div>
+                    <div class="lang-pane" data-lang-pane="bn">
+                        <p class="lang-note"><i class="bx bx-info-circle"></i> Leave empty to show the English text on Bangla pages.</p>
+                        {{ adminform.form.description_bn }}
+                        {{ adminform.form.description_bn.errors }}
                     </div>
                 </section>
 
-                <!-- MAIN PRODUCT IMAGE -->
-                <section class="product-card">
+                <!-- PRODUCT PAGE CONTENT (English + Bangla) -->
+                <section class="product-card" id="sec-content">
                     <div class="card-heading">
+                        <span class="sec-icon"><i class="bx bx-detail"></i></span>
+                        <h2>Product Page Content</h2>
+                        <p>Everything shown on the product page, in English and বাংলা. Empty Bangla boxes show the English text.</p>
+                    </div>
+
+                    {% for label, en_field, bn_field in text_rows %}
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label for="{{ en_field.id_for_label }}">{{ label }} (English)</label>
+                            {{ en_field }}
+                            {{ en_field.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label for="{{ bn_field.id_for_label }}">{{ label }} (বাংলা)</label>
+                            {{ bn_field }}
+                            {{ bn_field.errors }}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    {% for label, en_field, bn_field in list_rows %}
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label for="{{ en_field.id_for_label }}">{{ label }} (English)</label>
+                            {{ en_field }}
+                            {% if en_field.help_text %}<p class="help">{{ en_field.help_text }}</p>{% endif %}
+                            {{ en_field.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label for="{{ bn_field.id_for_label }}">{{ label }} (বাংলা)</label>
+                            {{ bn_field }}
+                            {% if bn_field.help_text %}<p class="help">{{ bn_field.help_text }}</p>{% endif %}
+                            {{ bn_field.errors }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </section>
+
+                <!-- SEO & SHARING (Phase 6) -->
+                <section class="product-card" id="sec-seo">
+                    <div class="card-heading">
+                        <span class="sec-icon"><i class="bx bx-search-alt"></i></span>
+                        <h2>SEO &amp; Sharing</h2>
+                        <p>What Google shows, and the card people see when this product is shared on Facebook / WhatsApp. Leave empty to use the name, short description and main image.</p>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label for="{{ adminform.form.seo_title_en.id_for_label }}">SEO title (English) <span class="optional-mark">~60 characters</span></label>
+                            {{ adminform.form.seo_title_en }}{{ adminform.form.seo_title_en.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label for="{{ adminform.form.seo_title_bn.id_for_label }}">SEO title (বাংলা)</label>
+                            {{ adminform.form.seo_title_bn }}{{ adminform.form.seo_title_bn.errors }}
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label for="{{ adminform.form.seo_description_en.id_for_label }}">SEO description (English) <span class="optional-mark">~155 characters</span></label>
+                            {{ adminform.form.seo_description_en }}{{ adminform.form.seo_description_en.errors }}
+                        </div>
+                        <div class="field-group">
+                            <label for="{{ adminform.form.seo_description_bn.id_for_label }}">SEO description (বাংলা)</label>
+                            {{ adminform.form.seo_description_bn }}{{ adminform.form.seo_description_bn.errors }}
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label for="{{ adminform.form.share_image.id_for_label }}">Share image <span class="optional-mark">1200×630 · empty = main product image</span></label>
+                        {{ adminform.form.share_image }}{{ adminform.form.share_image.errors }}
+                    </div>
+                    <div class="seo-preview" aria-hidden="true">
+                        <span class="seo-preview-url">{{ request.get_host }}/{{ adminform.form.slug.value|default:"product-link" }}</span>
+                        <span class="seo-preview-title" data-seo-title>{% firstof adminform.form.seo_title_en.value adminform.form.name_en.value "Product title" %}</span>
+                        <span class="seo-preview-text" data-seo-text>{% firstof adminform.form.seo_description_en.value adminform.form.short_description_en.value "Short description shown under the title on Google." %}</span>
+                    </div>
+                </section>
+                <style>
+                    .seo-preview { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; padding: 14px 16px; border: 1px dashed #d6dae1; border-radius: 10px; background: #fcfcfd; font-family: Arial, sans-serif; }
+                    .seo-preview-url { color: #202124; font-size: 12px; }
+                    .seo-preview-title { color: #1a0dab; font-size: 18px; line-height: 1.3; }
+                    .seo-preview-text { color: #4d5156; font-size: 13px; line-height: 1.45; }
+                </style>
+                <script>
+                (function () {
+                    function bind(id, target, fallbackId) {
+                        var input = document.getElementById(id), out = document.querySelector(target);
+                        var fb = fallbackId && document.getElementById(fallbackId);
+                        if (!out) return;
+                        function paint() { var v = (input && input.value.trim()) || (fb && fb.value.trim()) || out.textContent; out.textContent = v; }
+                        [input, fb].forEach(function (el) { if (el) el.addEventListener("input", paint); });
+                    }
+                    bind("id_seo_title_en", "[data-seo-title]", "id_name_en");
+                    bind("id_seo_description_en", "[data-seo-text]", "id_short_description_en");
+                })();
+                </script>
+
+                <!-- MAIN PRODUCT IMAGE -->
+                <section class="product-card" id="sec-image">
+                    <div class="card-heading">
+                        <span class="sec-icon"><i class="bx bx-image"></i></span>
                         <h2>Product Image</h2>
                         <p>Upload the main image displayed for this product.</p>
                     </div>
@@ -826,8 +1055,9 @@
             <div>
 
                 <!-- PRICING -->
-                <section class="product-card">
+                <section class="product-card" id="sec-pricing">
                     <div class="card-heading">
+                        <span class="sec-icon"><i class="bx bx-purchase-tag-alt"></i></span>
                         <h2>Pricing</h2>
                         <p>Set your product price and discount.</p>
                     </div>
@@ -864,11 +1094,18 @@
                         </div>
                         {{ adminform.form.discount_price.errors }}
                     </div>
+                    <div class="price-preview" id="price-preview" aria-live="polite">
+                        <span>Customer pays</span>
+                        <strong id="pp-now">৳0</strong>
+                        <del id="pp-was"></del>
+                        <em id="pp-save"></em>
+                    </div>
                 </section>
 
                 <!-- ORGANIZE -->
-                <section class="product-card">
+                <section class="product-card" id="sec-organize">
                     <div class="card-heading">
+                        <span class="sec-icon"><i class="bx bx-category"></i></span>
                         <h2>Organize</h2>
                         <p>Organize and categorize your product.</p>
                     </div>
@@ -926,6 +1163,16 @@
                         {{ adminform.form.is_active.errors }}
                     </div>
 
+                    <div class="field-group">
+                        <div class="status-box">
+                            {{ adminform.form.is_featured }}
+                            <label for="{{ adminform.form.is_featured.id_for_label }}">
+                                Featured (home page &amp; footer links)
+                            </label>
+                        </div>
+                        {{ adminform.form.is_featured.errors }}
+                    </div>
+
                     {% if adminform.form.tags %}
                         <div class="field-group">
                             <label for="{{ adminform.form.tags.id_for_label }}">Tags</label>
@@ -941,48 +1188,75 @@
             </div>
         </div>
 
-        <!-- ACTIONS -->
-        <div class="product-actions">
-
-            <a
-                href="{% url 'admin:web_product_changelist' %}"
-                class="product-action action-discard"
-            >
-                <i class="bx bx-x"></i>
-                Discard
-            </a>
-
-            <button
-                type="submit"
-                name="_save"
-                value="1"
-                class="product-action action-draft"
-                id="save-draft"
-            >
-                <i class="bx bx-save"></i>
-                Save as Draft
-            </button>
-
-            <button
-                type="submit"
-                name="_save"
-                value="1"
-                class="product-action action-publish"
-                id="publish-product"
-            >
-                <i class="bx bx-check-circle"></i>
-                Publish Product
-            </button>
-
-        </div>
-
     </form>
 </div>
 {% endblock %}
 
 
-{% block admin_change_form_document_ready %}
+{% block footer %}{# page scripts: this template replaces the whole content block, so they live in the footer #}
     {{ block.super }}
+    <script>
+    (function () {
+        "use strict";
+        function ready(fn) { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn); else fn(); }
+        ready(function () {
+            /* English / Bangla tabs */
+            document.querySelectorAll("[data-lang-tabs]").forEach(function (tabs) {
+                var card = tabs.closest("section");
+                tabs.addEventListener("click", function (e) {
+                    var btn = e.target.closest("button[data-lang]");
+                    if (!btn) return;
+                    tabs.querySelectorAll("button").forEach(function (b) { b.classList.toggle("active", b === btn); });
+                    card.querySelectorAll("[data-lang-pane]").forEach(function (p) {
+                        p.classList.toggle("active", p.dataset.langPane === btn.dataset.lang);
+                    });
+                });
+            });
+
+            /* Status pill + live title */
+            var active = document.getElementById("id_is_active");
+            var pill = document.getElementById("pf-status");
+            function paintStatus() {
+                if (!pill || !active) return;
+                pill.textContent = active.checked ? "Published" : "Draft";
+                pill.className = "pf-status " + (active.checked ? "on" : "off");
+            }
+            if (active) active.addEventListener("change", paintStatus);
+            paintStatus();
+            var nameEn = document.getElementById("id_name_en"), title = document.getElementById("pf-title");
+            if (nameEn && title) nameEn.addEventListener("input", function () { title.textContent = nameEn.value.trim() || "New product"; });
+
+            /* Customer price preview: same rules as Product.current_price */
+            var price = document.getElementById("id_price"), type = document.getElementById("id_discount_type"),
+                value = document.getElementById("id_discount_price");
+            function taka(n) { return "৳" + Math.round(n).toLocaleString("en-IN"); }
+            function paintPrice() {
+                var p = parseFloat(price && price.value) || 0, v = parseFloat(value && value.value) || 0,
+                    kind = type ? type.value : "none", now = p;
+                if (kind === "percent" && v) now = p - p * v / 100;
+                else if (kind === "fixed" && v) now = Math.max(0, p - v);
+                else if (kind !== "percent" && kind !== "fixed" && v) now = v;
+                document.getElementById("pp-now").textContent = taka(now);
+                document.getElementById("pp-was").textContent = now < p ? taka(p) : "";
+                document.getElementById("pp-save").textContent = now < p ? "Save " + taka(p - now) : "";
+            }
+            [price, type, value].forEach(function (el) { if (el) { el.addEventListener("input", paintPrice); el.addEventListener("change", paintPrice); } });
+            paintPrice();
+
+            /* Section shortcuts: highlight the section in view */
+            var links = Array.prototype.slice.call(document.querySelectorAll(".pf-nav a"));
+            if ("IntersectionObserver" in window && links.length) {
+                var io = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (en) {
+                        if (!en.isIntersecting) return;
+                        links.forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + en.target.id); });
+                    });
+                }, { rootMargin: "-45% 0px -50% 0px" });
+                links.forEach(function (a) { var s = document.querySelector(a.getAttribute("href")); if (s) io.observe(s); });
+            }
+        });
+    })();
+    </script>
 
     <script>
     (function () {
@@ -1006,7 +1280,7 @@
 
             /* Placeholders */
             const placeholders = {
-                id_name: "Enter product name",
+                id_name_en: "Enter product name (English)",
                 id_sku: "Enter product SKU",
                 id_stock: "Enter available stock",
                 id_price: "Enter base price",
@@ -1014,7 +1288,7 @@
                 id_brand: "Enter brand name",
                 id_sub_category: "Enter subcategory",
                 id_tags: "Enter tags separated by commas",
-                id_description: "Write a detailed product description..."
+                id_description_en: "Write a detailed product description..."
             };
 
             Object.entries(placeholders).forEach(function ([id, value]) {
@@ -1043,7 +1317,7 @@
             });
 
             /* Automatic slug generation */
-            const nameField = document.getElementById("id_name");
+            const nameField = document.getElementById("id_name_en");
             const slugField = document.getElementById("id_slug");
 
             if (nameField && slugField) {

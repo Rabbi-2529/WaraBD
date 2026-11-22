@@ -1,142 +1,123 @@
-{% load i18n %}
-<aside class="admin-sidebar">
+{% load i18n admin_dt %}
+{% admin_counts as badge %}
+{% with p=request.path %}
+<aside class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-brand">
-        <a href="{% url 'admin:index' %}">
-            <span class="brand-icon" style="background: #4f46e5; color: white;">W</span>
-            <span class="brand-text">WaRa Admin</span>
+        <a href="{% url 'admin:index' %}" class="brand-link">
+            {% if site_settings.logo %}
+                <span class="brand-logo"><img src="{{ site_settings.logo.url }}" alt=""></span>
+            {% else %}
+                <span class="brand-icon">W</span>
+            {% endif %}
+            <span class="brand-text"><span>WaRa<b>BD</b></span><small>Store admin</small></span>
         </a>
+        <button type="button" class="sidebar-close" data-sidebar-toggle aria-label="Close menu"><i class="bx bx-x"></i></button>
     </div>
 
-    <div class="sidebar-menu">
-        <div class="menu-group-title">Main</div>
-        
-        <a href="{% url 'admin:index' %}" class="menu-link {% if request.path == '/admin/' %}active{% endif %}">
-            <i class="bx bx-grid-alt"></i> <span>Dashboards</span>
+    <nav class="sidebar-menu" aria-label="Admin menu">
+        <a href="{% url 'admin:index' %}" class="menu-link {% if p == '/admin/' %}active{% endif %}">
+            <i class="bx bx-grid-alt"></i><span>Dashboard</span>
         </a>
-        
-        <a href="/" target="_blank" class="menu-link">
-            <i class="bx bx-rocket"></i> <span>Landing Page</span>
+        <a href="/" target="_blank" rel="noopener" class="menu-link">
+            <i class="bx bx-store"></i><span>View store</span><i class="bx bx-link-external menu-ext"></i>
         </a>
 
-        <div class="menu-group-title">Apps</div>
-        
-        <details class="menu-dropdown ecommerce-dropdown" id="ecommerceMenu" open>
-            <summary class="menu-link {% if '/web/product' in request.path or '/web/category' in request.path or '/web/order' in request.path or '/web/contactmessage' in request.path %}active{% endif %}">
-                <i class="bx bx-store-alt"></i> <span>E-commerce</span>
+        <div class="menu-group-title">Sales</div>
+        {# Orders: main menu with sub-pages #}
+        <details class="menu-dropdown" {% if '/web/order/' in p %}open{% endif %}>
+            <summary class="menu-link {% if '/web/order/' in p %}active{% endif %}">
+                <i class="bx bx-receipt"></i><span>Orders</span>
+                {% if badge.orders_pending %}<span class="menu-badge" title="Pending orders">{{ badge.orders_pending }}</span>{% endif %}
                 <i class="bx bx-chevron-down chevron"></i>
             </summary>
-            
-            <div class="submenu-wrapper"><div class="submenu-inner">
-                <div class="submenu">
-                    
-                    {# Products #}
-                    <details class="menu-dropdown nested-dropdown">
-                        <summary class="submenu-link">
-                            <span class="icon-spacer"></span><span>Products</span>
-                            <i class="bx bx-chevron-down chevron"></i>
-                        </summary>
-                        <div class="submenu-wrapper"><div class="submenu-inner">
-                            <div class="submenu-deep">
-                                <a href="{% url 'admin:web_product_changelist' %}" class="submenu-link {% if 'web_product' in request.path %}active{% endif %}">
-                                    <span class="icon-spacer"></span><span>Products List</span>
-                                </a>
-                                <a href="{% url 'admin:web_product_add' %}" class="submenu-link">
-                                    <span class="icon-spacer"></span><span>Add Product</span>
-                                </a>
-                            </div>
-                        </div></div>
-                    </details>
-
-                    {# Categories #}
-                    <a href="{% url 'admin:web_category_changelist' %}" class="submenu-link {% if 'web_category' in request.path %}active{% endif %}">
-                        <span class="icon-spacer"></span><span>Categories</span>
-                    </a>
-
-                    {# Orders #}
-                    <details class="menu-dropdown nested-dropdown">
-                        <summary class="submenu-link">
-                            <span class="icon-spacer"></span><span>Orders</span>
-                            <i class="bx bx-chevron-down chevron"></i>
-                        </summary>
-                        <div class="submenu-wrapper"><div class="submenu-inner">
-                            <div class="submenu-deep">
-                                <a href="{% url 'admin:web_order_changelist' %}" class="submenu-link {% if 'web_order' in request.path and 'add' not in request.path %}active{% endif %}">
-                                    <span class="icon-spacer"></span><span>Order List</span>
-                                </a>
-                                <a href="{% url 'admin:web_order_add' %}" class="submenu-link {% if 'web_order/add' in request.path %}active{% endif %}">
-                                    <span class="icon-spacer"></span><span>Add Order</span>
-                                </a>
-                            </div>
-                        </div></div>
-                    </details>
-
-                    {# Customers / Messages #}
-                    <a href="{% url 'admin:web_contactmessage_changelist' %}" class="submenu-link">
-                        <span class="icon-spacer"></span><span>Messages</span>
-                    </a>
-                    <a href="{% url 'admin:users_user_changelist' %}" class="submenu-link">
-                        <span class="icon-spacer"></span><span>Customers</span>
-                    </a>
-
-                </div>
-            </div></div>
+            <div class="submenu-wrapper"><div class="submenu-inner"><div class="submenu">
+                <a href="{% url 'admin:web_order_add' %}" class="submenu-link {% if '/web/order/add/' in p %}active{% endif %}">Create order</a>
+                <a href="{% url 'admin:web_order_changelist' %}" class="submenu-link {% if '/web/order/' in p and '/add/' not in p and not request.GET %}active{% endif %}">Order list</a>
+                <a href="{% url 'admin:web_order_changelist' %}?status__exact=pending" class="submenu-link {% if request.GET.status__exact == 'pending' %}active{% endif %}">Pending orders{% if badge.orders_pending %} <span class="sub-count">{{ badge.orders_pending }}</span>{% endif %}</a>
+                <a href="{% url 'admin:web_order_changelist' %}?payment_status__exact=verifying" class="submenu-link {% if request.GET.payment_status__exact == 'verifying' %}active{% endif %}">Check bKash / Nagad{% if badge.payments_verifying %} <span class="sub-count warn">{{ badge.payments_verifying }}</span>{% endif %}</a>
+            </div></div></div>
         </details>
 
-        {# WEBSITE CONTENT — everything the storefront pages read from the database #}
-        {% with p=request.path %}
-        <details class="menu-dropdown ecommerce-dropdown" id="contentMenu" {% if '/web/site' in p or '/web/usecase' in p or '/web/timelinestep' in p or '/web/portfolioproject' in p %}open{% endif %}>
-            <summary class="menu-link {% if '/web/site' in p or '/web/usecase' in p or '/web/timelinestep' in p or '/web/portfolioproject' in p %}active{% endif %}">
-                <i class="bx bx-layout"></i> <span>Website Content</span>
+        {# Products: main menu with sub-pages #}
+        <details class="menu-dropdown" {% if '/web/product/' in p or '/web/category/' in p %}open{% endif %}>
+            <summary class="menu-link {% if '/web/product/' in p or '/web/category/' in p %}active{% endif %}">
+                <i class="bx bx-package"></i><span>Products</span>
                 <i class="bx bx-chevron-down chevron"></i>
             </summary>
-            <div class="submenu-wrapper"><div class="submenu-inner">
-                <div class="submenu">
-                    <a href="{% url 'admin:web_sitesettings_change' 1 %}" class="submenu-link {% if '/web/sitesettings' in p %}active{% endif %}">
-                        <span class="icon-spacer"></span><span>Site Settings</span>
-                    </a>
-                    <a href="{% url 'admin:web_sitehighlight_changelist' %}" class="submenu-link {% if '/web/sitehighlight' in p %}active{% endif %}">
-                        <span class="icon-spacer"></span><span>Home Highlights</span>
-                    </a>
-                    <a href="{% url 'admin:web_sitefeature_changelist' %}" class="submenu-link {% if '/web/sitefeature' in p %}active{% endif %}">
-                        <span class="icon-spacer"></span><span>Feature Cards</span>
-                    </a>
-                    <a href="{% url 'admin:web_usecase_changelist' %}" class="submenu-link {% if '/web/usecase' in p %}active{% endif %}">
-                        <span class="icon-spacer"></span><span>Use Cases</span>
-                    </a>
-                    <a href="{% url 'admin:web_timelinestep_changelist' %}" class="submenu-link {% if '/web/timelinestep' in p %}active{% endif %}">
-                        <span class="icon-spacer"></span><span>About Timeline</span>
-                    </a>
-                    <a href="{% url 'admin:web_portfolioproject_changelist' %}" class="submenu-link {% if '/web/portfolioproject' in p %}active{% endif %}">
-                        <span class="icon-spacer"></span><span>Portfolio Projects</span>
-                    </a>
-                </div>
-            </div></div>
+            <div class="submenu-wrapper"><div class="submenu-inner"><div class="submenu">
+                <a href="{% url 'admin:web_product_add' %}" class="submenu-link {% if '/web/product/add/' in p %}active{% endif %}">Create product</a>
+                <a href="{% url 'admin:web_product_changelist' %}" class="submenu-link {% if '/web/product/' in p and '/add/' not in p %}active{% endif %}">Product list</a>
+                <a href="{% url 'admin:web_category_add' %}" class="submenu-link {% if '/web/category/add/' in p %}active{% endif %}">Create category</a>
+                <a href="{% url 'admin:web_category_changelist' %}" class="submenu-link {% if '/web/category/' in p and '/add/' not in p %}active{% endif %}">Category list</a>
+            </div></div></div>
         </details>
-        {% endwith %}
 
-        {# OTHER APPS #}
-        <a href="{% url 'admin:users_user_changelist' %}" class="menu-link"><i class="bx bx-user"></i> <span>Users</span></a>
-        <a href="{% url 'admin:password_change' %}" class="menu-link"><i class="bx bx-lock-alt"></i> <span>Change Password</span></a>
-        
-        <form action="{% url 'admin:logout' %}" method="post" class="m-0">
+        <a href="{% url 'admin:customers_customer_changelist' %}" class="menu-link {% if '/customers/customer/' in p %}active{% endif %}">
+            <i class="bx bx-user-circle"></i><span>Customers</span>
+        </a>
+
+        <div class="menu-group-title">Delivery</div>
+        <a href="{% url 'admin:web_district_changelist' %}" class="menu-link {% if '/web/district/' in p %}active{% endif %}">
+            <i class="bx bx-map"></i><span>District charges</span>
+        </a>
+        <a href="{% url 'admin:web_thana_changelist' %}" class="menu-link {% if '/web/thana/' in p %}active{% endif %}">
+            <i class="bx bx-map-pin"></i><span>Thana / upazila</span>
+        </a>
+
+        <div class="menu-group-title">Website</div>
+        <a href="{% url 'admin:web_sitesettings_change' 1 %}" class="menu-link {% if '/web/sitesettings/' in p %}active{% endif %}">
+            <i class="bx bx-cog"></i><span>Site settings</span>
+        </a>
+        <a href="{% url 'admin:web_contentblock_changelist' %}" class="menu-link {% if '/web/contentblock/' in p %}active{% endif %}">
+            <i class="bx bx-text"></i><span>Page text</span>
+        </a>
+        <a href="{% url 'admin:web_page_changelist' %}" class="menu-link {% if '/web/page/' in p %}active{% endif %}">
+            <i class="bx bx-file"></i><span>Policy pages</span>
+        </a>
+        <a href="{% url 'admin:web_pageseo_changelist' %}" class="menu-link {% if '/web/pageseo/' in p %}active{% endif %}">
+            <i class="bx bx-search-alt"></i><span>Page SEO</span>
+        </a>
+        <details class="menu-dropdown" {% if '/web/contentitem/' in p or '/web/site' in p and '/web/sitesettings/' not in p or '/web/usecase/' in p or '/web/timelinestep/' in p or '/web/portfolioproject/' in p %}open{% endif %}>
+            <summary class="menu-link">
+                <i class="bx bx-layer"></i><span>Page sections</span><i class="bx bx-chevron-down chevron"></i>
+            </summary>
+            <div class="submenu-wrapper"><div class="submenu-inner"><div class="submenu">
+                <a href="{% url 'admin:web_contentitem_changelist' %}" class="submenu-link {% if '/web/contentitem/' in p %}active{% endif %}">Page lists</a>
+                <a href="{% url 'admin:web_sitehighlight_changelist' %}" class="submenu-link {% if '/web/sitehighlight/' in p %}active{% endif %}">Home highlights</a>
+                <a href="{% url 'admin:web_sitefeature_changelist' %}" class="submenu-link {% if '/web/sitefeature/' in p %}active{% endif %}">Feature cards</a>
+                <a href="{% url 'admin:web_usecase_changelist' %}" class="submenu-link {% if '/web/usecase/' in p %}active{% endif %}">Use cases</a>
+                <a href="{% url 'admin:web_timelinestep_changelist' %}" class="submenu-link {% if '/web/timelinestep/' in p %}active{% endif %}">About timeline</a>
+                <a href="{% url 'admin:web_portfolioproject_changelist' %}" class="submenu-link {% if '/web/portfolioproject/' in p %}active{% endif %}">Portfolio projects</a>
+            </div></div></div>
+        </details>
+
+        <div class="menu-group-title">Messages</div>
+        <a href="{% url 'admin:web_contactmessage_changelist' %}" class="menu-link {% if '/web/contactmessage/' in p %}active{% endif %}">
+            <i class="bx bx-envelope"></i><span>Messages</span>
+            {% if badge.messages_unread %}<span class="menu-badge" title="Unread">{{ badge.messages_unread }}</span>{% endif %}
+        </a>
+        <a href="{% url 'admin:customers_smslog_changelist' %}" class="menu-link {% if '/customers/smslog/' in p %}active{% endif %}">
+            <i class="bx bx-message-square-detail"></i><span>SMS log</span>
+        </a>
+        <a href="{% url 'admin:customers_otpcode_changelist' %}" class="menu-link {% if '/customers/otpcode/' in p %}active{% endif %}">
+            <i class="bx bx-shield-quarter"></i><span>OTP codes</span>
+        </a>
+
+        {% if request.user.is_superuser %}
+        <div class="menu-group-title">Team</div>
+        <a href="{% url 'admin:users_user_changelist' %}" class="menu-link {% if '/users/user/' in p %}active{% endif %}">
+            <i class="bx bx-group"></i><span>Staff users</span>
+        </a>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-foot">
+        <a href="{% url 'admin:password_change' %}" class="foot-link" title="Change password"><i class="bx bx-lock-alt"></i><span>Password</span></a>
+        <form action="{% url 'admin:logout' %}" method="post">
             {% csrf_token %}
-            <button type="submit" class="menu-link w-100 text-start border-0 bg-transparent">
-                <i class="bx bx-log-out"></i> <span>Log out</span>
-            </button>
+            <button type="submit" class="foot-link" title="Log out"><i class="bx bx-log-out"></i><span>Log out</span></button>
         </form>
     </div>
 </aside>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const ecommerceMenu = document.getElementById('ecommerceMenu');
-        if (localStorage.getItem('ecommerce_menu_open') === 'true') {
-            ecommerceMenu.setAttribute('open', '');
-        } else if (localStorage.getItem('ecommerce_menu_open') === 'false') {
-            ecommerceMenu.removeAttribute('open');
-        }
-        ecommerceMenu.addEventListener('toggle', function() {
-            localStorage.setItem('ecommerce_menu_open', ecommerceMenu.open);
-        });
-    });
-</script>
+<div class="sidebar-backdrop" data-sidebar-toggle></div>
+{% endwith %}

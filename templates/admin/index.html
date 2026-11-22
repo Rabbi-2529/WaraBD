@@ -1,187 +1,169 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static %}
+{% load i18n static admin_dt bd_tags %}
 
-{% block extrastyle %}
-    {{ block.super }}
-    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <!-- ApexCharts CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    
-    <style>
-        body { background-color: #f8fafc; }
-        
-        /* KPI Cards */
-        .stat-card { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); display: flex; align-items: center; transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-3px); }
-        .stat-icon { width: 54px; height: 54px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-right: 16px; }
-        .stat-content { flex: 1; }
-        .stat-label { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .stat-value { font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; }
-        
-        /* Indigo + Navy Theme Colors */
-        .bg-indigo-light { background: #eef2ff; color: #4f46e5; }
-        .bg-green-light { background: #d1fae5; color: #10b981; }
-        .bg-blue-light { background: #e0f2fe; color: #0ea5e9; }
-        .bg-red-light { background: #fee2e2; color: #ef4444; }
-
-        /* Charts & Cards */
-        .chart-card { background: #fff; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); padding: 24px; height: 100%; margin-bottom: 24px; }
-        .chart-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
-        
-        /* Recent Orders Table */
-        .table-custom th { background: #f8fafc; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 600; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
-        .table-custom td { padding: 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px; vertical-align: middle; }
-        
-        .badge-pill { padding: 5px 10px; font-size: 11px; font-weight: 600; border-radius: 50rem; display: inline-block; }
-        .bg-pending { background: #fef3c7; color: #d97706; }
-        .bg-paid { background: #d1fae5; color: #059669; }
-        .bg-shipped { background: #e0f2fe; color: #0284c7; }
-        .bg-cancelled { background: #fee2e2; color: #dc2626; }
-    </style>
-{% endblock %}
+{% block title %}Dashboard | WaRa Admin{% endblock %}
 
 {% block content %}
-<div class="container-fluid p-0">
-    
-    <!-- 1. KPI STAT CARDS -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon bg-green-light"><i class="bx bx-dollar"></i></div>
-                <div class="stat-content">
-                    <p class="stat-label">Total Revenue</p>
-                    <h3 class="stat-value">৳{{ total_revenue|floatformat:0 }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon bg-indigo-light"><i class="bx bx-cart-alt"></i></div>
-                <div class="stat-content">
-                    <p class="stat-label">Total Orders</p>
-                    <h3 class="stat-value">{{ total_orders }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon bg-blue-light"><i class="bx bx-cube-alt"></i></div>
-                <div class="stat-content">
-                    <p class="stat-label">Active Products</p>
-                    <h3 class="stat-value">{{ total_products }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon bg-red-light"><i class="bx bx-envelope"></i></div>
-                <div class="stat-content">
-                    <p class="stat-label">Unread Messages</p>
-                    <h3 class="stat-value">{{ unread_messages }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
+{% admin_dashboard as d %}
 
-    <!-- 2. CHARTS ROW -->
-    <div class="row g-3 mb-4">
-        <!-- Revenue Chart -->
-        <div class="col-lg-8">
-            <div class="chart-card">
-                <h3 class="chart-title">Revenue Overview (Last 6 Months)</h3>
-                <div id="revenueChart"></div>
-            </div>
-        </div>
-        
-        <!-- Orders Chart -->
-        <div class="col-lg-4">
-            <div class="chart-card">
-                <h3 class="chart-title">Orders Volume</h3>
-                <div id="ordersChart"></div>
-            </div>
-        </div>
+<div class="dash-hello">
+    <div>
+        <h2>Hello{% if request.user.get_short_name %}, {{ request.user.get_short_name }}{% endif %} 👋</h2>
+        <p>Here is how the store is doing today, {% now "l, j F Y" %}.</p>
     </div>
-
-    <!-- 3. RECENT ORDERS TABLE -->
-    <div class="row">
-        <div class="col-12">
-            <div class="chart-card p-0">
-                <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
-                    <h3 class="chart-title m-0 border-0 p-0">Recent Orders</h3>
-                    <a href="{% url 'admin:web_order_changelist' %}" class="btn btn-sm btn-outline-primary" style="border-color: #4f46e5; color: #4f46e5;">View All</a>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-custom mb-0">
-                        <thead>
-                            <tr>
-                                <th>Order #</th>
-                                <th>Customer</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for order in recent_orders %}
-                            <tr>
-                                <td><a href="{% url 'admin:web_order_change' order.pk %}" style="font-weight: 600;">{{ order.order_number }}</a></td>
-                                <td>{{ order.full_name }}</td>
-                                <td style="font-weight: 700;">৳{{ order.total }}</td>
-                                <td>
-                                    {% if order.status == 'pending' %}<span class="badge-pill bg-pending">Pending</span>
-                                    {% elif order.status == 'paid' %}<span class="badge-pill bg-paid">Paid</span>
-                                    {% elif order.status == 'shipped' %}<span class="badge-pill bg-shipped">Shipped</span>
-                                    {% elif order.status == 'cancelled' %}<span class="badge-pill bg-cancelled">Cancelled</span>
-                                    {% else %}<span class="badge-pill bg-secondary">{{ order.status }}</span>{% endif %}
-                                </td>
-                                <td style="color: #64748b;">{{ order.created_at|date:"d M, Y h:i A" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="5" class="text-center py-4 text-muted">No orders found.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <div class="dash-quick">
+        <a href="{% url 'admin:web_product_add' %}" class="primary"><i class="bx bx-plus"></i> Add product</a>
+        <a href="{% url 'admin:web_order_changelist' %}?status__exact=pending"><i class="bx bx-time-five"></i> Pending orders</a>
+        <a href="{% url 'admin:web_district_changelist' %}"><i class="bx bx-map"></i> Delivery charges</a>
+        <a href="{% url 'admin:web_sitesettings_change' 1 %}"><i class="bx bx-cog"></i> Settings</a>
     </div>
 </div>
 
-<!-- Pass Django Data to JavaScript safely -->
-{{ chart_months|json_script:"chart-months" }}
-{{ chart_revenue|json_script:"chart-revenue" }}
-{{ chart_orders|json_script:"chart-orders" }}
+<div class="kpi-grid">
+    <a class="kpi" href="{% url 'admin:web_order_changelist' %}">
+        <span class="kpi-icon tone-green"><i class="bx bx-line-chart"></i></span>
+        <span>
+            <p class="kpi-label">Sales this month</p>
+            <p class="kpi-value">{{ d.revenue_month|taka }}</p>
+            <p class="kpi-note">Today {{ d.revenue_today|taka }} · all time {{ d.revenue_total|taka }}</p>
+        </span>
+    </a>
+    <a class="kpi" href="{% url 'admin:web_order_changelist' %}?status__exact=pending">
+        <span class="kpi-icon tone-red"><i class="bx bx-receipt"></i></span>
+        <span>
+            <p class="kpi-label">Orders waiting</p>
+            <p class="kpi-value">{{ d.orders_pending }}</p>
+            <p class="kpi-note">{{ d.orders_today }} new today · {{ d.orders_total }} in total{% if d.payments_verifying %} · {{ d.payments_verifying }} payment{{ d.payments_verifying|pluralize }} to check{% endif %}</p>
+        </span>
+    </a>
+    <a class="kpi" href="{% url 'admin:customers_customer_changelist' %}">
+        <span class="kpi-icon tone-blue"><i class="bx bx-user-circle"></i></span>
+        <span>
+            <p class="kpi-label">Customers</p>
+            <p class="kpi-value">{{ d.customers_total }}</p>
+            <p class="kpi-note">{{ d.customers_new }} joined this month</p>
+        </span>
+    </a>
+    <a class="kpi" href="{% url 'admin:web_product_changelist' %}">
+        <span class="kpi-icon tone-amber"><i class="bx bx-package"></i></span>
+        <span>
+            <p class="kpi-label">Products live</p>
+            <p class="kpi-value">{{ d.products_active }}</p>
+            <p class="kpi-note">{% if d.products_out %}{{ d.products_out }} out of stock{% else %}All in stock{% endif %}</p>
+        </span>
+    </a>
+</div>
 
+<div class="dash-grid">
+    <section class="dash-card">
+        <div class="dash-card-head"><h3>Sales, last 6 months</h3><span class="kpi-note">Cancelled orders not counted</span></div>
+        <div class="dash-card-body"><div id="revenueChart" style="min-height:290px"></div></div>
+    </section>
+    <section class="dash-card">
+        <div class="dash-card-head"><h3>Orders by status</h3><a href="{% url 'admin:web_order_changelist' %}">All orders</a></div>
+        <div class="dash-card-body">
+            <ul class="status-list">
+                {% for s in d.status_breakdown %}
+                <li>
+                    <a href="{% url 'admin:web_order_changelist' %}?status__exact={{ s.key }}">
+                        <span class="chip {% if s.key == 'pending' %}chip-warn{% elif s.key == 'paid' %}chip-info{% elif s.key == 'shipped' %}chip-info{% elif s.key == 'delivered' %}chip-ok{% else %}chip-bad{% endif %}">{{ s.label }}</span>
+                    </a>
+                    <b>{{ s.n }}</b>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="dash-card-head" style="padding:16px 0 8px;border:0"><h3>Top delivery districts</h3></div>
+            {% for row in d.top_districts %}
+                <div style="margin-bottom:10px">
+                    <div style="display:flex;justify-content:space-between;font-size:13.5px"><span>{{ row.city }}</span><b>{{ row.n }} order{{ row.n|pluralize }}</b></div>
+                    <div class="bar"><span style="width:{% widthratio row.n d.top_districts.0.n 100 %}%"></span></div>
+                </div>
+            {% empty %}
+                <p class="kpi-note">No orders yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<div class="dash-grid">
+    <section class="dash-card">
+        <div class="dash-card-head"><h3>Latest orders</h3><a href="{% url 'admin:web_order_changelist' %}">View all</a></div>
+        {% if d.recent_orders %}
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead><tr><th>Order</th><th>Customer</th><th>District</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
+                <tbody>
+                {% for order in d.recent_orders %}
+                    <tr>
+                        <td><a href="{% url 'admin:web_order_change' order.pk %}">#{{ order.order_number }}</a></td>
+                        <td>{{ order.full_name }}<div class="kpi-note">{{ order.phone }}</div></td>
+                        <td>{{ order.city }}{% if order.thana %}<div class="kpi-note">{{ order.thana }}</div>{% endif %}</td>
+                        <td><b>{{ order.total|taka }}</b></td>
+                        <td><span class="chip {% if order.status == 'pending' %}chip-warn{% elif order.status == 'delivered' %}chip-ok{% elif order.status == 'cancelled' %}chip-bad{% else %}chip-info{% endif %}">{{ order.get_status_display }}</span></td>
+                        <td class="kpi-note">{{ order.created_at|date:"j M, g:i A" }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="empty-note">No orders yet. They will show here as soon as a customer checks out.</p>
+        {% endif %}
+    </section>
+
+    <section class="dash-card">
+        <div class="dash-card-head"><h3>Needs attention</h3></div>
+        <div class="dash-card-body">
+            <ul class="status-list">
+                <li><a href="{% url 'admin:web_contactmessage_changelist' %}?is_read__exact=0">Unread messages</a><b>{{ d.messages_unread }}</b></li>
+                <li><a href="{% url 'admin:web_order_changelist' %}?payment_status__exact=verifying">bKash / Nagad to verify</a><b>{{ d.payments_verifying }}</b></li>
+                <li><a href="{% url 'admin:customers_smslog_changelist' %}">SMS sent today</a><b>{{ d.sms_today }}{% if d.sms_failed_today %} <span class="chip chip-bad">{{ d.sms_failed_today }} failed</span>{% endif %}</b></li>
+            </ul>
+            <div class="dash-card-head" style="padding:16px 0 8px;border:0"><h3>Low stock (3 or less)</h3></div>
+            {% for product in d.low_stock %}
+                <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;font-size:13.5px">
+                    <a href="{% url 'admin:web_product_change' product.pk %}">{{ product.name|truncatechars:34 }}</a>
+                    <span class="chip {% if product.stock %}chip-warn{% else %}chip-bad{% endif %}">{{ product.stock }} left</span>
+                </div>
+            {% empty %}
+                <p class="kpi-note">Every product has more than 3 in stock.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+{{ d.chart_months|json_script:"chart-months" }}
+{{ d.chart_revenue|json_script:"chart-revenue" }}
+{{ d.chart_orders|json_script:"chart-orders" }}
+{% endblock %}
+
+{% block footer %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.49.1/dist/apexcharts.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Parse Data
-        const months = JSON.parse(document.getElementById('chart-months').textContent);
-        const revenueData = JSON.parse(document.getElementById('chart-revenue').textContent);
-        const ordersData = JSON.parse(document.getElementById('chart-orders').textContent);
-
-        // 1. Revenue Area Chart
-        const revenueOptions = {
-            series: [{ name: 'Revenue (৳)', data: revenueData }],
-            chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'inherit' },
-            colors: ['#4f46e5'],
-            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
-            dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 3 },
-            xaxis: { categories: months, axisBorder: { show: false }, axisTicks: { show: false } },
-            yaxis: { labels: { formatter: (val) => '৳' + val.toFixed(0) } }
-        };
-        new ApexCharts(document.querySelector("#revenueChart"), revenueOptions).render();
-
-        // 2. Orders Bar Chart
-        const ordersOptions = {
-            series: [{ name: 'Orders', data: ordersData }],
-            chart: { type: 'bar', height: 300, toolbar: { show: false }, fontFamily: 'inherit' },
-            colors: ['#10b981'],
-            plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
-            dataLabels: { enabled: false },
-            xaxis: { categories: months, axisBorder: { show: false }, axisTicks: { show: false } },
-        };
-        new ApexCharts(document.querySelector("#ordersChart"), ordersOptions).render();
-    });
+(function () {
+    var el = document.getElementById("revenueChart");
+    if (!el || !window.ApexCharts) return;
+    var read = function (id) { return JSON.parse(document.getElementById(id).textContent); };
+    new ApexCharts(el, {
+        chart: { height: 290, toolbar: { show: false }, fontFamily: "Inter, sans-serif" },
+        series: [
+            { name: "Sales (৳)", type: "area", data: read("chart-revenue") },
+            { name: "Orders", type: "column", data: read("chart-orders") }
+        ],
+        colors: ["#d7182a", "#0f172a"],
+        stroke: { curve: "smooth", width: [3, 0] },
+        fill: { type: ["gradient", "solid"], opacity: [1, 0.85], gradient: { opacityFrom: .35, opacityTo: .02 } },
+        plotOptions: { bar: { columnWidth: "28%", borderRadius: 4 } },
+        dataLabels: { enabled: false },
+        legend: { position: "top", horizontalAlign: "right" },
+        grid: { borderColor: "#eef2f7", strokeDashArray: 4 },
+        xaxis: { categories: read("chart-months"), axisBorder: { show: false }, axisTicks: { show: false } },
+        yaxis: [
+            { labels: { formatter: function (v) { return "৳" + Math.round(v).toLocaleString("en-IN"); } } },
+            { opposite: true, labels: { formatter: function (v) { return Math.round(v); } } }
+        ],
+        tooltip: { shared: true, intersect: false }
+    }).render();
+})();
 </script>
 {% endblock %}

@@ -125,6 +125,16 @@ svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: n
 .nav-links a.active::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--red); }
 
 .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+/* Language switcher (English <-> বাংলা) */
+.lang-switch { display: inline-flex; align-items: center; gap: 6px; height: 46px; padding: 0 14px; border: 2px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); font-weight: 700; font-size: 14px; white-space: nowrap; transition: border-color .2s, color .2s; }
+.lang-switch:hover { border-color: var(--red); color: var(--red); }
+.lang-switch svg { width: 18px; height: 18px; }
+@media (max-width: 640px) { .lang-switch { height: 40px; padding: 0 10px; } .lang-switch svg { display: none; } }
+
+/* Bangla pages: Bangla font, no negative letter-spacing, a little more line height */
+body.lang-bn { font-family: "Hind Siliguri", Arial, Helvetica, sans-serif; line-height: 1.7; }
+body.lang-bn h1, body.lang-bn h2, body.lang-bn h3, body.lang-bn .p-title, body.lang-bn .logo { letter-spacing: 0; }
 .cart-btn { position: relative; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line); background: var(--white); cursor: pointer; transition: border-color .2s, color .2s; }
 .cart-btn:hover { border-color: var(--red); color: var(--red); }
 .cart-btn svg { width: 20px; height: 20px; }
@@ -643,7 +653,7 @@ svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: n
 @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
 @keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
 
-.js .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+.js .reveal { opacity: 0; transform: translateY(12px); transition: opacity .35s ease, transform .35s ease; }
 .js .reveal.in { opacity: 1; transform: none; }
 
 .tags { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -806,3 +816,160 @@ svg.i { width: 1.15em; height: 1.15em; flex: none; stroke: currentColor; fill: n
     padding: 4px 10px;
     border-radius: 6px;
 }
+/* ---------- Policy / info pages (Phase 3) ---------- */
+.policy-body { max-width: 860px; margin: 0 auto; color: var(--ink); }
+.policy-body h2 { font-size: 22px; margin: 32px 0 10px; }
+.policy-body h2:first-child { margin-top: 0; }
+.policy-body p { color: var(--muted); }
+.policy-body .policy-list li { padding: 4px 0; }
+.policy-body .policy-list li::before { content: "•"; color: var(--red); font-weight: 900; margin-right: 10px; }
+.policy-updated { max-width: 860px; margin: 26px auto 0; font-size: 13px; color: var(--muted); }
+.logo-img { max-height: 48px; width: auto; display: block; }
+
+/* ---------- Customer login / OTP / My Account (Phase 4) ---------- */
+.auth-section { padding-top: 56px; }
+.auth-card { max-width: 480px; margin: 0 auto; text-align: left; }
+.auth-card h1 { font-size: 30px; margin: 0 0 8px; }
+.auth-lead { color: var(--muted); margin: 0 0 22px; }
+.auth-icon { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--red); color: var(--white); margin-bottom: 16px; }
+.auth-icon.green { background: var(--green); }
+.auth-icon svg { width: 26px; height: 26px; }
+.auth-card .field { margin-bottom: 18px; }
+.auth-switch { margin: 20px 0 0; text-align: center; color: var(--muted); }
+.auth-switch a { color: var(--red); font-weight: 700; }
+.otp-input { font-size: 28px !important; letter-spacing: 12px; text-align: center; font-weight: 800; }
+.otp-hint { margin: -8px 0 16px; font-size: 13px; color: var(--muted); }
+.otp-test { margin-bottom: 18px; background: #fff7ed; color: #9a3412; }
+.otp-actions { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+.link-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 6px 0; font-weight: 700; color: var(--red); cursor: pointer; font-size: 14px; }
+.link-btn:disabled { color: var(--muted); cursor: default; }
+.link-btn svg { width: 16px; height: 16px; }
+.co-note { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; font-size: 14px; color: var(--muted); background: var(--soft); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; }
+.co-note svg { width: 18px; height: 18px; color: var(--green); flex: none; margin-top: 2px; }
+.co-note a { color: var(--red); font-weight: 700; }
+.account-btn.is-in { border-color: var(--green); color: var(--green); }
+.account-layout { display: grid; grid-template-columns: 240px 1fr; gap: 28px; align-items: start; }
+.account-nav { display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 10px; background: var(--white); position: sticky; top: 96px; }
+.account-nav a, .account-nav button { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 8px; font-weight: 700; color: var(--ink); background: none; border: 0; width: 100%; text-align: left; cursor: pointer; font-size: 15px; }
+.account-nav a:hover, .account-nav button:hover { background: var(--soft); }
+.account-nav a.active { background: var(--black); color: var(--white); }
+.account-nav svg { width: 18px; height: 18px; }
+.account-cards .card h3 { font-size: 22px; margin-bottom: 2px; word-break: break-word; }
+.table-wrap { overflow-x: auto; }
+.order-table td, .order-table th { white-space: nowrap; }
+.status-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--soft); color: var(--ink); }
+.status-pill.status-delivered { background: var(--green-tint); color: var(--green); }
+.status-pill.status-shipped, .status-pill.status-paid { background: #e0f2fe; color: #0369a1; }
+.status-pill.status-cancelled { background: var(--red-tint); color: var(--red); }
+.address-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.address-card.is-default { border-color: var(--green); }
+.address-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.address-actions form { margin: 0; }
+@media (max-width: 900px) {
+  .account-layout { grid-template-columns: 1fr; }
+  .account-nav { position: static; flex-direction: row; flex-wrap: wrap; }
+  .account-nav a, .account-nav button { width: auto; }
+}
+
+/* ---------- District → thana dropdowns (Select2) & automatic delivery charge ---------- */
+body .select2-container--default .select2-selection--single { height: 50px; border: 2px solid var(--line); border-radius: 8px; background: var(--white); }
+body .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 46px; padding-left: 14px; padding-right: 36px; color: var(--ink); }
+body .select2-container--default .select2-selection--single .select2-selection__placeholder { color: var(--muted); }
+body .select2-container--default .select2-selection--single .select2-selection__arrow { height: 46px; right: 8px; }
+body .select2-container--default.select2-container--focus .select2-selection--single, body .select2-container--default.select2-container--open .select2-selection--single { border-color: var(--black); box-shadow: 0 0 0 4px rgba(15,15,15,.06); }
+body .select2-container--default.select2-container--disabled .select2-selection--single { background: var(--soft); cursor: not-allowed; }
+body .select2-container--default .select2-dropdown { border: 2px solid var(--black); border-radius: 8px; overflow: hidden; font-family: inherit; }
+body .select2-container--default .select2-search--dropdown .select2-search__field { border: 2px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+body .select2-container--default .select2-results__option { padding: 9px 14px; }
+body .select2-container--default .select2-results__option--highlighted[aria-selected] { background: var(--red); color: var(--white); }
+body .field.invalid .select2-container--default .select2-selection--single { border-color: var(--red); background: var(--red-tint); }
+.delivery-quote { display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-radius: 8px; background: var(--soft); color: var(--muted); font-size: 14px; }
+.delivery-quote svg { width: 20px; height: 20px; color: var(--muted); flex: none; }
+.delivery-quote.ready { background: var(--green-tint); color: var(--ink); }
+.delivery-quote.ready svg { color: var(--green); }
+
+/* ---------- Small phones: keep the header on one line (no sideways scroll) ---------- */
+@media (max-width: 480px) {
+  .nav-actions { gap: 6px; }
+  .cart-btn, .menu-toggle { width: 40px; height: 40px; }
+  .cart-btn svg, .menu-toggle svg { width: 18px; height: 18px; }
+  .lang-switch { height: 40px; padding: 0 9px; font-size: 13px; }
+  .logo { font-size: 20px; gap: 6px; }
+  .logo-mark { width: 34px; height: 34px; }
+  .logo-img { max-height: 38px; }
+}
+@media (max-width: 380px) {
+  .logo small { display: none; }
+  .nav-actions { gap: 4px; }
+  .cart-btn, .menu-toggle { width: 38px; height: 38px; }
+}
+html, body { max-width: 100%; overflow-x: clip; }
+
+/* ---------- Tighter spacing (less empty space between sections) ---------- */
+@media (min-width: 641px) { main { margin-bottom: 28px; } }
+.section { padding: 56px 0; }
+.section-sm { padding: 40px 0; }
+.section-head { margin-bottom: 32px; }
+.section-head h2 { margin-bottom: 8px; }
+.hero { padding: 24px 0 56px; }
+.page-banner { padding: 40px 0 36px; }
+.page-banner h1 { margin-bottom: 6px; }
+.spotlight, .about-intro { gap: 40px; }
+.tabs { margin-top: 40px; }
+.cta-band { padding: 36px 40px; }
+.site-footer { padding-top: 48px; }
+.result-head { margin-bottom: 28px; }
+.checkout-layout { gap: 24px; }
+@media (max-width: 991px) {
+  .section { padding: 44px 0; }
+  .section-head { margin-bottom: 24px; }
+  .hero { padding: 16px 0 40px; }
+  .page-banner { padding: 32px 0 28px; }
+  .page-banner h1 { font-size: 30px; }
+  .spotlight, .about-intro { gap: 28px; }
+}
+@media (max-width: 640px) {
+  .section { padding: 32px 0; }
+  .section-sm { padding: 28px 0; }
+  .section-head { margin-bottom: 20px; }
+  .page-banner { padding: 26px 0 22px; }
+  .page-banner h1 { font-size: 26px; }
+  .page-banner p { font-size: 15px; }
+  .hero-visual { min-height: 280px; }
+  .cta-band { padding: 28px 20px; }
+  .site-footer { padding-top: 36px; }
+  .footer-grid { gap: 22px; }
+  .tabs { margin-top: 28px; }
+}
+
+/* ---------- Courier tracking box (track order / my orders) ---------- */
+.courier-box { display: flex; align-items: center; gap: 14px; margin-top: 16px; padding: 14px 16px; border: 2px solid var(--green); border-radius: 10px; background: var(--green-tint); }
+.courier-box > svg, .courier-box > i { width: 24px; height: 24px; color: var(--green); flex: none; }
+.courier-box div { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.courier-box span { font-size: 14px; color: var(--muted); }
+.courier-box code { font-weight: 700; color: var(--ink); }
+@media (max-width: 640px) { .courier-box { flex-wrap: wrap; } .courier-box .btn { width: 100%; } }
+
+/* ---------- Rich text written in the admin editor (product description, policy pages) ---------- */
+.rich-text { color: var(--ink); line-height: 1.75; }
+.rich-text > *:first-child { margin-top: 0; }
+.rich-text p { margin: 0 0 14px; }
+.rich-text h2 { font-size: 22px; margin: 22px 0 10px; }
+.rich-text h3 { font-size: 18px; margin: 18px 0 8px; }
+.rich-text ul, .rich-text ol { margin: 0 0 14px; padding-left: 22px; }
+.rich-text li { margin: 4px 0; }
+.rich-text a { color: var(--red); text-decoration: underline; }
+.rich-text blockquote { margin: 16px 0; padding: 10px 16px; border-left: 4px solid var(--red); background: var(--soft); border-radius: 0 8px 8px 0; }
+.rich-text figure { margin: 16px 0; }
+.rich-text figure.image img, .rich-text img { max-width: 100%; height: auto; border-radius: 10px; }
+.rich-text figure.image-style-side { float: right; max-width: 45%; margin: 4px 0 12px 18px; }
+.rich-text figcaption { font-size: 13px; color: var(--muted); text-align: center; margin-top: 6px; }
+.rich-text figure.table { overflow-x: auto; }
+.rich-text table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 15px; }
+.rich-text th, .rich-text td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; vertical-align: top; }
+.rich-text th { background: var(--soft); font-weight: 700; }
+.rich-text::after { content: ""; display: block; clear: both; }
+@media (max-width: 640px) { .rich-text figure.image-style-side { float: none; max-width: 100%; margin: 12px 0; } }
+.policy-body figure img { max-width: 100%; height: auto; border-radius: 10px; }
+.policy-body table { width: 100%; border-collapse: collapse; }
+.policy-body th, .policy-body td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; }

@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
-from .models import Product
+from .models import Page, Product
 
 
 class _SiteUrlSitemap(Sitemap):
@@ -13,7 +13,14 @@ class _SiteUrlSitemap(Sitemap):
 
     The sites framework still holds the default "example.com", so without
     this every sitemap link would point at the wrong domain.
+
+    Every page is listed once per language (/ and /bn/) with hreflang
+    alternates, so Google shows Bangla searchers the Bangla page.
     """
+
+    i18n = True
+    alternates = True
+    x_default = True
 
     def _site(self):
         return urlsplit(getattr(settings, "SITE_URL", "") or "")
@@ -47,7 +54,21 @@ class StaticViewSitemap(_SiteUrlSitemap):
         return reverse(item)
 
 
+class PageSitemap(_SiteUrlSitemap):
+    """Policy / info pages (privacy, terms, returns, warranty & delivery, FAQ)."""
+
+    changefreq = "yearly"
+    priority = 0.4
+
+    def items(self):
+        return Page.objects.filter(is_active=True).order_by("order", "pk")
+
+    def lastmod(self, obj):
+        return obj.updated_at
+
+
 SITEMAPS = {
     "static": StaticViewSitemap,
     "products": ProductSitemap,
+    "pages": PageSitemap,
 }

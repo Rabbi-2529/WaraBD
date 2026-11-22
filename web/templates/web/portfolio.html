@@ -1,23 +1,15 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Portfolio | WaRa BD</title>
-  <meta name="description" content="See the WaRa FT-SCL029 keypad lock in action — product gallery and use cases for homes, offices, hotels, hospitals, gyms and shops.">
-  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
-</head>
-<body data-page="portfolio">
-  <div id="site-header"></div>
+{% extends "web/layout.html" %}
+{% load i18n cms_tags %}
+{# Text: admin → Website Content → Page text (portfolio.*). #}
 
-  <main>
+{% block page %}portfolio{% endblock %}
+
+{% block content %}
     <section class="page-banner">
       <div class="container">
-        <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'web:home' %}">Home</a><span class="sep">/</span><span>Portfolio</span></nav>
-        <h1>Product Portfolio</h1>
-        <p>One keypad lock, twelve ways to use it. Explore the FT-SCL029 up close and see where it fits best.</p>
+        <nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}"><a href="{% url 'web:home' %}">{% translate "Home" %}</a><span class="sep">/</span><span>{% translate "Portfolio" %}</span></nav>
+        <h1>{% cms "portfolio.banner.title" %}{% translate "Product Portfolio" %}{% endcms %}</h1>
+        <p>{% cms "portfolio.banner.text" %}{% translate "One keypad lock, twelve ways to use it. Explore the FT-SCL029 up close and see where it fits best." %}{% endcms %}</p>
       </div>
     </section>
 
@@ -25,23 +17,23 @@
     <section class="section">
       <div class="container">
         <div class="section-head left reveal">
-          <span class="eyebrow">Gallery</span>
-          <h2>The FT-SCL029 up close</h2>
-          <p>Click any photo to enlarge it.</p>
+          <span class="eyebrow">{% cms "portfolio.gallery.eyebrow" %}{% translate "Gallery" %}{% endcms %}</span>
+          <h2>{% cms "portfolio.gallery.title" %}{% translate "The FT-SCL029 up close" %}{% endcms %}</h2>
+          <p>{% cms "portfolio.gallery.text" %}{% translate "Click any photo to enlarge it." %}{% endcms %}</p>
         </div>
         <div class="photo-grid reveal" id="photoGrid"></div>
       </div>
     </section>
 
-    <!-- Use cases -->
+    <!-- Use cases (Website Content → Use Cases) -->
     <section class="section section-soft">
       <div class="container">
         <div class="section-head reveal">
-          <span class="eyebrow">Use cases</span>
-          <h2>Built for every kind of space</h2>
-          <p>Filter by setting to see how homes, offices and businesses put the lock to work.</p>
+          <span class="eyebrow">{% cms "portfolio.usecases.eyebrow" %}{% translate "Use cases" %}{% endcms %}</span>
+          <h2>{% cms "portfolio.usecases.title" %}{% translate "Built for every kind of space" %}{% endcms %}</h2>
+          <p>{% cms "portfolio.usecases.text" %}{% translate "Filter by setting to see how homes, offices and businesses put the lock to work." %}{% endcms %}</p>
         </div>
-        <div class="filters" id="pfFilters" role="group" aria-label="Filter use cases"></div>
+        <div class="filters" id="pfFilters" role="group" aria-label="{% translate 'Filter use cases' %}"></div>
         <div class="grid grid-3" id="pfGrid"></div>
       </div>
     </section>
@@ -50,16 +42,14 @@
     <section class="section">
       <div class="container">
         <div class="section-head reveal">
-          <span class="eyebrow">At a glance</span>
-          <h2>Small lock, serious specs</h2>
+          <span class="eyebrow">{% cms "portfolio.glance.eyebrow" %}{% translate "At a glance" %}{% endcms %}</span>
+          <h2>{% cms "portfolio.glance.title" %}{% translate "Small lock, serious specs" %}{% endcms %}</h2>
         </div>
         <div class="grid grid-4">
-          <div class="stat reveal"><div class="num">Ø 50.5</div><div class="lbl">mm keypad diameter</div></div>
-          <div class="stat reveal"><div class="num">60×86</div><div class="lbl">mm lock body (23.5 mm deep)</div></div>
-          <div class="stat reveal"><div class="num">3 mm+</div><div class="lbl">Suitable door thickness</div></div>
-          <div class="stat reveal"><div class="num">3</div><div class="lbl">Certifications: FCC, CE, RoHS</div></div>
+          {% cms_items "portfolio.stats" as stats %}
+          {% for item in stats %}<div class="stat reveal"><div class="num">{{ item.value }}</div><div class="lbl">{{ item.title }}</div></div>{% endfor %}
         </div>
-        <p style="text-align:center;margin-top:30px"><a class="link-arrow" href="{% url 'web:product_list' %}#specs">View full specifications <i data-icon="arrow"></i></a></p>
+        <p style="text-align:center;margin-top:30px"><a class="link-arrow" href="{% if featured_product %}{{ featured_product.get_absolute_url }}#specs{% else %}{% url 'web:product_list' %}{% endif %}">{% translate "View full specifications" %} <i data-icon="arrow"></i></a></p>
       </div>
     </section>
 
@@ -67,19 +57,14 @@
       <div class="container">
         <div class="cta-band reveal" data-buy-scope>
           <div>
-            <h2>Need locks for a whole building?</h2>
-            <p>Hotels, gyms, schools and offices — talk to us about bulk orders and installation support.</p>
+            <h2>{% cms "portfolio.cta.title" %}{% translate "Need locks for a whole building?" %}{% endcms %}</h2>
+            <p>{% cms "portfolio.cta.text" %}{% translate "Hotels, gyms, schools and offices — talk to us about bulk orders and installation support." %}{% endcms %}</p>
           </div>
           <div class="actions">
-            <a class="btn btn-white" href="{% url 'web:contact' %}"><i data-icon="mail"></i> Request a quote</a>
-            <button type="button" class="btn btn-outline-light" data-add-to-cart><i data-icon="cart"></i> Add one to cart</button>
+            <a class="btn btn-white" href="{% url 'web:contact' %}"><i data-icon="mail"></i> {% translate "Request a quote" %}</a>
+            <button type="button" class="btn btn-outline-light" data-add-to-cart><i data-icon="cart"></i> {% translate "Add one to cart" %}</button>
           </div>
         </div>
       </div>
     </section>
-  </main>
-
-  <div id="site-footer"></div>
-  {% include "web/_products_bridge.html" %}
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "customers/_account_layout.html" %}
+{% load i18n %}
+{% block title %}{% translate "My orders" %} | {{ site_settings.name }}{% endblock %}
+{% block heading %}{% translate "My orders" %}{% endblock %}
+
+{% block account %}
+<div class="box">
+  {% if orders %}
+    {% include "customers/_order_rows.html" %}
+  {% else %}
+    <p style="color:var(--muted)">{% translate "You have not ordered yet." %}</p>
+    <a class="btn btn-red" href="{% url 'web:product_list' %}"><i data-icon="bag"></i> {% translate "Browse products" %}</a>
+  {% endif %}
+</div>
+{% endblock %}

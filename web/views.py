@@ -11,17 +11,27 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import validate_email
 from django.http import HttpResponse, JsonResponse
+from django.utils.translation import gettext as _
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import Http404
+from django.urls import Resolver404, resolve, reverse
 from django.views.decorators.http import require_POST
+
+from customers.models import Customer, OtpCode
+from customers.otp import OtpError, otp_needed_for_order, request_otp
 
 from . import product_page
 from .bd import clean_bd_district, normalize_bd_phone
+from .checkout import place_checkout_order
+from .delivery import DeliveryError, delivery_quote, locations_payload
+from .richtext import plain as plain_text
 from .cart import Cart
 from .emails import send_admin_new_order, send_order_confirmation
 from .forms import CheckoutForm, ContactForm
 from .models import (
     Category,
     Order,
+    Page,
     PortfolioProject,
     Product,
     SiteHighlight,
@@ -148,7 +158,7 @@ def _build_product_data(product):
         "images": images,
 
         # Additional product information
-        "description": product.description or "",
+        "description": plain_text(product.description),
     }
 
 
@@ -164,7 +174,7 @@ def _build_use_case_data(use_case):
         "category": use_case.category,
         "mode": use_case.mode,
         "place": use_case.place or "",
-        "text": use_case.text or "",
+        "text": plain_text(use_case.text),
         "icon": use_case.icon or "box",
         "tone": use_case.tone or "",
     }
@@ -176,8 +186,12 @@ def _build_use_case_data(use_case):
 
 ROBOTS_DISALLOW = (
     "/admin/",
-    "/admin-invoice/",
     "/accounts/",
+)
+# Storefront pages that must stay out of search results, in every language
+# ("/cart/" and "/bn/cart/" ...).
+ROBOTS_DISALLOW_STORE = (
+    "/admin-invoice/",
     "/api/",
     "/cart/",
     "/checkout/",
@@ -188,8 +202,10 @@ ROBOTS_DISALLOW = (
 def robots_txt(request):
     site_url = (getattr(django_settings, "SITE_URL", "") or "").rstrip("/")
     sitemap_url = (site_url + "/sitemap.xml") if site_url else request.build_absolute_uri("/sitemap.xml")
+    prefixes = [""] + [f"/{code}" for code, _name in django_settings.LANGUAGES if code != django_settings.LANGUAGE_CODE]
     lines = ["User-agent: *"]
     lines += [f"Disallow: {path}" for path in ROBOTS_DISALLOW]
+    lines += [f"Disallow: {prefix}{path}" for prefix in prefixes for path in ROBOTS_DISALLOW_STORE]
     lines += ["", f"Sitemap: {sitemap_url}", ""]
     return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
 
@@ -274,12 +290,24 @@ def product_list(request):
     })
 
 
+def product_old_url(request, slug):
+    """/products/<slug>/ (old address) → /<slug> permanently, keeping #fragment-free query."""
+    target = reverse("web:product_detail", kwargs={"slug": slug})
+    if request.META.get("QUERY_STRING"):
+        target += "?" + request.META["QUERY_STRING"]
+    return redirect(target, permanent=True)
+
+
 def product_detail(request, slug):
-    product = get_object_or_404(
-        Product,
-        slug=slug,
-        is_active=True,
-    )
+    product = Product.objects.filter(slug=slug, is_active=True).first()
+    if product is None:
+        # "/about" (no slash) lands here because product URLs have no trailing
+        # slash: send it to "/about/" if that page exists, otherwise 404.
+        try:
+            resolve(request.path_info + "/")
+        except Resolver404:
+            raise Http404("Product not found")
+        return redirect(request.path + "/", permanent=True)
 
     related_qs = (
         Product.objects
@@ -344,7 +372,7 @@ def contact(request):
             form.save()
             messages.success(
                 request,
-                "Thanks! Your message has been sent.",
+                _("Thanks! Your message has been sent."),
             )
             return redirect("web:contact")
 
@@ -387,7 +415,7 @@ def cart_add(request, product_id):
 
     messages.success(
         request,
-        f'"{product.name}" added to cart.',
+        _('"%(name)s" added to cart.') % {"name": product.name},
     )
 
     return redirect(
@@ -430,7 +458,7 @@ def cart_remove(request, product_id):
 
     messages.info(
         request,
-        f'"{product.name}" removed.',
+        _('"%(name)s" removed.') % {"name": product.name},
     )
 
     return redirect("web:cart")
@@ -446,6 +474,10 @@ def checkout(request):
     return render(request, "web/checkout.html", {
         "cart": {},
         "form": form,
+        # Logged-in customers get their default address filled in.
+        "checkout_address": request.customer.default_address if request.customer else None,
+        # Districts → thanas → delivery charges for the dropdowns.
+        "delivery_locations": locations_payload(),
     })
 
 
@@ -478,7 +510,7 @@ def _validate_checkout(data):
 
     cleaned["name"] = _clean_text(data, "name", 200)
     if len(cleaned["name"]) < 3:
-        errors["name"] = "Please enter your full name."
+        errors["name"] = _("Please enter your full name.")
 
     try:
         cleaned["phone"] = normalize_bd_phone(data.get("phone"))
@@ -490,26 +522,38 @@ def _validate_checkout(data):
         try:
             validate_email(cleaned["email"])
         except DjangoValidationError:
-            errors["email"] = "Enter a valid email address."
+            errors["email"] = _("Enter a valid email address.")
 
     try:
         cleaned["district"] = clean_bd_district(data.get("district"))
     except ValueError as exc:
         errors["district"] = str(exc)
 
+    # Thana / upazila: picked from the district's list (or typed when missing).
+    cleaned["thana"] = _clean_text(data, "thana", 80)
+    if not cleaned["thana"]:
+        errors["thana"] = _("Please select your thana / upazila.")
+
+    # Delivery charge follows the district (or thana) — the customer does not choose it.
+    if "district" not in errors:
+        try:
+            quote = delivery_quote(cleaned["district"], cleaned["thana"])
+        except DeliveryError as exc:
+            errors["district"] = str(exc)
+        else:
+            cleaned["zone"] = quote["zone"]
+            if quote["thana"] is not None:
+                cleaned["thana"] = quote["thana"].name_en  # canonical English spelling
+
     cleaned["address"] = _clean_text(data, "address", 255)
     if len(cleaned["address"]) < 10:
-        errors["address"] = "Please enter your full address (house, road, area / thana)."
+        errors["address"] = _("Please enter your full address (house, road, area / thana).")
 
     cleaned["note"] = _clean_text(data, "note", 1000)
 
-    cleaned["zone"] = str(data.get("zone") or Order.ZONE_INSIDE)
-    if cleaned["zone"] not in dict(Order.ZONE_CHOICES):
-        errors["zone"] = "Please choose a delivery area."
-
     cleaned["payment"] = str(data.get("payment") or "cod")
     if cleaned["payment"] not in dict(Order.PAYMENT_METHOD_CHOICES):
-        errors["payment"] = "Please choose a payment method."
+        errors["payment"] = _("Please choose a payment method.")
 
     cleaned["sender"] = ""
     cleaned["trx"] = ""
@@ -520,11 +564,11 @@ def _validate_checkout(data):
             errors["sender"] = str(exc)
         cleaned["trx"] = re.sub(r"\s", "", str(data.get("trx") or "")).upper()
         if not _TRX_RE.match(cleaned["trx"]):
-            errors["trx"] = "Enter the transaction ID (TrxID) from your payment SMS."
+            errors["trx"] = _("Enter the transaction ID (TrxID) from your payment SMS.")
 
     lines = data.get("lines")
     if not isinstance(lines, list) or not lines:
-        errors["lines"] = "Your cart is empty."
+        errors["lines"] = _("Your cart is empty.")
         cleaned["lines"] = []
     else:
         cleaned["lines"] = lines
@@ -536,64 +580,26 @@ def _validate_checkout(data):
 def api_checkout(request):
     data = _read_json(request)
     if data is None:
-        return _json_error("Invalid request.")
+        return _json_error(_("Invalid request."))
 
     cleaned, errors = _validate_checkout(data)
     if errors:
         return _json_error(next(iter(errors.values())), errors=errors)
 
-    cart = Cart(request)
-    cart.clear()
-
-    for item in cleaned["lines"]:
-        if not isinstance(item, dict):
-            return _json_error("Invalid cart item.")
+    # Guests confirm their mobile number with an SMS code first (once per day
+    # per browser; logged-in customers never need it). The OTP page places
+    # the order after the right code is entered.
+    if otp_needed_for_order(request, cleaned["phone"]):
         try:
-            qty = int(item.get("qty", 0))
-        except (TypeError, ValueError):
-            return _json_error("Invalid product quantity.")
-        product = Product.objects.filter(slug=str(item.get("id") or "")).first()
-        if product is None:
-            return _json_error(
-                "A product in your cart is no longer available. Please refresh your cart."
-            )
-        cart.add(product, qty)
+            request_otp(request, phone=cleaned["phone"], purpose=OtpCode.PURPOSE_CHECKOUT,
+                        payload={"checkout": cleaned})
+        except OtpError as exc:
+            return _json_error(str(exc), status=429, errors={"phone": str(exc)})
+        return JsonResponse({"success": False, "otp_required": True, "redirect": reverse("customers:otp")})
 
-    try:
-        order = place_order(
-            cart=cart,
-            customer_data={
-                "full_name": cleaned["name"],
-                "phone": cleaned["phone"],
-                "email": cleaned["email"],
-                "address_line1": cleaned["address"],
-                "city": cleaned["district"],
-                "country": "Bangladesh",
-                "notes": cleaned["note"],
-            },
-            user=request.user if request.user.is_authenticated else None,
-            delivery_zone=cleaned["zone"],
-            payment_method=cleaned["payment"],
-            payment_sender=cleaned["sender"],
-            transaction_id=cleaned["trx"],
-        )
-    except DjangoValidationError as exc:  # includes StockError
-        cart.clear()
-        return _json_error(" ".join(exc.messages))
-    except Exception:
-        cart.clear()
-        logger.exception("Checkout failed")
-        return _json_error("Something went wrong. Please try again or call us.", status=500)
-
-    cart.clear()
-
-    try:
-        if order.email:
-            send_order_confirmation(order)
-        send_admin_new_order(order)
-    except Exception:
-        logger.exception("Failed to send email for order %s", order.order_number)
-
+    order, error, status = place_checkout_order(request, cleaned, customer=order_customer(request, cleaned["phone"]))
+    if error:
+        return _json_error(error, status=status)
     return JsonResponse({
         "success": True,
         "order_number": order.order_number,
@@ -625,7 +631,7 @@ def order_failed(request):
 
             messages.info(
                 request,
-                f"Order {order_number} cancelled.",
+                _("Order %(number)s cancelled.") % {"number": order_number},
             )
 
         except Order.DoesNotExist:
@@ -638,12 +644,12 @@ def order_failed(request):
 def api_contact(request):
     data = _read_json(request)
     if data is None:
-        return _json_error("Invalid request.")
+        return _json_error(_("Invalid request."))
 
     errors = {}
     name = _clean_text(data, "name", 150)
     if len(name) < 3:
-        errors["name"] = "Please enter your full name."
+        errors["name"] = _("Please enter your full name.")
 
     try:
         phone = normalize_bd_phone(data.get("phone"))
@@ -656,15 +662,15 @@ def api_contact(request):
         try:
             validate_email(email)
         except DjangoValidationError:
-            errors["email"] = "Enter a valid email address."
+            errors["email"] = _("Enter a valid email address.")
 
     subject = _clean_text(data, "subject", 200)
     if not subject:
-        errors["subject"] = "Please select an option."
+        errors["subject"] = _("Please select an option.")
 
     message = _clean_text(data, "message", 5000)
     if len(message) < 10:
-        errors["message"] = "Please write at least 10 characters."
+        errors["message"] = _("Please write at least 10 characters.")
 
     if errors:
         return _json_error(next(iter(errors.values())), errors=errors)
@@ -693,3 +699,69 @@ def admin_invoice_view(request, object_id):
     return render(request, "admin/invoice.html", {
         "order": order,
     })
+
+
+# ==============================================================================
+# POLICY / INFO PAGES & ORDER TRACKING (Phase 3 / 4)
+# ==============================================================================
+
+def page_detail(request, slug):
+    page = get_object_or_404(Page, slug=slug, is_active=True)
+    return render(request, "web/page.html", {"page": page})
+
+
+def order_progress(order):
+    """Steps for the order tracker: [(label, state)] with state done/current/todo."""
+    if order.status == Order.STATUS_CANCELLED:
+        return [(_("Order placed"), "done"), (_("Cancelled"), "failed")]
+    reached = {
+        Order.STATUS_PENDING: 1,
+        Order.STATUS_PAID: 2,
+        Order.STATUS_SHIPPED: 3,
+        Order.STATUS_DELIVERED: 4,
+    }.get(order.status, 1)
+    labels = [_("Order placed"), _("Confirmed"), _("Shipped"), _("Delivered")]
+    steps = []
+    for index, label in enumerate(labels, 1):
+        state = "done" if index < reached or reached == 4 else ("current" if index == reached else "todo")
+        steps.append((label, state))
+    return steps
+
+
+def track_order(request):
+    """Guests look up an order with its order number + the phone used to order.
+
+    POST (not GET) so phone numbers never appear in URLs or server logs.
+    """
+    order, error = None, ""
+    number = phone_input = ""
+    if request.method == "POST":
+        number = _clean_text(request.POST, "order_number", 32).upper()
+        phone_input = _clean_text(request.POST, "phone", 20)
+        try:
+            phone = normalize_bd_phone(phone_input)
+        except ValueError as exc:
+            error = str(exc)
+        else:
+            order = Order.objects.filter(order_number__iexact=number, phone=phone).first()
+            if order is None:
+                error = _("No order found with this order number and mobile number.")
+    return render(request, "web/track_order.html", {
+        "order": order,
+        "progress": order_progress(order) if order else [],
+        "error": error,
+        "number": number,
+        "phone_input": phone_input,
+    })
+
+
+def order_customer(request, phone):
+    """Customer account to attach an order to: the logged-in customer, or the
+    account owning `phone` when that number was verified in this browser today."""
+    from customers.auth import phone_verified_today
+
+    if request.customer:
+        return request.customer
+    if phone_verified_today(request, phone):
+        return Customer.objects.filter(phone=phone, is_active=True).first()
+    return None

@@ -1,0 +1,30 @@
+{% extends "customers/_account_layout.html" %}
+{% load i18n bd_tags %}
+{% block title %}{% translate "Profile" %} | {{ site_settings.name }}{% endblock %}
+{% block heading %}{% translate "Profile" %}{% endblock %}
+
+{% block account %}
+<div class="form-card">
+  <h2>{% translate "Your details" %}</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="form" value="profile">
+    <div class="form-grid">
+      {% include "customers/_field.html" with field=profile_form.name %}
+      {% include "customers/_field.html" with field=profile_form.email %}
+    </div>
+    <button type="submit" class="btn btn-green" style="margin-top:18px"><i data-icon="check"></i> {% translate "Save" %}</button>
+  </form>
+</div>
+
+<div class="form-card" id="change-number" style="margin-top:24px">
+  <h2>{% translate "Mobile number" %}</h2>
+  <p style="color:var(--muted)">{% blocktranslate trimmed with phone=customer.phone|digits %}You log in with <strong>{{ phone }}</strong>. To use a different number, enter it below — we will send a code to the new number.{% endblocktranslate %}</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="form" value="phone">
+    {% include "customers/_field.html" with field=phone_form.phone %}
+    <button type="submit" class="btn btn-outline" style="margin-top:6px"><i data-icon="send"></i> {% translate "Send code to new number" %}</button>
+  </form>
+</div>
+{% endblock %}

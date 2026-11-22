@@ -1,0 +1,25 @@
+{% extends "customers/_account_layout.html" %}
+{% load i18n bd_tags %}
+{% block title %}{% translate "My account" %} | {{ site_settings.name }}{% endblock %}
+
+{% block account %}
+<div class="grid grid-3 account-cards">
+  <div class="card"><div class="icon-box"><i data-icon="bag"></i></div><h3>{{ order_count|digits }}</h3><p>{% translate "Orders" %}</p></div>
+  <div class="card"><div class="icon-box green"><i data-icon="phone"></i></div><h3>{{ customer.phone|digits }}</h3><p>{% translate "Verified mobile number" %}</p></div>
+  <div class="card"><div class="icon-box"><i data-icon="pin"></i></div>
+    <h3>{% if address %}{% translate address.district %}{% else %}—{% endif %}</h3>
+    <p>{% if address %}{{ address.one_line }}{% else %}<a href="{% url 'customers:address_add' %}">{% translate "Add a delivery address" %}</a>{% endif %}</p>
+  </div>
+</div>
+
+<div class="box" style="margin-top:26px">
+  <h3><i data-icon="bag"></i>{% translate "Recent orders" %}</h3>
+  {% if recent_orders %}
+    {% include "customers/_order_rows.html" with orders=recent_orders %}
+    <p style="margin:14px 0 0"><a class="link-arrow" href="{% url 'customers:orders' %}">{% translate "All orders" %} <i data-icon="arrow"></i></a></p>
+  {% else %}
+    <p style="color:var(--muted)">{% translate "You have not ordered yet." %}</p>
+    <a class="btn btn-red" href="{% url 'web:product_list' %}"><i data-icon="bag"></i> {% translate "Browse products" %}</a>
+  {% endif %}
+</div>
+{% endblock %}

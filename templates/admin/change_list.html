@@ -1,0 +1,58 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+{# Standard list screen: toolbar (search + Add button), table, filters on the right. #}
+
+{% block extrastyle %}{{ block.super }}{{ media.css }}{% endblock %}
+{% block extrahead %}{{ block.super }}{{ media.js }}{% endblock %}
+
+{% block content %}
+<div class="list-head">
+    <div class="list-head-text">
+        <span class="list-count">{{ cl.full_result_count }} {% if cl.full_result_count == 1 %}{{ cl.opts.verbose_name }}{% else %}{{ cl.opts.verbose_name_plural }}{% endif %}</span>
+        {% if cl.result_count != cl.full_result_count %}<span class="list-filtered">· {{ cl.result_count }} match the filters · <a href="?">clear</a></span>{% endif %}
+    </div>
+    {% block object-tools %}
+        {% if has_add_permission %}
+            {% url cl.opts|admin_urlname:'add' as add_url %}
+            <a href="{% add_preserved_filters add_url is_popup to_field %}" class="btn-add"><i class="bx bx-plus"></i> {% translate 'Add' %} {{ cl.opts.verbose_name }}</a>
+        {% endif %}
+    {% endblock %}
+</div>
+
+<div id="changelist" class="list-layout {% if cl.has_filters %}has-filters{% endif %}">
+    <div class="list-main card">
+        <div class="card-body">
+            {% block search %}{% search_form cl %}{% endblock %}
+            {% block date_hierarchy %}{% if cl.date_hierarchy %}{% date_hierarchy cl %}{% endif %}{% endblock %}
+
+            <form id="changelist-form" method="post"{% if cl.formset and cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>
+                {% csrf_token %}
+                {% if cl.formset %}<div>{{ cl.formset.management_form }}</div>{% endif %}
+
+                {% if action_form and actions_on_top and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+
+                <div class="results">
+                    {% block result_list %}{% result_list cl %}{% endblock %}
+                </div>
+
+                {% if action_form and actions_on_bottom and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+                {% block pagination %}{% pagination cl %}{% endblock %}
+            </form>
+        </div>
+    </div>
+
+    {% block filters %}
+        {% if cl.has_filters %}
+        <aside id="changelist-filter" class="list-filters card">
+            <div class="card-body">
+                <h2 class="filters-title"><i class="bx bx-filter-alt"></i> {% translate 'Filter' %}</h2>
+                {% if cl.is_facets_optional or cl.has_active_filters %}
+                    {% if cl.has_active_filters %}<a class="filters-clear" href="{{ cl.clear_all_filters_qs }}"><i class="bx bx-x"></i> {% translate "Clear all filters" %}</a>{% endif %}
+                {% endif %}
+                {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+            </div>
+        </aside>
+        {% endif %}
+    {% endblock %}
+</div>
+{% endblock %}

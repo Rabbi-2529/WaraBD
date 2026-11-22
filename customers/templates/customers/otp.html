@@ -1,0 +1,48 @@
+{% extends "web/layout.html" %}
+{% load i18n bd_tags %}
+
+{% block title %}{% translate "Enter your code" %} | {{ site_settings.name }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block alternates %}{% endblock %}
+{% block page %}otp{% endblock %}
+
+{% block content %}
+<section class="section auth-section">
+  <div class="container">
+    <div class="form-card auth-card">
+      <div class="auth-icon"><i data-icon="mobile"></i></div>
+      <h1>{% translate "Enter your code" %}</h1>
+      <p class="auth-lead">
+        {% blocktranslate trimmed with phone=otp.phone|digits %}We sent a 6-digit code by SMS to <strong>{{ phone }}</strong>.{% endblocktranslate %}
+        {% if otp.purpose == "checkout" %}{% translate "Your order is placed as soon as you enter it." %}{% endif %}
+      </p>
+
+      {% if test_code %}
+      <div class="form-alert show otp-test" role="status"><i data-icon="info"></i>
+        <span>{% blocktranslate trimmed with code=test_code %}Test mode — no SMS was sent. Your code is <strong>{{ code }}</strong>. Switch on “Send real SMS” in Site Settings to send real codes.{% endblocktranslate %}</span>
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% include "customers/_field.html" with field=form.code %}
+        <p class="hint otp-hint">{% blocktranslate trimmed with minutes=valid_minutes|digits %}The code works for {{ minutes }} minutes.{% endblocktranslate %}</p>
+        <button type="submit" class="btn btn-red btn-block"><i data-icon="check"></i> {% if otp.purpose == "checkout" %}{% translate "Confirm & place order" %}{% else %}{% translate "Verify" %}{% endif %}</button>
+      </form>
+
+      <div class="otp-actions">
+        <form method="post" action="{% url 'customers:otp_resend' %}" id="otpResendForm">
+          {% csrf_token %}
+          <button type="submit" class="link-btn" id="otpResend" data-wait="{{ resend_in }}"{% if resend_in %} disabled{% endif %}>
+            <i data-icon="refresh"></i> <span data-label="{% translate 'Resend code' %}" data-wait-label="{% translate 'Resend code in %(s)s s' %}">{% translate "Resend code" %}</span>
+          </button>
+        </form>
+        <form method="post" action="{% url 'customers:otp_change_number' %}">
+          {% csrf_token %}
+          <button type="submit" class="link-btn"><i data-icon="phone"></i> {% translate "Change number" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

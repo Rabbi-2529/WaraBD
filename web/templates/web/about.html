@@ -1,97 +1,88 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About Us | WaRa BD</title>
-  <meta name="description" content="WaRa BD brings WaRa smart cabinet and drawer locks to homes and businesses across Bangladesh.">
-  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
-</head>
-<body data-page="about">
-  <div id="site-header"></div>
+{% extends "web/layout.html" %}
+{% load i18n cms_tags %}
+{# Text: admin → Website Content → Page text (about.*). #}
 
-  <main>
+{% block page %}about{% endblock %}
+
+{% block content %}
     <section class="page-banner">
       <div class="container">
-        <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'web:home' %}">Home</a><span class="sep">/</span><span>About Us</span></nav>
-        <h1>About WaRa BD</h1>
-        <p>We make everyday storage smarter and safer — one cabinet, drawer and locker at a time.</p>
+        <nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}"><a href="{% url 'web:home' %}">{% translate "Home" %}</a><span class="sep">/</span><span>{% translate "About Us" %}</span></nav>
+        <h1>{% cms "about.banner.title" %}{% translate "About WaRa BD" %}{% endcms %}</h1>
+        <p>{% cms "about.banner.text" %}{% translate "We make everyday storage smarter and safer — one cabinet, drawer and locker at a time." %}{% endcms %}</p>
       </div>
     </section>
 
     <section class="section">
       <div class="container about-intro">
         <div class="reveal">
-          <span class="eyebrow">Our story</span>
-          <h2 style="font-size:36px">Keys get lost. Codes don't.</h2>
-          <p style="color:var(--muted)">WaRa BD started with a simple frustration: the little metal key for a drawer or cabinet is always the one that goes missing. Padlocks get cut, spare keys get copied, and shared lockers turn into a guessing game.</p>
-          <p style="color:var(--muted)">So we focused on one product and set out to do it properly — the <strong style="color:var(--black)">WaRa FT-SCL029</strong> keypad lock. It brings code-based, keyless security to the furniture people use every day, at a price that makes sense for homes as well as hotels, offices and gyms.</p>
-          <p style="color:var(--muted)">Today we deliver genuine WaRa locks across Bangladesh, help customers choose the right setup, and stay on call long after the parcel arrives.</p>
+          <span class="eyebrow">{% cms "about.story.eyebrow" %}{% translate "Our story" %}{% endcms %}</span>
+          <h2 style="font-size:36px">{% cms "about.story.title" %}{% translate "Keys get lost. Codes don't." %}{% endcms %}</h2>
+          <p style="color:var(--muted)">{% cms "about.story.p1" %}{% translate "WaRa BD started with a simple frustration: the little metal key for a drawer or cabinet is always the one that goes missing. Padlocks get cut, spare keys get copied, and shared lockers turn into a guessing game." %}{% endcms %}</p>
+          <p style="color:var(--muted)">{% cms "about.story.p2" html %}{% blocktranslate trimmed %}So we focused on one product and set out to do it properly — the <strong style="color:var(--black)">WaRa FT-SCL029</strong> keypad lock. It brings code-based, keyless security to the furniture people use every day, at a price that makes sense for homes as well as hotels, offices and gyms.{% endblocktranslate %}{% endcms %}</p>
+          <p style="color:var(--muted)">{% cms "about.story.p3" %}{% translate "Today we deliver genuine WaRa locks across Bangladesh, help customers choose the right setup, and stay on call long after the parcel arrives." %}{% endcms %}</p>
           <ul class="check-list" style="margin-top:20px">
-            <li><i data-icon="check"></i><span>Genuine WaRa products only</span></li>
-            <li><i data-icon="check"></i><span>Honest pricing with cash on delivery</span></li>
-            <li><i data-icon="check"></i><span>Real people on phone &amp; WhatsApp</span></li>
+            {% cms_items "about.story_points" as points %}
+            {% for item in points %}<li><i data-icon="check"></i><span>{{ item.title }}</span></li>{% endfor %}
           </ul>
         </div>
         <div class="about-visual reveal">
           <div class="frame"><img data-pimg="3" alt=""></div>
-          <div class="badge-float"><strong data-bind="warranty"></strong><span>warranty on every lock</span></div>
+          <div class="badge-float"><strong data-bind="warranty"></strong><span>{% cms "about.badge" %}{% translate "warranty on every lock" %}{% endcms %}</span></div>
         </div>
       </div>
     </section>
 
-    <!-- Mission (Dynamic) -->
+    <!-- Mission (Website Content → Feature Cards → About Mission) -->
     <section class="section section-soft">
       <div class="container">
         <div class="section-head reveal">
-          <span class="eyebrow">What drives us</span>
-          <h2>Mission, vision &amp; promise</h2>
+          <span class="eyebrow">{% cms "about.mission.eyebrow" %}{% translate "What drives us" %}{% endcms %}</span>
+          <h2>{% cms "about.mission.title" %}{% translate "Mission, vision & promise" %}{% endcms %}</h2>
         </div>
         <div class="grid grid-3">
           {% for mission in about_missions %}
           <div class="card reveal">
             <div class="icon-box {% if forloop.counter == 2 %}green{% elif forloop.counter == 3 %}dark{% endif %}"><i data-icon="{{ mission.icon }}"></i></div>
-            <h3>{{ mission.title }}</h3><p>{{ mission.text }}</p>
+            <h3>{{ mission.title }}</h3><p>{{ mission.text|rich_inline }}</p>
           </div>
           {% endfor %}
         </div>
       </div>
     </section>
 
-    <!-- Why choose us (Dynamic) -->
+    <!-- Why choose us (Website Content → Feature Cards → About Why) -->
     <section class="section section-dark">
       <div class="container">
         <div class="section-head reveal">
-          <span class="eyebrow">Why choose us</span>
-          <h2>More than a lock in a box</h2>
-          <p>Everything you need to buy, install and rely on your WaRa lock.</p>
+          <span class="eyebrow">{% cms "about.why.eyebrow" %}{% translate "Why choose us" %}{% endcms %}</span>
+          <h2>{% cms "about.why.title" %}{% translate "More than a lock in a box" %}{% endcms %}</h2>
+          <p>{% cms "about.why.text" %}{% translate "Everything you need to buy, install and rely on your WaRa lock." %}{% endcms %}</p>
         </div>
         <div class="grid grid-4">
           {% for why in about_whys %}
           <div class="mode-card {% if forloop.counter|divisibleby:2 %}green{% endif %} reveal">
             <h3 style="font-size:19px"><i data-icon="{{ why.icon }}"></i> {{ why.title }}</h3>
-            <p style="margin:0">{{ why.text }}</p>
+            <p style="margin:0">{{ why.text|rich_inline }}</p>
           </div>
           {% endfor %}
         </div>
       </div>
     </section>
 
-    <!-- Timeline (Dynamic) -->
+    <!-- Timeline (Website Content → About Timeline) -->
     <section class="section">
       <div class="container">
         <div class="section-head reveal">
-          <span class="eyebrow">How we work</span>
-          <h2>From order to locked drawer</h2>
+          <span class="eyebrow">{% cms "about.timeline.eyebrow" %}{% translate "How we work" %}{% endcms %}</span>
+          <h2>{% cms "about.timeline.title" %}{% translate "From order to locked drawer" %}{% endcms %}</h2>
         </div>
         <div class="timeline reveal">
           {% for step in timeline_steps %}
           <div class="tl-item">
             <div class="tl-dot"><i data-icon="{{ step.icon }}"></i></div>
             <h3>{{ step.title }}</h3>
-            <p>{{ step.text }}</p>
+            <p>{{ step.text|rich_inline }}</p>
           </div>
           {% endfor %}
         </div>
@@ -102,19 +93,14 @@
       <div class="container">
         <div class="cta-band reveal">
           <div>
-            <h2>Have a question about the FT-SCL029?</h2>
-            <p>Our team is happy to help you pick the right setup.</p>
+            <h2>{% cms "about.cta.title" %}{% translate "Have a question about the FT-SCL029?" %}{% endcms %}</h2>
+            <p>{% cms "about.cta.text" %}{% translate "Our team is happy to help you pick the right setup." %}{% endcms %}</p>
           </div>
           <div class="actions">
-            <a class="btn btn-white" href="{% url 'web:contact' %}"><i data-icon="mail"></i> Contact us</a>
-            <a class="btn btn-outline-light" href="{% url 'web:product_list' %}">View product</a>
+            <a class="btn btn-white" href="{% url 'web:contact' %}"><i data-icon="mail"></i> {% translate "Contact us" %}</a>
+            <a class="btn btn-outline-light" href="{% if featured_product %}{{ featured_product.get_absolute_url }}{% else %}{% url 'web:product_list' %}{% endif %}">{% translate "View product" %}</a>
           </div>
         </div>
       </div>
     </section>
-  </main>
-
-  <div id="site-footer"></div>
-  {% include "web/_products_bridge.html" %}
-</body>
-</html>
+{% endblock %}

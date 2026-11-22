@@ -1,0 +1,17 @@
+{% load i18n bd_tags %}
+<div class="table-wrap">
+<table class="cart-table order-table">
+  <thead><tr><th>{% translate "Order number" %}</th><th>{% translate "Date" %}</th><th>{% translate "Status" %}</th><th>{% translate "Total" %}</th><th><span class="sr-only">{% translate "Details" %}</span></th></tr></thead>
+  <tbody>
+    {% for order in orders %}
+    <tr>
+      <td data-label="{% translate 'Order number' %}"><strong>{{ order.order_number }}</strong></td>
+      <td data-label="{% translate 'Date' %}">{{ order.created_at|date:"d M Y"|digits }}</td>
+      <td data-label="{% translate 'Status' %}"><span class="status-pill status-{{ order.status }}">{{ order.get_status_display }}</span></td>
+      <td data-label="{% translate 'Total' %}">{{ order.total|taka }}</td>
+      <td><a class="link-arrow" href="{% url 'customers:order_detail' order.order_number %}">{% translate "Details" %} <i data-icon="arrow"></i></a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>

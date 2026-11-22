@@ -1,0 +1,20 @@
+{% load i18n bd_tags %}{# Order status tracker. progress = [(label, "done"|"current"|"todo"|"failed")] from views.order_progress #}
+<div class="steps-bar" aria-label="{% translate 'Order status' %}">
+  {% for label, state in progress %}
+    {% if not forloop.first %}<div class="sb-line{% if state == 'done' or state == 'current' or state == 'failed' %} done{% endif %}"></div>{% endif %}
+    <div class="sb-step {% if state == 'done' %}done{% elif state == 'current' or state == 'failed' %}current{% endif %}">
+      <span class="n">{% if state == "done" %}<i data-icon="check"></i>{% elif state == "failed" %}<i data-icon="x"></i>{% else %}{{ forloop.counter|digits }}{% endif %}</span>
+      <span class="lbl">{{ label }}</span>
+    </div>
+  {% endfor %}
+</div>
+{% if order.courier_tracking_code or order.courier_consignment_id %}
+<div class="courier-box">
+  <i data-icon="truck"></i>
+  <div>
+    <strong>{% blocktranslate with courier=order.courier_display %}On the way with {{ courier }}{% endblocktranslate %}</strong>
+    <span>{% translate "Tracking code" %}: <code>{{ order.courier_tracking_code|default:order.courier_consignment_id }}</code></span>
+  </div>
+  {% if order.courier_link %}<a class="btn btn-outline btn-sm" href="{{ order.courier_link }}" target="_blank" rel="noopener">{% translate "Track parcel" %}</a>{% endif %}
+</div>
+{% endif %}

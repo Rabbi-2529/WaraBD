@@ -1,0 +1,10 @@
+{% load i18n %}{# Uploaded logo (Site Settings → Logo) or the built-in "WaRa BD" text logo. #}
+<a class="logo" href="{% url 'web:home' %}" aria-label="{% translate 'WaRa BD home' %}">
+  {% if site_settings.logo %}
+    <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.name }}" class="logo-img">
+  {% else %}
+    <span class="logo-mark"><i data-icon="lock"></i></span>
+    <span><span class="wa">Wa</span><span class="ra">Ra</span></span>
+    <small>BD</small>
+  {% endif %}
+</a>

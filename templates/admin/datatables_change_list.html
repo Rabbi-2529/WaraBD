@@ -1,0 +1,91 @@
+{% extends "admin/change_list.html" %}
+{% load admin_dt %}
+{# Server-side DataTables list (web/admin_datatables.py). Filters, actions and links stay Django's. #}
+
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.8/css/dataTables.bootstrap5.min.css">
+<style>
+  .dt-wrap { background:#fff; border-radius:10px; padding:16px 18px; box-shadow:0 0 35px 0 rgba(154,161,171,.15); }
+  .dt-wrap table.dataTable { border-collapse:collapse !important; margin-top:12px !important; }
+  .dt-wrap table.dataTable thead th { background:#f8fafc; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
+  .dt-wrap table.dataTable tbody td { vertical-align:middle; border-color:#eef2f7; font-size:14px; }
+  .dt-wrap table.dataTable tbody tr:hover td { background:#f8fafc; }
+  .dt-wrap .dataTables_filter input { border:1px solid #cbd5e1; border-radius:8px; padding:7px 12px; min-width:240px; }
+  .dt-wrap .dataTables_length select { border:1px solid #cbd5e1; border-radius:8px; padding:5px 28px 5px 10px; }
+  .dt-wrap .page-item.active .page-link { background:#d7182a; border-color:#d7182a; }
+  .dt-wrap .page-link { color:#d7182a; }
+  .dt-wrap .dataTables_processing { background:rgba(255,255,255,.9); border:1px solid #e2e8f0; border-radius:8px; }
+  .dt-wrap input.dt-fee { width:110px; border:1px solid #cbd5e1; border-radius:6px; padding:5px 8px; }
+  .dt-wrap input.dt-fee.saved { border-color:#12924a; background:#e6f5eb; }
+  .dt-wrap input.dt-fee.error { border-color:#d7182a; background:#fff0f1; }
+</style>
+{% endblock %}
+
+{% block search %}{% endblock %}
+
+{% block result_list %}
+{% dt_headers cl as headers %}
+<div class="dt-wrap">
+  <table id="adminDataTable" class="table table-hover w-100"
+         data-url="{% url datatable_url_name %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+    <thead>
+      <tr>
+        {% for header in headers %}
+        <th scope="col" data-orderable="{% if header.sortable %}true{% else %}false{% endif %}">{{ header.text|capfirst }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block pagination %}{% endblock %}
+
+{% block footer %}{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+(function ($) {
+  var table = document.getElementById("adminDataTable");
+  if (!table) return;
+  var columns = Array.prototype.map.call(table.querySelectorAll("thead th"), function (th) {
+    return { orderable: th.dataset.orderable === "true" };
+  });
+  var csrf = (document.querySelector("[name=csrfmiddlewaretoken]") || {}).value || "";
+
+  var dt = $(table).DataTable({
+    serverSide: true,
+    processing: true,
+    ajax: { url: table.dataset.url },
+    columns: columns,
+    order: [],  // keep the admin's default ordering until a column is clicked
+    pageLength: {{ datatables_page_lengths.0|default:25 }},
+    lengthMenu: [{% for n in datatables_page_lengths %}{{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+    autoWidth: false,
+    language: { search: "", searchPlaceholder: "Search…", processing: "Loading…" }
+  });
+
+  // Bulk actions: "select all" checkbox for the rows loaded by DataTables.
+  $(table).on("change", "#action-toggle", function () {
+    $(table).find("input.action-select").prop("checked", this.checked);
+  });
+  dt.on("draw", function () { $("#action-toggle").prop("checked", false); });
+
+  // Inline delivery-charge editing (District / Thana lists): saves on change.
+  $(table).on("change", "input.dt-fee", function () {
+    var input = this, value = input.value.trim();
+    input.classList.remove("saved", "error");
+    fetch(input.dataset.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": csrf },
+      body: "fee=" + encodeURIComponent(value)
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      input.classList.add(res.ok ? "saved" : "error");
+      input.title = res.ok ? "Saved" : (res.error || "Not saved");
+    }).catch(function () { input.classList.add("error"); });
+  });
+})(window.jQuery);
+</script>
+{% endblock %}

@@ -15,3 +15,6 @@ django-allauth[mfa]==0.63.3  # https://github.com/pennersr/django-allauth
 django-crispy-forms==2.2  # https://github.com/django-crispy-forms/django-crispy-forms
 crispy-bootstrap5==2024.2  # https://github.com/django-crispy-forms/crispy-bootstrap5
 django-redis==5.4.0  # https://github.com/jazzband/django-redis
+django-modeltranslation==0.19.17  # https://github.com/deschler/django-modeltranslation — English/Bangla model fields
+polib==1.2.0  # https://github.com/izimobil/polib — compiles locale/*.po without GNU gettext
+nh3==0.2.18  # sanitises CKEditor HTML before it is shown on the site

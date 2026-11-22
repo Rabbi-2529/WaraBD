@@ -18,6 +18,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.translation import gettext as _
 
 from .models import Order, OrderItem, Product, SiteSettings
 
@@ -33,7 +34,7 @@ def delivery_fee_for(zone):
         return Decimal(site.delivery_outside_fee)
     if zone == Order.ZONE_INSIDE:
         return Decimal(site.delivery_inside_fee)
-    raise ValidationError("Please choose a delivery area.")
+    raise ValidationError(_("Please choose a delivery area."))
 
 
 # ==============================================================================
@@ -47,6 +48,7 @@ def place_order(
     customer_data,
     user=None,
     delivery_zone=Order.ZONE_INSIDE,
+    delivery_fee=None,
     payment_method="cod",
     payment_sender="",
     transaction_id="",
@@ -90,7 +92,7 @@ def place_order(
     items = list(cart)
 
     if not items:
-        raise StockError("Your cart is empty.")
+        raise StockError(_("Your cart is empty."))
 
     # Validate quantities and collect product IDs.
     product_quantities = {}
@@ -100,13 +102,13 @@ def place_order(
         quantity = item.get("quantity")
 
         if product is None:
-            raise StockError("A product in your cart is unavailable.")
+            raise StockError(_("A product in your cart is unavailable."))
 
         if isinstance(quantity, bool) or not isinstance(quantity, int):
-            raise StockError("Invalid product quantity.")
+            raise StockError(_("Invalid product quantity."))
 
         if quantity < 1 or quantity > 99:
-            raise StockError("Product quantity must be between 1 and 99.")
+            raise StockError(_("Product quantity must be between 1 and 99."))
 
         product_id = product.pk
 
@@ -137,8 +139,7 @@ def place_order(
 
     if missing_ids:
         raise StockError(
-            "One or more products in your cart are no longer available. "
-            "Please refresh your cart."
+            _("One or more products in your cart are no longer available. Please refresh your cart.")
         )
 
     # --------------------------------------------------------------------------
@@ -151,13 +152,13 @@ def place_order(
 
         if not product.is_active:
             raise StockError(
-                f'"{product.name}" is currently unavailable.'
+                _('"%(name)s" is currently unavailable.') % {"name": product.name}
             )
 
         if product.stock < quantity:
             raise StockError(
-                f'"{product.name}" only has {product.stock} '
-                f'in stock. You requested {quantity}.'
+                _('"%(name)s" only has %(stock)s in stock. You requested %(quantity)s.')
+                % {"name": product.name, "stock": product.stock, "quantity": quantity}
             )
 
     # --------------------------------------------------------------------------
@@ -172,11 +173,13 @@ def place_order(
         start=locked_products[0].current_price * 0,
     )
 
-    shipping = delivery_fee_for(delivery_zone)
+    # delivery_fee comes from the district / thana table (web.delivery);
+    # without it fall back to the Site Settings inside/outside Dhaka fee.
+    shipping = Decimal(delivery_fee) if delivery_fee is not None else delivery_fee_for(delivery_zone)
     total = subtotal + shipping
 
     if payment_method not in dict(Order.PAYMENT_METHOD_CHOICES):
-        raise ValidationError("Please choose a payment method.")
+        raise ValidationError(_("Please choose a payment method."))
 
     is_mobile_payment = payment_method in Order.MOBILE_PAYMENT_METHODS
     payment_status = (
@@ -198,6 +201,7 @@ def place_order(
         address_line2=customer_data.get("address_line2", ""),
 
         city=customer_data["city"],
+        thana=customer_data.get("thana", ""),
         postal_code=customer_data.get("postal_code", ""),
         country=customer_data.get("country", "Bangladesh"),
 

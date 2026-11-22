@@ -1,81 +1,62 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Products | WaRa BD</title>
-  <meta name="description" content="Shop WaRa smart security products in Bangladesh — keypad cabinet and drawer locks with cash on delivery and official warranty.">
-  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
-</head>
-<body data-page="products">
-  <div id="site-header"></div>
+{% extends "web/layout.html" %}
+{% load i18n cms_tags %}
 
-  <main>
+{% block page %}products{% endblock %}
+
+{% block content %}
     <section class="page-banner">
       <div class="container">
-        <nav class="crumbs" aria-label="Breadcrumb"><a href="{% url 'web:home' %}">Home</a><span class="sep">/</span><span>Products</span></nav>
-        <h1>Our Products</h1>
-        <p>Genuine WaRa smart security products, delivered across Bangladesh.</p>
+        <nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}"><a href="{% url 'web:home' %}">{% translate "Home" %}</a><span class="sep">/</span><span>{% translate "Products" %}</span></nav>
+        <h1>{% cms "products.banner.title" %}{% translate "Our Products" %}{% endcms %}</h1>
+        <p>{% cms "products.banner.text" %}{% translate "Genuine WaRa smart security products, delivered across Bangladesh." %}{% endcms %}</p>
       </div>
     </section>
 
     <section class="section" style="padding-top:40px">
       <div class="container shop-layout">
-        <aside class="shop-sidebar" id="shopSidebar" aria-label="Product filters">
+        <aside class="shop-sidebar" id="shopSidebar" aria-label="{% translate 'Product filters' %}">
           <div class="filter-box">
-            <h3>Search</h3>
+            <h3>{% translate "Search" %}</h3>
             <div class="shop-search">
-              <input type="search" id="fSearch" placeholder="Search products…" aria-label="Search products">
+              <input type="search" id="fSearch" placeholder="{% translate 'Search products…' %}" aria-label="{% translate 'Search products' %}">
             </div>
           </div>
-
           <div class="filter-box">
-            <h3>Price Range</h3>
+            <h3>{% translate "Price Range" %}</h3>
             <div class="range">
               <div class="range-track"><div class="range-fill"></div></div>
-              <input type="range" id="fMin" aria-label="Minimum price">
-              <input type="range" id="fMax" aria-label="Maximum price">
+              <input type="range" id="fMin" aria-label="{% translate 'Minimum price' %}">
+              <input type="range" id="fMax" aria-label="{% translate 'Maximum price' %}">
             </div>
             <div class="range-inputs">
-              <input type="number" id="fMinNum" inputmode="numeric" aria-label="Minimum price (৳)">
-              <input type="number" id="fMaxNum" inputmode="numeric" aria-label="Maximum price (৳)">
+              <input type="number" id="fMinNum" inputmode="numeric" aria-label="{% translate 'Minimum price (৳)' %}">
+              <input type="number" id="fMaxNum" inputmode="numeric" aria-label="{% translate 'Maximum price (৳)' %}">
             </div>
           </div>
-
           <div class="filter-box">
-            <h3>Categories</h3>
+            <h3>{% translate "Categories" %}</h3>
             <div id="fCats"></div>
           </div>
-
           <div class="filter-box">
-            <h3>Availability</h3>
+            <h3>{% translate "Availability" %}</h3>
             <div id="fStock"></div>
           </div>
-
-          <button type="button" class="btn btn-outline btn-block" id="fReset"><i data-icon="refresh"></i> Reset filters</button>
+          <button type="button" class="btn btn-outline btn-block" id="fReset"><i data-icon="refresh"></i> {% translate "Reset filters" %}</button>
         </aside>
-
         <div>
           <div class="shop-toolbar">
-            <button type="button" class="btn btn-dark btn-sm filter-toggle" id="filterToggle" aria-controls="shopSidebar" aria-expanded="false"><i data-icon="grid"></i> Filters</button>
+            <button type="button" class="btn btn-dark btn-sm filter-toggle" id="filterToggle" aria-controls="shopSidebar" aria-expanded="false"><i data-icon="grid"></i> {% translate "Filters" %}</button>
             <p id="shopCount" aria-live="polite"></p>
-            <select id="fSort" aria-label="Sort products">
-              <option value="default">Default</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="name">Name: A to Z</option>
-              <option value="newest">Newest first</option>
+            <select id="fSort" aria-label="{% translate 'Sort products' %}">
+              <option value="default">{% translate "Default" %}</option>
+              <option value="price-asc">{% translate "Price: Low to High" %}</option>
+              <option value="price-desc">{% translate "Price: High to Low" %}</option>
+              <option value="name">{% translate "Name: A to Z" %}</option>
+              <option value="newest">{% translate "Newest first" %}</option>
             </select>
           </div>
           <div class="product-grid" id="productGrid"></div>
         </div>
       </div>
     </section>
-  </main>
-
-  <div id="site-footer"></div>
-  {% include "web/_products_bridge.html" %}
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% load static i18n seo_tags %}<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% seo_data as seo %}
+  <title>{% block title %}{{ seo.title }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ seo.description }}{% endblock %}">
+  {% block robots %}{% if seo.noindex %}<meta name="robots" content="noindex">{% endif %}{% endblock %}
+  <link rel="canonical" href="{{ seo.canonical }}">
+  {# Share card: Facebook, WhatsApp, Messenger, LinkedIn, X #}
+  <meta property="og:type" content="{{ seo.type }}">
+  <meta property="og:site_name" content="{{ seo.site_name }}">
+  <meta property="og:title" content="{{ seo.title }}">
+  <meta property="og:description" content="{{ seo.description }}">
+  <meta property="og:url" content="{{ seo.canonical }}">
+  <meta property="og:locale" content="{{ seo.locale }}">{% for loc in seo.alt_locales %}
+  <meta property="og:locale:alternate" content="{{ loc }}">{% endfor %}
+  {% if seo.image %}<meta property="og:image" content="{{ seo.image }}">
+  <meta property="og:image:alt" content="{{ seo.image_alt }}">{% endif %}
+  <meta name="twitter:card" content="{% if seo.image %}summary_large_image{% else %}summary{% endif %}">
+  <meta name="twitter:title" content="{{ seo.title }}">
+  <meta name="twitter:description" content="{{ seo.description }}">
+  {% if seo.image %}<meta name="twitter:image" content="{{ seo.image }}">{% endif %}
+  {% if site_settings.google_site_verification %}<meta name="google-site-verification" content="{{ site_settings.google_site_verification }}">{% endif %}
+  {% for item in seo.jsonld %}<script type="application/ld+json">{{ item|safe }}</script>
+  {% endfor %}
+  {% block alternates %}{% for link in language_links %}
+  <link rel="alternate" hreflang="{{ link.code }}" href="{{ link.absolute_url }}">{% endfor %}
+  <link rel="alternate" hreflang="x-default" href="{{ language_links.0.absolute_url }}">
+  {% endblock %}
+  {% if site_settings.favicon %}<link rel="icon" href="{{ site_settings.favicon.url }}">{% else %}<link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">{% endif %}
+  {% if lang == "bn" %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap">
+  {% endif %}
+  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body data-page="{% block page %}{% endblock %}" class="lang-{{ lang }}">
+  {% include "web/partials/header.html" %}
+
+  <main>
+    {% if messages %}
+    <div class="container" style="padding-top:16px">
+      {% for message in messages %}<div class="form-alert show" role="status">{{ message }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block after_main %}{% endblock %}
+
+  {% include "web/partials/footer.html" %}
+  {% include "web/_products_bridge.html" %}
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

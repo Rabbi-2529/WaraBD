@@ -1,0 +1,2237 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: WaRa BD\n"
+"Language: bn\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: customers/auth.py
+msgid "Please log in with your mobile number."
+msgstr "অনুগ্রহ করে আপনার মোবাইল নম্বর দিয়ে লগইন করুন।"
+
+#: customers/forms.py
+msgid "6-digit code"
+msgstr "৬ সংখ্যার কোড"
+
+#: customers/forms.py
+msgid "Email (optional)"
+msgstr "ইমেইল (ঐচ্ছিক)"
+
+#: customers/forms.py
+msgid "New mobile number"
+msgstr "নতুন মোবাইল নম্বর"
+
+#: customers/forms.py customers/models.py
+msgid "e.g. Home, Office"
+msgstr "যেমন বাসা, অফিস"
+
+#: customers/models.py
+msgid "Default address"
+msgstr "ডিফল্ট ঠিকানা"
+
+#: customers/models.py
+msgid "Label"
+msgstr "নাম (লেবেল)"
+
+#: customers/models.py
+msgid "Name"
+msgstr "নাম"
+
+#: customers/models.py
+msgid "Receiver's mobile"
+msgstr "প্রাপকের মোবাইল"
+
+#: customers/models.py
+msgid "Receiver's name"
+msgstr "প্রাপকের নাম"
+
+#: customers/otp.py
+msgid "Please wait %(n)s second before asking for a new code."
+msgid_plural "Please wait %(n)s seconds before asking for a new code."
+msgstr[0] "নতুন কোড চাওয়ার আগে %(n)s সেকেন্ড অপেক্ষা করুন।"
+msgstr[1] "নতুন কোড চাওয়ার আগে %(n)s সেকেন্ড অপেক্ষা করুন।"
+
+#: customers/otp.py
+msgid ""
+"SMS codes are not available right now. Please call us and we will help you."
+msgstr ""
+"এই মুহূর্তে এসএমএস কোড পাঠানো যাচ্ছে না। আমাদের কল করুন, আমরা সাহায্য করব।"
+
+#: customers/otp.py
+msgid "This code has expired. Tap “Resend code” to get a new one."
+msgstr "এই কোডের মেয়াদ শেষ। নতুন কোড পেতে “আবার কোড পাঠান” চাপুন।"
+
+#: customers/otp.py
+msgid "This code is no longer valid. Please request a new one."
+msgstr "এই কোডটি আর কাজ করবে না। নতুন কোড চেয়ে নিন।"
+
+#: customers/otp.py
+msgid ""
+"This number has reached today's SMS limit. Please try again tomorrow or call"
+" us."
+msgstr ""
+"আজকের জন্য এই নম্বরের এসএমএস সীমা শেষ। আগামীকাল আবার চেষ্টা করুন অথবা আমাদের"
+" কল করুন।"
+
+#: customers/otp.py
+msgid ""
+"Too many SMS codes were requested from this connection today. Please try "
+"again tomorrow or call us."
+msgstr ""
+"আজ এই সংযোগ থেকে অনেকবার এসএমএস কোড চাওয়া হয়েছে। আগামীকাল আবার চেষ্টা করুন"
+" অথবা আমাদের কল করুন।"
+
+#: customers/otp.py
+msgid "Too many wrong codes. Tap “Resend code” to get a new one."
+msgstr "অনেকবার ভুল কোড দেওয়া হয়েছে। নতুন কোড পেতে “আবার কোড পাঠান” চাপুন।"
+
+#: customers/otp.py
+msgid "We couldn't send the SMS. Please try again in a minute or call us."
+msgstr ""
+"এসএমএস পাঠানো যায়নি। এক মিনিট পর আবার চেষ্টা করুন অথবা আমাদের কল করুন।"
+
+#: customers/otp.py
+msgid "Wrong code. %(n)s try left."
+msgid_plural "Wrong code. %(n)s tries left."
+msgstr[0] "ভুল কোড। আর %(n)s বার চেষ্টা করতে পারবেন।"
+msgstr[1] "ভুল কোড। আর %(n)s বার চেষ্টা করতে পারবেন।"
+
+#: customers/templates/customers/_account_layout.html
+#: customers/templates/customers/address_form.html
+#: customers/templates/customers/addresses.html
+msgid "Addresses"
+msgstr "ঠিকানা"
+
+#: customers/templates/customers/_account_layout.html
+msgid "Hello, %(name)s"
+msgstr "হ্যালো, %(name)s"
+
+#: customers/templates/customers/_account_layout.html
+msgid "Log out"
+msgstr "লগআউট"
+
+#: customers/templates/customers/_account_layout.html
+#: customers/templates/customers/orders.html
+msgid "My orders"
+msgstr "আমার অর্ডার"
+
+#: customers/templates/customers/_account_layout.html
+msgid "Overview"
+msgstr "সারসংক্ষেপ"
+
+#: customers/templates/customers/_account_layout.html
+#: customers/templates/customers/profile.html
+msgid "Profile"
+msgstr "প্রোফাইল"
+
+#: customers/templates/customers/_order_rows.html
+msgid "Details"
+msgstr "বিস্তারিত"
+
+#: customers/templates/customers/account.html
+msgid "Add a delivery address"
+msgstr "ডেলিভারি ঠিকানা যোগ করুন"
+
+#: customers/templates/customers/account.html
+#: customers/templates/customers/order_detail.html
+msgid "All orders"
+msgstr "সব অর্ডার"
+
+#: customers/templates/customers/account.html
+#: customers/templates/customers/orders.html web/static/web/js/app.js
+msgid "Browse products"
+msgstr "পণ্য দেখুন"
+
+#: customers/templates/customers/account.html
+msgid "Orders"
+msgstr "অর্ডার"
+
+#: customers/templates/customers/account.html
+msgid "Recent orders"
+msgstr "সাম্প্রতিক অর্ডার"
+
+#: customers/templates/customers/account.html
+msgid "Verified mobile number"
+msgstr "যাচাইকৃত মোবাইল নম্বর"
+
+#: customers/templates/customers/account.html
+#: customers/templates/customers/orders.html
+msgid "You have not ordered yet."
+msgstr "আপনি এখনও কোনো অর্ডার করেননি।"
+
+#: customers/templates/customers/address_form.html
+#: customers/templates/customers/addresses.html
+msgid "Add address"
+msgstr "ঠিকানা যোগ করুন"
+
+#: customers/templates/customers/address_form.html
+msgid "Cancel"
+msgstr "বাতিল"
+
+#: customers/templates/customers/address_form.html
+msgid "Edit address"
+msgstr "ঠিকানা সম্পাদনা"
+
+#: customers/templates/customers/address_form.html
+msgid "Save address"
+msgstr "ঠিকানা সংরক্ষণ করুন"
+
+#: customers/templates/customers/addresses.html
+msgid "Delete"
+msgstr "মুছুন"
+
+#: customers/templates/customers/addresses.html
+msgid "Delete this address?"
+msgstr "এই ঠিকানাটি মুছে ফেলবেন?"
+
+#: customers/templates/customers/addresses.html
+msgid "Edit"
+msgstr "সম্পাদনা"
+
+#: customers/templates/customers/addresses.html
+msgid "Make default"
+msgstr "ডিফল্ট করুন"
+
+#: customers/templates/customers/addresses.html
+msgid "No saved addresses yet."
+msgstr "এখনও কোনো ঠিকানা সংরক্ষণ করা হয়নি।"
+
+#: customers/templates/customers/login.html
+#: customers/templates/customers/register.html
+msgid "Create an account"
+msgstr "অ্যাকাউন্ট খুলুন"
+
+#: customers/templates/customers/login.html
+msgid ""
+"Enter your mobile number. We will send you a 6-digit code by SMS — no "
+"password needed."
+msgstr ""
+"আপনার মোবাইল নম্বর দিন। আমরা এসএমএস-এ একটি ৬ সংখ্যার কোড পাঠাব — কোনো "
+"পাসওয়ার্ড লাগবে না।"
+
+#: customers/templates/customers/login.html
+msgid "New here?"
+msgstr "নতুন?"
+
+#: customers/templates/customers/login.html
+#: customers/templates/customers/register.html
+msgid "Send code"
+msgstr "কোড পাঠান"
+
+#: customers/templates/customers/otp.html
+msgid "Change number"
+msgstr "নম্বর পরিবর্তন করুন"
+
+#: customers/templates/customers/otp.html
+msgid "Confirm & place order"
+msgstr "নিশ্চিত করে অর্ডার করুন"
+
+#: customers/templates/customers/otp.html
+msgid "Enter your code"
+msgstr "আপনার কোড লিখুন"
+
+#: customers/templates/customers/otp.html
+msgid "Resend code"
+msgstr "আবার কোড পাঠান"
+
+#: customers/templates/customers/otp.html
+msgid "Resend code in %(s)s s"
+msgstr "%(s)s সেকেন্ড পর আবার কোড পাঠান"
+
+#: customers/templates/customers/otp.html
+msgid ""
+"Test mode — no SMS was sent. Your code is <strong>%(code)s</strong>. Switch "
+"on “Send real SMS” in Site Settings to send real codes."
+msgstr ""
+"টেস্ট মোড — কোনো এসএমএস পাঠানো হয়নি। আপনার কোড <strong>%(code)s</strong>। "
+"আসল কোড পাঠাতে সাইট সেটিংসে “Send real SMS” চালু করুন।"
+
+#: customers/templates/customers/otp.html
+msgid "The code works for %(minutes)s minutes."
+msgstr "কোডটি %(minutes)s মিনিট কাজ করবে।"
+
+#: customers/templates/customers/otp.html
+msgid "Verify"
+msgstr "যাচাই করুন"
+
+#: customers/templates/customers/otp.html
+msgid "We sent a 6-digit code by SMS to <strong>%(phone)s</strong>."
+msgstr ""
+"আমরা <strong>%(phone)s</strong> নম্বরে এসএমএস-এ একটি ৬ সংখ্যার কোড "
+"পাঠিয়েছি।"
+
+#: customers/templates/customers/otp.html
+msgid "Your order is placed as soon as you enter it."
+msgstr "কোডটি দিলেই আপনার অর্ডার নেওয়া হবে।"
+
+#: customers/templates/customers/profile.html
+msgid "Send code to new number"
+msgstr "নতুন নম্বরে কোড পাঠান"
+
+#: customers/templates/customers/profile.html
+msgid ""
+"You log in with <strong>%(phone)s</strong>. To use a different number, enter"
+" it below — we will send a code to the new number."
+msgstr ""
+"আপনি <strong>%(phone)s</strong> দিয়ে লগইন করেন। অন্য নম্বর ব্যবহার করতে "
+"নিচে লিখুন — আমরা নতুন নম্বরে একটি কোড পাঠাব।"
+
+#: customers/templates/customers/profile.html
+msgid "Your details"
+msgstr "আপনার তথ্য"
+
+#: customers/templates/customers/register.html
+msgid "Already have an account?"
+msgstr "আগে থেকেই অ্যাকাউন্ট আছে?"
+
+#: customers/templates/customers/register.html
+msgid ""
+"Track your orders and check out faster. We will confirm your mobile number "
+"with an SMS code."
+msgstr ""
+"অর্ডার ট্র্যাক করুন এবং দ্রুত চেকআউট করুন। এসএমএস কোড দিয়ে আমরা আপনার "
+"মোবাইল নম্বর নিশ্চিত করব।"
+
+#: customers/views.py
+msgid "A new code has been sent."
+msgstr "নতুন কোড পাঠানো হয়েছে।"
+
+#: customers/views.py
+msgid "Address deleted."
+msgstr "ঠিকানা মুছে ফেলা হয়েছে।"
+
+#: customers/views.py
+msgid "Address saved."
+msgstr "ঠিকানা সংরক্ষণ করা হয়েছে।"
+
+#: customers/views.py
+msgid "No account uses this number yet. Create an account instead."
+msgstr "এই নম্বরে এখনও কোনো অ্যাকাউন্ট নেই। নতুন অ্যাকাউন্ট খুলুন।"
+
+#: customers/views.py
+msgid "This account is not available. Please contact us."
+msgstr "এই অ্যাকাউন্টটি এখন ব্যবহার করা যাচ্ছে না। আমাদের সাথে যোগাযোগ করুন।"
+
+#: customers/views.py
+msgid "This is already your number."
+msgstr "এটি তো আপনার বর্তমান নম্বর।"
+
+#: customers/views.py
+msgid "This number already belongs to another account."
+msgstr "এই নম্বরটি অন্য একটি অ্যাকাউন্টে ব্যবহৃত হচ্ছে।"
+
+#: customers/views.py
+msgid "This number already has an account. Please log in."
+msgstr "এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন করুন।"
+
+#: customers/views.py
+msgid "Welcome back, %(name)s!"
+msgstr "আবার স্বাগতম, %(name)s!"
+
+#: customers/views.py
+msgid "You have been logged out."
+msgstr "আপনি লগআউট হয়েছেন।"
+
+#: customers/views.py
+msgid "Your account is ready, %(name)s!"
+msgstr "আপনার অ্যাকাউন্ট তৈরি হয়েছে, %(name)s!"
+
+#: customers/views.py
+msgid "Your code has expired or was already used. Please start again."
+msgstr "কোডের মেয়াদ শেষ অথবা আগেই ব্যবহার করা হয়েছে। আবার শুরু করুন।"
+
+#: customers/views.py
+msgid "Your mobile number has been changed."
+msgstr "আপনার মোবাইল নম্বর পরিবর্তন হয়েছে।"
+
+#: customers/views.py
+msgid "Your profile has been saved."
+msgstr "আপনার প্রোফাইল সংরক্ষণ করা হয়েছে।"
+
+#: web/bd.py
+msgid "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)."
+msgstr "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (01XXXXXXXXX)।"
+
+#: web/bd.py
+msgid "Please select your district."
+msgstr "আপনার জেলা নির্বাচন করুন।"
+
+#: web/checkout.py
+msgid ""
+"A product in your cart is no longer available. Please refresh your cart."
+msgstr "আপনার কার্টের একটি পণ্য আর পাওয়া যাচ্ছে না। কার্টটি রিফ্রেশ করুন।"
+
+#: web/checkout.py
+msgid "Invalid cart item."
+msgstr "কার্টের পণ্যটি সঠিক নয়।"
+
+#: web/checkout.py web/services.py
+msgid "Invalid product quantity."
+msgstr "পণ্যের পরিমাণ সঠিক নয়।"
+
+#: web/checkout.py
+msgid "Something went wrong. Please try again or call us."
+msgstr "কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন অথবা আমাদের কল করুন।"
+
+#: web/delivery.py
+msgid "We do not deliver to this district yet. Please call us."
+msgstr "এই জেলায় এখনও ডেলিভারি দিচ্ছি না। অনুগ্রহ করে আমাদের কল করুন।"
+
+#: web/models.py
+msgid "Awaiting verification"
+msgstr "যাচাইয়ের অপেক্ষায়"
+
+#: web/models.py web/views.py
+msgid "Cancelled"
+msgstr "বাতিল"
+
+#: web/models.py web/views.py
+msgid "Delivered"
+msgstr "ডেলিভারি সম্পন্ন"
+
+#: web/models.py web/static/web/js/app.js
+msgid "In stock"
+msgstr "স্টকে আছে"
+
+#: web/models.py web/static/web/js/app.js
+msgid "Out of stock"
+msgstr "স্টক শেষ"
+
+#: web/models.py
+msgid "Paid"
+msgstr "পরিশোধিত"
+
+#: web/models.py
+msgid "Pending"
+msgstr "অপেক্ষমাণ"
+
+#: web/models.py
+msgid "Refunded"
+msgstr "টাকা ফেরত দেওয়া হয়েছে"
+
+#: web/models.py web/views.py
+msgid "Shipped"
+msgstr "পাঠানো হয়েছে"
+
+#: web/models.py
+msgid "Unpaid"
+msgstr "অপরিশোধিত"
+
+#: web/models.py web/static/web/js/app.js
+msgid "Upcoming"
+msgstr "শীঘ্রই আসছে"
+
+#: web/seo.py
+msgid ""
+"Contact WaRa BD for orders, installation help, warranty support and bulk "
+"quotes for the FT-SCL029 cabinet lock."
+msgstr ""
+"FT-SCL029 ক্যাবিনেট লকের অর্ডার, লাগানোর সাহায্য, ওয়ারেন্টি সাপোর্ট ও "
+"পাইকারি দামের জন্য WaRa BD-এর সাথে যোগাযোগ করুন।"
+
+#: web/seo.py
+msgid ""
+"See the WaRa FT-SCL029 keypad lock in action — product gallery and use cases"
+" for homes, offices, hotels, hospitals, gyms and shops."
+msgstr ""
+"কাজের মধ্যে WaRa FT-SCL029 কিপ্যাড লক দেখুন — বাসা, অফিস, হোটেল, হাসপাতাল, "
+"জিম ও দোকানের জন্য পণ্যের গ্যালারি ও ব্যবহারের উদাহরণ।"
+
+#: web/seo.py
+msgid ""
+"Shop WaRa smart security products in Bangladesh — keypad cabinet and drawer "
+"locks with cash on delivery and official warranty."
+msgstr ""
+"বাংলাদেশে WaRa স্মার্ট সিকিউরিটি পণ্য কিনুন — ক্যাশ অন ডেলিভারি ও অফিসিয়াল "
+"ওয়ারেন্টিসহ কিপ্যাড ক্যাবিনেট ও ড্রয়ার লক।"
+
+#: web/seo.py
+msgid ""
+"WaRa BD brings WaRa smart cabinet and drawer locks to homes and businesses "
+"across Bangladesh."
+msgstr ""
+"WaRa BD সারা বাংলাদেশের বাসা ও ব্যবসা প্রতিষ্ঠানে WaRa স্মার্ট ক্যাবিনেট ও "
+"ড্রয়ার লক পৌঁছে দেয়।"
+
+#: web/services.py
+msgid "\"%(name)s\" is currently unavailable."
+msgstr "\"%(name)s\" এই মুহূর্তে পাওয়া যাচ্ছে না।"
+
+#: web/services.py
+msgid "\"%(name)s\" only has %(stock)s in stock. You requested %(quantity)s."
+msgstr "\"%(name)s\" স্টকে আছে মাত্র %(stock)sটি। আপনি চেয়েছেন %(quantity)sটি।"
+
+#: web/services.py
+msgid "A product in your cart is unavailable."
+msgstr "আপনার কার্টের একটি পণ্য পাওয়া যাচ্ছে না।"
+
+#: web/services.py
+msgid ""
+"One or more products in your cart are no longer available. Please refresh "
+"your cart."
+msgstr ""
+"আপনার কার্টের এক বা একাধিক পণ্য আর পাওয়া যাচ্ছে না। কার্টটি রিফ্রেশ করুন।"
+
+#: web/services.py
+msgid "Please choose a delivery area."
+msgstr "ডেলিভারি এলাকা নির্বাচন করুন।"
+
+#: web/services.py web/views.py
+msgid "Please choose a payment method."
+msgstr "পেমেন্ট পদ্ধতি নির্বাচন করুন।"
+
+#: web/services.py
+msgid "Product quantity must be between 1 and 99."
+msgstr "পণ্যের পরিমাণ ১ থেকে ৯৯-এর মধ্যে হতে হবে।"
+
+#: web/services.py web/views.py
+msgid "Your cart is empty."
+msgstr "আপনার কার্ট খালি।"
+
+#: web/static/web/js/app.js
+msgid "%(n)s × %(model)s added to cart"
+msgstr "%(n)s × %(model)s কার্টে যোগ হয়েছে"
+
+#: web/static/web/js/app.js
+msgid "Added"
+msgstr "যোগ হয়েছে"
+
+#: web/static/web/js/app.js
+msgid "All"
+msgstr "সব"
+
+#: web/static/web/js/app.js
+msgid "At checkout"
+msgstr "চেকআউটে হিসাব হবে"
+
+#: web/static/web/js/app.js
+msgid "Bagerhat"
+msgstr "বাগেরহাট"
+
+#: web/static/web/js/app.js
+msgid "Bandarban"
+msgstr "বান্দরবান"
+
+#: web/static/web/js/app.js
+msgid "Barguna"
+msgstr "বরগুনা"
+
+#: web/static/web/js/app.js
+msgid "Barishal"
+msgstr "বরিশাল"
+
+#: web/static/web/js/app.js
+msgid "Bhola"
+msgstr "ভোলা"
+
+#: web/static/web/js/app.js
+msgid "Bogura"
+msgstr "বগুড়া"
+
+#: web/static/web/js/app.js
+msgid "Brahmanbaria"
+msgstr "ব্রাহ্মণবাড়িয়া"
+
+#: web/static/web/js/app.js
+msgid "Browse our WaRa products and add your favourites to the cart."
+msgstr "আমাদের WaRa পণ্যগুলো দেখুন এবং পছন্দেরগুলো কার্টে যোগ করুন।"
+
+#: web/static/web/js/app.js
+msgid "Cart cleared"
+msgstr "কার্ট খালি করা হয়েছে"
+
+#: web/static/web/js/app.js
+msgid "Cart has max units."
+msgstr "কার্টে সর্বোচ্চ পরিমাণ পণ্য আছে।"
+
+#: web/static/web/js/app.js
+msgid "Chandpur"
+msgstr "চাঁদপুর"
+
+#: web/static/web/js/app.js
+msgid "Chapai Nawabganj"
+msgstr "চাঁপাইনবাবগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Chattogram"
+msgstr "চট্টগ্রাম"
+
+#: web/static/web/js/app.js
+msgid "Chuadanga"
+msgstr "চুয়াডাঙ্গা"
+
+#: web/static/web/js/app.js
+msgid "Clear cart"
+msgstr "কার্ট খালি করুন"
+
+#: web/static/web/js/app.js
+msgid "Close"
+msgstr "বন্ধ করুন"
+
+#: web/static/web/js/app.js
+msgid "Color"
+msgstr "রং"
+
+#: web/static/web/js/app.js
+msgid "Commercial"
+msgstr "বাণিজ্যিক"
+
+#: web/static/web/js/app.js
+msgid "Could not place your order. Please try again."
+msgstr "অর্ডারটি সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।"
+
+#: web/static/web/js/app.js
+msgid "Could not send your message."
+msgstr "বার্তাটি পাঠানো যায়নি।"
+
+#: web/static/web/js/app.js
+msgid "Cox's Bazar"
+msgstr "কক্সবাজার"
+
+#: web/static/web/js/app.js
+msgid "Cumilla"
+msgstr "কুমিল্লা"
+
+#: web/static/web/js/app.js
+msgid "Delivery charge to %(place)s: %(fee)s"
+msgstr "%(place)s-এ ডেলিভারি চার্জ: %(fee)s"
+
+#: web/static/web/js/app.js
+msgid "Delivery from %(fee)s · Cash on delivery"
+msgstr "ডেলিভারি চার্জ %(fee)s থেকে · ক্যাশ অন ডেলিভারি"
+
+#: web/static/web/js/app.js
+msgid "Dhaka"
+msgstr "ঢাকা"
+
+#: web/static/web/js/app.js
+msgid "Dinajpur"
+msgstr "দিনাজপুর"
+
+#: web/static/web/js/app.js
+msgid "Enlarge"
+msgstr "বড় করে দেখুন"
+
+#: web/static/web/js/app.js
+msgid "Enter a valid Bangladeshi mobile number."
+msgstr "সঠিক বাংলাদেশি মোবাইল নম্বর দিন।"
+
+#: web/static/web/js/app.js
+msgid "Enter the transaction ID from your payment SMS."
+msgstr "পেমেন্ট এসএমএস থেকে ট্রানজেকশন আইডি লিখুন।"
+
+#: web/static/web/js/app.js
+msgid "Entering code…"
+msgstr "কোড দেওয়া হচ্ছে…"
+
+#: web/static/web/js/app.js
+msgid "Faridpur"
+msgstr "ফরিদপুর"
+
+#: web/static/web/js/app.js
+msgid "Feni"
+msgstr "ফেনী"
+
+#: web/static/web/js/app.js
+msgid "Gaibandha"
+msgstr "গাইবান্ধা"
+
+#: web/static/web/js/app.js
+msgid "Gazipur"
+msgstr "গাজীপুর"
+
+#: web/static/web/js/app.js
+msgid "Get notified"
+msgstr "জানতে চাই"
+
+#: web/static/web/js/app.js
+msgid "Gopalganj"
+msgstr "গোপালগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Habiganj"
+msgstr "হবিগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Hi WaRa BD, I want to place an order."
+msgstr "হ্যালো WaRa BD, আমি একটি অর্ডার করতে চাই।"
+
+#: web/static/web/js/app.js
+msgid "Hi WaRa BD, please let me know when new products arrive."
+msgstr "হ্যালো WaRa BD, নতুন পণ্য এলে আমাকে জানাবেন।"
+
+#: web/static/web/js/app.js
+msgid "Hospitality & Health"
+msgstr "হোটেল ও স্বাস্থ্যসেবা"
+
+#: web/static/web/js/app.js
+msgid "Image coming soon"
+msgstr "ছবি শীঘ্রই আসছে"
+
+#: web/static/web/js/app.js
+msgid "Item removed from cart"
+msgstr "পণ্যটি কার্ট থেকে সরানো হয়েছে"
+
+#: web/static/web/js/app.js
+msgid "Jamalpur"
+msgstr "জামালপুর"
+
+#: web/static/web/js/app.js
+msgid "Jashore"
+msgstr "যশোর"
+
+#: web/static/web/js/app.js
+msgid "Jhalokathi"
+msgstr "ঝালকাঠি"
+
+#: web/static/web/js/app.js
+msgid "Jhenaidah"
+msgstr "ঝিনাইদহ"
+
+#: web/static/web/js/app.js
+msgid "Joypurhat"
+msgstr "জয়পুরহাট"
+
+#: web/static/web/js/app.js
+msgid "Khagrachhari"
+msgstr "খাগড়াছড়ি"
+
+#: web/static/web/js/app.js
+msgid "Khulna"
+msgstr "খুলনা"
+
+#: web/static/web/js/app.js
+msgid "Kishoreganj"
+msgstr "কিশোরগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Kurigram"
+msgstr "কুড়িগ্রাম"
+
+#: web/static/web/js/app.js
+msgid "Kushtia"
+msgstr "কুষ্টিয়া"
+
+#: web/static/web/js/app.js
+msgid "Lakshmipur"
+msgstr "লক্ষ্মীপুর"
+
+#: web/static/web/js/app.js
+msgid "Lalmonirhat"
+msgstr "লালমনিরহাট"
+
+#: web/static/web/js/app.js
+msgid "Madaripur"
+msgstr "মাদারীপুর"
+
+#: web/static/web/js/app.js
+msgid "Magura"
+msgstr "মাগুরা"
+
+#: web/static/web/js/app.js
+msgid "Manikganj"
+msgstr "মানিকগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Maximum %(n)s units per order."
+msgstr "প্রতি অর্ডারে সর্বোচ্চ %(n)sটি।"
+
+#: web/static/web/js/app.js
+msgid "Meherpur"
+msgstr "মেহেরপুর"
+
+#: web/static/web/js/app.js
+msgid "More WaRa products coming soon"
+msgstr "আরও WaRa পণ্য শীঘ্রই আসছে"
+
+#: web/static/web/js/app.js
+msgid "Moulvibazar"
+msgstr "মৌলভীবাজার"
+
+#: web/static/web/js/app.js
+msgid "Munshiganj"
+msgstr "মুন্সীগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Mymensingh"
+msgstr "ময়মনসিংহ"
+
+#: web/static/web/js/app.js
+msgid "Naogaon"
+msgstr "নওগাঁ"
+
+#: web/static/web/js/app.js
+msgid "Narail"
+msgstr "নড়াইল"
+
+#: web/static/web/js/app.js
+msgid "Narayanganj"
+msgstr "নারায়ণগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Narsingdi"
+msgstr "নরসিংদী"
+
+#: web/static/web/js/app.js
+msgid "Natore"
+msgstr "নাটোর"
+
+#: web/static/web/js/app.js
+msgid "Netrokona"
+msgstr "নেত্রকোণা"
+
+#: web/static/web/js/app.js
+msgid "Network error. Please try again."
+msgstr "নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।"
+
+#: web/static/web/js/app.js
+msgid ""
+"New smart security products are on the way. Message us to hear first when "
+"they arrive."
+msgstr "নতুন স্মার্ট সিকিউরিটি পণ্য আসছে। সবার আগে জানতে আমাদের মেসেজ করুন।"
+
+#: web/static/web/js/app.js
+msgid "Next image"
+msgstr "পরের ছবি"
+
+#: web/static/web/js/app.js
+msgid "Nilphamari"
+msgstr "নীলফামারী"
+
+#: web/static/web/js/app.js
+msgid "No products match your filters"
+msgstr "আপনার ফিল্টারের সাথে মেলে এমন কোনো পণ্য নেই"
+
+#: web/static/web/js/app.js
+msgid "No products yet"
+msgstr "এখনও কোনো পণ্য নেই"
+
+#: web/static/web/js/app.js
+msgid "No results found"
+msgstr "কিছু পাওয়া যায়নি"
+
+#: web/static/web/js/app.js
+msgid "Noakhali"
+msgstr "নোয়াখালী"
+
+#: web/static/web/js/app.js
+msgid "Not available."
+msgstr "পাওয়া যাচ্ছে না।"
+
+#: web/static/web/js/app.js
+msgid "Nothing to check out yet"
+msgstr "চেকআউট করার মতো কিছু নেই"
+
+#: web/static/web/js/app.js
+msgid "Office"
+msgstr "অফিস"
+
+#: web/static/web/js/app.js
+msgid "Order summary"
+msgstr "অর্ডারের সারাংশ"
+
+#: web/static/web/js/app.js
+msgid "Pabna"
+msgstr "পাবনা"
+
+#: web/static/web/js/app.js
+msgid "Panchagarh"
+msgstr "পঞ্চগড়"
+
+#: web/static/web/js/app.js
+msgid "Patuakhali"
+msgstr "পটুয়াখালী"
+
+#: web/static/web/js/app.js
+msgid "Pirojpur"
+msgstr "পিরোজপুর"
+
+#: web/static/web/js/app.js
+msgid "Place order"
+msgstr "অর্ডার করুন"
+
+#: web/static/web/js/app.js
+msgid "Please confirm your details and accept the delivery & warranty policy."
+msgstr "আপনার তথ্য নিশ্চিত করুন এবং ডেলিভারি ও ওয়ারেন্টি নীতিতে সম্মতি দিন।"
+
+#: web/static/web/js/app.js
+msgid "Please enter your full address."
+msgstr "আপনার পূর্ণ ঠিকানা লিখুন।"
+
+#: web/static/web/js/app.js
+msgid "Please fix the highlighted fields."
+msgstr "চিহ্নিত ঘরগুলো ঠিক করুন।"
+
+#: web/static/web/js/app.js
+msgid "Previous image"
+msgstr "আগের ছবি"
+
+#: web/static/web/js/app.js
+msgid "Price"
+msgstr "দাম"
+
+#: web/static/web/js/app.js
+msgid "Private mode"
+msgstr "প্রাইভেট মোড"
+
+#: web/static/web/js/app.js
+msgid "Proceed to checkout"
+msgstr "চেকআউটে যান"
+
+#: web/static/web/js/app.js
+msgid "Product"
+msgstr "পণ্য"
+
+#: web/static/web/js/app.js
+msgid "Products added in the admin panel will appear here."
+msgstr "অ্যাডমিন প্যানেলে যোগ করা পণ্য এখানে দেখা যাবে।"
+
+#: web/static/web/js/app.js
+msgid "Public (visitor) mode"
+msgstr "পাবলিক (ভিজিটর) মোড"
+
+#: web/static/web/js/app.js
+msgid "Public Spaces"
+msgstr "পাবলিক স্থান"
+
+#: web/static/web/js/app.js
+msgid "Qty"
+msgstr "পরিমাণ"
+
+#: web/static/web/js/app.js
+msgid "Quantity"
+msgstr "পরিমাণ"
+
+#: web/static/web/js/app.js
+msgid "Rajbari"
+msgstr "রাজবাড়ী"
+
+#: web/static/web/js/app.js
+msgid "Rajshahi"
+msgstr "রাজশাহী"
+
+#: web/static/web/js/app.js
+msgid "Rangamati"
+msgstr "রাঙ্গামাটি"
+
+#: web/static/web/js/app.js
+msgid "Rangpur"
+msgstr "রংপুর"
+
+#: web/static/web/js/app.js
+msgid "Remove"
+msgstr "সরান"
+
+#: web/static/web/js/app.js
+msgid "Satkhira"
+msgstr "সাতক্ষীরা"
+
+#: web/static/web/js/app.js
+msgid "Searching…"
+msgstr "খোঁজা হচ্ছে…"
+
+#: web/static/web/js/app.js
+msgid "Select district"
+msgstr "জেলা নির্বাচন করুন"
+
+#: web/static/web/js/app.js
+msgid "Select thana / upazila"
+msgstr "থানা / উপজেলা নির্বাচন করুন"
+
+#: web/static/web/js/app.js
+msgid "Sending…"
+msgstr "পাঠানো হচ্ছে…"
+
+#: web/static/web/js/app.js
+msgid "Shariatpur"
+msgstr "শরীয়তপুর"
+
+#: web/static/web/js/app.js
+msgid "Sherpur"
+msgstr "শেরপুর"
+
+#: web/static/web/js/app.js
+msgid "Showing %(shown)s of %(total)s product"
+msgstr "%(total)sটির মধ্যে %(shown)sটি পণ্য দেখানো হচ্ছে"
+
+#: web/static/web/js/app.js
+msgid "Showing %(shown)s of %(total)s products"
+msgstr "%(total)sটির মধ্যে %(shown)sটি পণ্য দেখানো হচ্ছে"
+
+#: web/static/web/js/app.js
+msgid "Sirajganj"
+msgstr "সিরাজগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Subtotal (%(n)s item)"
+msgstr "সাবটোটাল (%(n)sটি পণ্য)"
+
+#: web/static/web/js/app.js
+msgid "Subtotal (%(n)s items)"
+msgstr "সাবটোটাল (%(n)sটি পণ্য)"
+
+#: web/static/web/js/app.js
+msgid "Sunamganj"
+msgstr "সুনামগঞ্জ"
+
+#: web/static/web/js/app.js
+msgid "Sylhet"
+msgstr "সিলেট"
+
+#: web/static/web/js/app.js
+msgid "Tangail"
+msgstr "টাঙ্গাইল"
+
+#: web/static/web/js/app.js
+msgid "Thakurgaon"
+msgstr "ঠাকুরগাঁও"
+
+#: web/static/web/js/app.js
+msgid "This field is required."
+msgstr "এই ঘরটি পূরণ করা আবশ্যক।"
+
+#: web/static/web/js/app.js
+msgid "Try a wider price range or clear the filters."
+msgstr "দামের সীমা বাড়িয়ে দেখুন অথবা ফিল্টার মুছে দিন।"
+
+#: web/static/web/js/app.js
+msgid "Undo"
+msgstr "ফিরিয়ে আনুন"
+
+#: web/static/web/js/app.js
+msgid "Unlocked"
+msgstr "খোলা"
+
+#: web/static/web/js/app.js
+msgid "View cart"
+msgstr "কার্ট দেখুন"
+
+#: web/static/web/js/app.js
+msgid "You save"
+msgstr "আপনার সাশ্রয়"
+
+#: web/static/web/js/app.js
+msgid "Your cart is empty"
+msgstr "আপনার কার্ট খালি"
+
+#: web/static/web/js/app.js
+msgid "Your cart is empty. Add a product first."
+msgstr "আপনার কার্ট খালি। আগে একটি পণ্য যোগ করুন।"
+
+#: web/static/web/js/app.js
+msgid "Your order"
+msgstr "আপনার অর্ডার"
+
+#: web/static/web/js/app.js
+msgid "type your own"
+msgstr "নিজে লিখুন"
+
+#: web/templates/web/about.html web/templates/web/partials/header.html
+#: web/seo.py
+msgid "About Us"
+msgstr "আমাদের সম্পর্কে"
+
+#: web/templates/web/about.html
+msgid "About WaRa BD"
+msgstr "WaRa BD সম্পর্কে"
+
+#: web/templates/web/about.html web/templates/web/cart.html
+#: web/templates/web/checkout.html web/templates/web/contact.html
+#: web/templates/web/page.html web/templates/web/portfolio.html
+#: web/templates/web/product.html web/templates/web/products.html
+#: web/templates/web/track_order.html
+#: customers/templates/customers/_account_layout.html
+msgid "Breadcrumb"
+msgstr "পেজের অবস্থান"
+
+#: web/templates/web/about.html web/templates/web/page.html
+#: web/templates/web/partials/footer.html
+msgid "Contact us"
+msgstr "যোগাযোগ করুন"
+
+#: web/templates/web/about.html
+msgid "Everything you need to buy, install and rely on your WaRa lock."
+msgstr "WaRa লক কেনা, লাগানো এবং নিশ্চিন্তে ব্যবহারের জন্য যা যা দরকার।"
+
+#: web/templates/web/about.html
+msgid "From order to locked drawer"
+msgstr "অর্ডার থেকে লক করা ড্রয়ার পর্যন্ত"
+
+#: web/templates/web/about.html
+msgid "Have a question about the FT-SCL029?"
+msgstr "FT-SCL029 নিয়ে কোনো প্রশ্ন আছে?"
+
+#: web/templates/web/about.html web/templates/web/cart.html
+#: web/templates/web/checkout.html web/templates/web/contact.html
+#: web/templates/web/page.html web/templates/web/partials/header.html
+#: web/templates/web/portfolio.html web/templates/web/product.html
+#: web/templates/web/products.html web/templates/web/track_order.html
+#: web/seo.py customers/templates/customers/_account_layout.html
+#: web/static/web/js/app.js
+msgid "Home"
+msgstr "হোম"
+
+#: web/templates/web/about.html
+msgid "How we work"
+msgstr "আমরা যেভাবে কাজ করি"
+
+#: web/templates/web/about.html
+msgid "Keys get lost. Codes don't."
+msgstr "চাবি হারায়। কোড হারায় না।"
+
+#: web/templates/web/about.html
+msgid "Mission, vision & promise"
+msgstr "লক্ষ্য, স্বপ্ন ও প্রতিশ্রুতি"
+
+#: web/templates/web/about.html
+msgid "More than a lock in a box"
+msgstr "শুধু একটি বাক্সে লক নয়"
+
+#: web/templates/web/about.html
+msgid "Our story"
+msgstr "আমাদের গল্প"
+
+#: web/templates/web/about.html
+msgid "Our team is happy to help you pick the right setup."
+msgstr "সঠিক সেটআপ বেছে নিতে আমাদের টিম আপনাকে সাহায্য করবে।"
+
+#: web/templates/web/about.html
+msgid ""
+"So we focused on one product and set out to do it properly — the <strong "
+"style=\"color:var(--black)\">WaRa FT-SCL029</strong> keypad lock. It brings "
+"code-based, keyless security to the furniture people use every day, at a "
+"price that makes sense for homes as well as hotels, offices and gyms."
+msgstr ""
+"তাই আমরা একটি পণ্যেই মনোযোগ দিয়েছি এবং সেটি ঠিকভাবে করতে চেয়েছি — <strong "
+"style=\"color:var(--black)\">WaRa FT-SCL029</strong> কিপ্যাড লক। এটি "
+"প্রতিদিনের আসবাবপত্রে কোড-ভিত্তিক, চাবিহীন নিরাপত্তা দেয়, এমন দামে যা বাসা "
+"থেকে শুরু করে হোটেল, অফিস ও জিম — সবার জন্য মানানসই।"
+
+#: web/templates/web/about.html
+msgid ""
+"Today we deliver genuine WaRa locks across Bangladesh, help customers choose"
+" the right setup, and stay on call long after the parcel arrives."
+msgstr ""
+"আজ আমরা সারা বাংলাদেশে আসল WaRa লক পৌঁছে দিই, গ্রাহকদের সঠিক সেটআপ বেছে নিতে"
+" সাহায্য করি, এবং পার্সেল পৌঁছানোর পরেও পাশে থাকি।"
+
+#: web/templates/web/about.html
+msgid "View product"
+msgstr "পণ্যটি দেখুন"
+
+#: web/templates/web/about.html
+msgid ""
+"WaRa BD started with a simple frustration: the little metal key for a drawer"
+" or cabinet is always the one that goes missing. Padlocks get cut, spare "
+"keys get copied, and shared lockers turn into a guessing game."
+msgstr ""
+"WaRa BD শুরু হয়েছিল একটি সাধারণ বিরক্তি থেকে: ড্রয়ার বা ক্যাবিনেটের ছোট "
+"চাবিটাই সবসময় হারিয়ে যায়। তালা কেটে ফেলা যায়, বাড়তি চাবির নকল হয়, আর "
+"শেয়ার করা লকার হয়ে যায় অনুমানের খেলা।"
+
+#: web/templates/web/about.html
+msgid ""
+"We make everyday storage smarter and safer — one cabinet, drawer and locker "
+"at a time."
+msgstr ""
+"আমরা প্রতিদিনের সংরক্ষণকে আরও স্মার্ট ও নিরাপদ করি — একটি একটি করে "
+"ক্যাবিনেট, ড্রয়ার ও লকার।"
+
+#: web/templates/web/about.html
+msgid "What drives us"
+msgstr "আমাদের অনুপ্রেরণা"
+
+#: web/templates/web/about.html
+msgid "Why choose us"
+msgstr "কেন আমাদের বেছে নেবেন"
+
+#: web/templates/web/about.html
+msgid "warranty on every lock"
+msgstr "প্রতিটি লকে ওয়ারেন্টি"
+
+#: web/templates/web/cart.html web/templates/web/checkout.html
+#: web/templates/web/partials/steps_bar.html
+msgid "Cart"
+msgstr "কার্ট"
+
+#: web/templates/web/cart.html
+msgid "Review your items, adjust quantities and head to checkout."
+msgstr "পণ্যগুলো দেখে নিন, পরিমাণ ঠিক করুন এবং চেকআউটে যান।"
+
+#: web/templates/web/cart.html
+msgid "Shopping Cart"
+msgstr "শপিং কার্ট"
+
+#: web/templates/web/checkout.html
+msgid "(optional — for the invoice)"
+msgstr "(ঐচ্ছিক — ইনভয়েসের জন্য)"
+
+#: web/templates/web/checkout.html
+msgid "(optional)"
+msgstr "(ঐচ্ছিক)"
+
+#: web/templates/web/checkout.html
+msgid "<span class=\"pay-name\"></span> number"
+msgstr "<span class=\"pay-name\"></span> নম্বর"
+
+#: web/templates/web/checkout.html web/templates/web/partials/footer.html
+#: web/models.py web/static/web/js/app.js
+msgid "Cash on Delivery"
+msgstr "ক্যাশ অন ডেলিভারি"
+
+#: web/templates/web/checkout.html web/templates/web/partials/footer.html
+#: web/templates/web/partials/steps_bar.html
+msgid "Checkout"
+msgstr "চেকআউট"
+
+#: web/templates/web/checkout.html web/static/web/js/app.js
+msgid "Choose your district to see the delivery charge."
+msgstr "ডেলিভারি চার্জ দেখতে আপনার জেলা নির্বাচন করুন।"
+
+#: web/templates/web/checkout.html
+msgid "Contact information"
+msgstr "যোগাযোগের তথ্য"
+
+#: web/templates/web/checkout.html web/templates/web/order_success.html
+#: customers/templates/customers/order_detail.html
+msgid "Delivery address"
+msgstr "ডেলিভারি ঠিকানা"
+
+#: web/templates/web/checkout.html customers/models.py
+msgid "District"
+msgstr "জেলা"
+
+#: web/templates/web/checkout.html web/templates/web/contact.html
+#: customers/models.py
+msgid "Email"
+msgstr "ইমেইল"
+
+#: web/templates/web/checkout.html
+msgid ""
+"Enter your <span class=\"pay-name\"></span> number and the Transaction ID "
+"(TrxID) from the SMS below."
+msgstr ""
+"নিচে আপনার <span class=\"pay-name\"></span> নম্বর এবং এসএমএস-এ পাওয়া "
+"ট্রানজেকশন আইডি (TrxID) লিখুন।"
+
+#: web/templates/web/checkout.html
+msgid "Full address"
+msgstr "পূর্ণ ঠিকানা"
+
+#: web/templates/web/checkout.html web/templates/web/contact.html
+#: customers/forms.py
+msgid "Full name"
+msgstr "পূর্ণ নাম"
+
+#: web/templates/web/checkout.html
+msgid "Have an account? Log in"
+msgstr "অ্যাকাউন্ট আছে? লগইন করুন"
+
+#: web/templates/web/checkout.html customers/forms.py customers/models.py
+msgid "House, road, area"
+msgstr "বাড়ি, রোড, এলাকা"
+
+#: web/templates/web/checkout.html
+msgid ""
+"I confirm my details are correct and agree to the <a href=\"%(url)s\" "
+"target=\"_blank\" style=\"color:var(--red);font-weight:700\">delivery &amp; "
+"warranty policy</a>."
+msgstr ""
+"আমি নিশ্চিত করছি যে আমার তথ্য সঠিক এবং আমি <a href=\"%(url)s\" "
+"target=\"_blank\" style=\"color:var(--red);font-weight:700\">ডেলিভারি ও "
+"ওয়ারেন্টি নীতিতে</a> সম্মত।"
+
+#: web/templates/web/checkout.html
+msgid "Just a few details and your WaRa lock is on its way."
+msgstr "কয়েকটি তথ্য দিলেই আপনার WaRa লক রওনা হবে।"
+
+#: web/templates/web/checkout.html
+msgid "Landmark, preferred delivery time, etc."
+msgstr "নিকটবর্তী চিহ্ন, পছন্দের ডেলিভারি সময় ইত্যাদি"
+
+#: web/templates/web/checkout.html
+msgid "Logged in as %(name)s — no SMS code needed."
+msgstr "%(name)s হিসেবে লগইন করা আছে — এসএমএস কোড লাগবে না।"
+
+#: web/templates/web/checkout.html web/templates/web/contact.html
+#: web/templates/web/track_order.html
+#: customers/templates/customers/profile.html customers/forms.py
+#: customers/models.py
+msgid "Mobile number"
+msgstr "মোবাইল নম্বর"
+
+#: web/templates/web/checkout.html
+msgid "Mobile payment"
+msgstr "মোবাইল পেমেন্ট"
+
+#: web/templates/web/checkout.html web/templates/web/partials/footer.html
+#: web/models.py web/static/web/js/app.js
+msgid "Nagad"
+msgstr "নগদ"
+
+#: web/templates/web/checkout.html
+msgid ""
+"Open your <strong class=\"pay-name\"></strong> app and choose <strong>Send "
+"Money</strong>."
+msgstr ""
+"আপনার <strong class=\"pay-name\"></strong> অ্যাপ খুলে <strong>সেন্ড "
+"মানি</strong> নির্বাচন করুন।"
+
+#: web/templates/web/checkout.html
+msgid "Order note"
+msgstr "অর্ডার নোট"
+
+#: web/templates/web/checkout.html
+msgid "Pay when it arrives"
+msgstr "পণ্য হাতে পেয়ে টাকা দিন"
+
+#: web/templates/web/checkout.html
+msgid "Payment method"
+msgstr "পেমেন্ট পদ্ধতি"
+
+#: web/templates/web/checkout.html
+msgid "Placing your order…"
+msgstr "আপনার অর্ডার নেওয়া হচ্ছে…"
+
+#: web/templates/web/checkout.html
+msgid "Please don't close or refresh this page."
+msgstr "অনুগ্রহ করে পেজটি বন্ধ বা রিফ্রেশ করবেন না।"
+
+#: web/templates/web/checkout.html customers/forms.py web/static/web/js/app.js
+msgid "Select district first"
+msgstr "আগে জেলা নির্বাচন করুন"
+
+#: web/templates/web/checkout.html customers/forms.py web/static/web/js/app.js
+msgid "Select your district"
+msgstr "জেলা নির্বাচন করুন"
+
+#: web/templates/web/checkout.html
+msgid ""
+"Send <strong class=\"pay-amount\"></strong> to <strong "
+"id=\"payMerchant\"></strong>."
+msgstr ""
+"<strong id=\"payMerchant\"></strong> নম্বরে <strong class=\"pay-"
+"amount\"></strong> পাঠান।"
+
+#: web/templates/web/checkout.html customers/models.py
+msgid "Thana / Upazila"
+msgstr "থানা / উপজেলা"
+
+#: web/templates/web/checkout.html
+msgid "Transaction ID"
+msgstr "ট্রানজেকশন আইডি"
+
+#: web/templates/web/checkout.html
+msgid ""
+"We will send a 6-digit code by SMS to confirm your mobile number before "
+"placing the order."
+msgstr ""
+"অর্ডার নেওয়ার আগে আপনার মোবাইল নম্বর নিশ্চিত করতে আমরা এসএমএস-এ একটি ৬ "
+"সংখ্যার কোড পাঠাব।"
+
+#: web/templates/web/checkout.html customers/forms.py
+msgid "Your full name"
+msgstr "আপনার পূর্ণ নাম"
+
+#: web/templates/web/checkout.html web/templates/web/partials/footer.html
+#: web/models.py web/static/web/js/app.js
+msgid "bKash"
+msgstr "বিকাশ"
+
+#: web/templates/web/checkout.html
+msgid "e.g. 9A7K3M2Q8T"
+msgstr "যেমন 9A7K3M2Q8T"
+
+#: web/templates/web/contact.html customers/templates/customers/addresses.html
+msgid "Address"
+msgstr "ঠিকানা"
+
+#: web/templates/web/contact.html
+msgid "Business hours"
+msgstr "কাজের সময়"
+
+#: web/templates/web/contact.html web/templates/web/order_failed.html
+msgid "Call us"
+msgstr "কল করুন"
+
+#: web/templates/web/contact.html
+msgid "Call, message or drop by — whatever suits you best."
+msgstr "কল করুন, মেসেজ দিন অথবা চলে আসুন — যেটা আপনার সুবিধা।"
+
+#: web/templates/web/contact.html
+msgid "Chat with our team"
+msgstr "আমাদের টিমের সাথে চ্যাট করুন"
+
+#: web/templates/web/contact.html
+msgid "Choose a topic"
+msgstr "বিষয় নির্বাচন করুন"
+
+#: web/templates/web/contact.html web/templates/web/partials/header.html
+msgid "Contact"
+msgstr "যোগাযোগ"
+
+#: web/templates/web/contact.html web/seo.py
+msgid "Contact Us"
+msgstr "যোগাযোগ করুন"
+
+#: web/templates/web/contact.html
+msgid "Fields marked <span style=\"color:var(--red)\">*</span> are required."
+msgstr "<span style=\"color:var(--red)\">*</span> চিহ্নিত ঘরগুলো পূরণ করা আবশ্যক।"
+
+#: web/templates/web/contact.html web/templates/web/partials/footer.html
+msgid "Get in touch"
+msgstr "যোগাযোগ করুন"
+
+#: web/templates/web/contact.html
+msgid "How can we help?"
+msgstr "আমরা কীভাবে সাহায্য করতে পারি?"
+
+#: web/templates/web/contact.html
+msgid "Message"
+msgstr "বার্তা"
+
+#: web/templates/web/contact.html
+msgid "Message received!"
+msgstr "বার্তা পেয়েছি!"
+
+#: web/templates/web/contact.html
+msgid ""
+"Questions about the lock, an order, installation or a bulk quote? We usually"
+" reply within a few hours."
+msgstr ""
+"লক, অর্ডার, লাগানো বা পাইকারি দাম নিয়ে প্রশ্ন? আমরা সাধারণত কয়েক ঘণ্টার "
+"মধ্যে উত্তর দিই।"
+
+#: web/templates/web/contact.html
+msgid "Send another"
+msgstr "আরেকটি পাঠান"
+
+#: web/templates/web/contact.html web/static/web/js/app.js
+msgid "Send message"
+msgstr "বার্তা পাঠান"
+
+#: web/templates/web/contact.html
+msgid "Send on WhatsApp"
+msgstr "হোয়াটসঅ্যাপে পাঠান"
+
+#: web/templates/web/contact.html
+msgid "Send us a message"
+msgstr "আমাদের বার্তা পাঠান"
+
+#: web/templates/web/contact.html
+msgid "Subject"
+msgstr "বিষয়"
+
+#: web/templates/web/contact.html
+msgid ""
+"Thanks for reaching out. Our team will get back to you shortly. Need a "
+"faster answer? Send the same message on WhatsApp."
+msgstr ""
+"যোগাযোগের জন্য ধন্যবাদ। আমাদের টিম শীঘ্রই আপনার সাথে যোগাযোগ করবে। আরও দ্রুত"
+" উত্তর চান? একই বার্তা হোয়াটসঅ্যাপে পাঠান।"
+
+#: web/templates/web/contact.html
+msgid "WaRa BD location map"
+msgstr "WaRa BD-এর অবস্থানের মানচিত্র"
+
+#: web/templates/web/contact.html
+msgid "We're here to help"
+msgstr "আমরা সাহায্য করতে প্রস্তুত"
+
+#: web/templates/web/contact.html web/templates/web/index.html
+#: web/templates/web/page.html
+msgid "WhatsApp"
+msgstr "হোয়াটসঅ্যাপ"
+
+#: web/templates/web/contact.html
+msgid "Your name"
+msgstr "আপনার নাম"
+
+#: web/templates/web/index.html
+msgid ""
+"A slim round keypad lock with visitor password changing access. Set a code, "
+"close the drawer, done — no keys to lose and no wiring to run."
+msgstr ""
+"ভিজিটর পাসওয়ার্ড পরিবর্তনের সুবিধাসহ একটি পাতলা গোল কিপ্যাড লক। কোড সেট "
+"করুন, ড্রয়ার বন্ধ করুন, ব্যস — চাবি হারানোর ভয় নেই, তার টানারও ঝামেলা নেই।"
+
+#: web/templates/web/index.html
+msgid "A smart lock that fits where keys never worked well"
+msgstr "যেখানে চাবি কখনো ভালো কাজ করেনি, সেখানে মানানসই স্মার্ট লক"
+
+#: web/templates/web/index.html web/templates/web/product.html
+#: web/static/web/js/app.js
+msgid "Add to Cart"
+msgstr "কার্টে যোগ করুন"
+
+#: web/templates/web/index.html
+msgid "Best for:"
+msgstr "যেখানে সবচেয়ে ভালো:"
+
+#: web/templates/web/index.html web/templates/web/product.html
+#: web/static/web/js/app.js
+msgid "Buy Now"
+msgstr "এখনই কিনুন"
+
+#: web/templates/web/index.html
+msgid "Buy with confidence"
+msgstr "নিশ্চিন্তে কিনুন"
+
+#: web/templates/web/index.html
+msgid "Delivered to your door with cash on delivery all over Bangladesh."
+msgstr "সারা বাংলাদেশে ক্যাশ অন ডেলিভারিতে আপনার দরজায় পৌঁছে দেওয়া হয়।"
+
+#: web/templates/web/index.html
+msgid ""
+"From the bedroom wardrobe to a hotel full of lockers, the FT-SCL029 secures "
+"anything with a door or a drawer."
+msgstr ""
+"বেডরুমের ওয়ারড্রোব থেকে শুরু করে লকারে ভরা হোটেল — দরজা বা ড্রয়ার আছে এমন "
+"সবকিছু সুরক্ষিত রাখে FT-SCL029।"
+
+#: web/templates/web/index.html
+msgid "Full details"
+msgstr "বিস্তারিত দেখুন"
+
+#: web/templates/web/index.html
+msgid "Genuine WaRa smart security, with more products on the way."
+msgstr "আসল WaRa স্মার্ট সিকিউরিটি, আরও পণ্য আসছে।"
+
+#: web/templates/web/index.html
+msgid ""
+"Keyless security for every <span class=\"r\">cabinet</span> &amp; <span "
+"class=\"g\">drawer</span>."
+msgstr ""
+"প্রতিটি <span class=\"r\">ক্যাবিনেট</span> ও <span "
+"class=\"g\">ড্রয়ারের</span> জন্য চাবিহীন নিরাপত্তা।"
+
+#: web/templates/web/index.html web/static/web/js/app.js
+msgid "Locked"
+msgstr "লক করা"
+
+#: web/templates/web/index.html
+msgid "Meet the FT-SCL029"
+msgstr "পরিচিত হোন FT-SCL029-এর সাথে"
+
+#: web/templates/web/index.html
+msgid "No electrician, no wiring — just basic tools and a few minutes."
+msgstr ""
+"ইলেকট্রিশিয়ান লাগবে না, তারও না — শুধু সাধারণ যন্ত্রপাতি আর কয়েক মিনিট।"
+
+#: web/templates/web/index.html
+msgid "One lock, dozens of places"
+msgstr "একটি লক, ডজনখানেক জায়গা"
+
+#: web/templates/web/index.html
+msgid "Order Now"
+msgstr "এখনই অর্ডার করুন"
+
+#: web/templates/web/index.html
+msgid "Our products"
+msgstr "আমাদের পণ্য"
+
+#: web/templates/web/index.html
+msgid "Public mode or private mode — you choose"
+msgstr "পাবলিক মোড না প্রাইভেট মোড — আপনিই ঠিক করুন"
+
+#: web/templates/web/index.html
+msgid "Real product · Black"
+msgstr "আসল পণ্য · কালো"
+
+#: web/templates/web/index.html web/templates/web/product.html
+#: customers/templates/customers/profile.html
+msgid "Save"
+msgstr "সাশ্রয়"
+
+#: web/templates/web/index.html
+msgid "Secure your drawers today —"
+msgstr "আজই আপনার ড্রয়ার সুরক্ষিত করুন —"
+
+#: web/templates/web/index.html
+msgid "Shop WaRa"
+msgstr "WaRa শপ"
+
+#: web/templates/web/index.html
+msgid "Simple setup"
+msgstr "সহজ সেটআপ"
+
+#: web/templates/web/index.html
+msgid ""
+"Switch the lock between shared, visitor-friendly use and fixed personal "
+"access."
+msgstr ""
+"লকটি শেয়ার করা, ভিজিটর-বান্ধব ব্যবহার আর নির্দিষ্ট ব্যক্তিগত ব্যবহারের "
+"মধ্যে বদলে নিন।"
+
+#: web/templates/web/index.html
+msgid ""
+"The keypad sits flush on the outside of the door while a motorized lock body"
+" mounts out of sight inside. Owners keep a management code and USB keys; "
+"everyday users get their own code — or, in public mode, every visitor sets a"
+" fresh one."
+msgstr ""
+"কিপ্যাডটি দরজার বাইরের দিকে সমানভাবে বসে, আর মোটরচালিত লক বডিটি ভেতরে চোখের "
+"আড়ালে থাকে। মালিকের কাছে থাকে ম্যানেজমেন্ট কোড ও ইউএসবি চাবি; প্রতিদিনের "
+"ব্যবহারকারীরা পান নিজস্ব কোড — আর পাবলিক মোডে প্রত্যেক ভিজিটর নতুন কোড সেট "
+"করেন।"
+
+#: web/templates/web/index.html
+msgid "Two ways to use it"
+msgstr "ব্যবহারের দুটি উপায়"
+
+#: web/templates/web/index.html
+msgid "Up and running in four steps"
+msgstr "চারটি ধাপে প্রস্তুত"
+
+#: web/templates/web/index.html
+msgid "View all products"
+msgstr "সব পণ্য দেখুন"
+
+#: web/templates/web/index.html
+msgid "Visitor password access"
+msgstr "ভিজিটর পাসওয়ার্ড সুবিধা"
+
+#: web/templates/web/index.html
+msgid "Where it works"
+msgstr "যেখানে কাজ করে"
+
+#: web/templates/web/index.html
+msgid "Why WaRa BD"
+msgstr "কেন WaRa BD"
+
+#: web/templates/web/order_failed.html
+msgid "Order not completed"
+msgstr "অর্ডার সম্পন্ন হয়নি"
+
+#: web/templates/web/order_failed.html
+msgid ""
+"The order was not placed and nothing has been charged. Your cart is still "
+"saved — try again, or call us and we will take the order by phone."
+msgstr ""
+"অর্ডারটি নেওয়া হয়নি এবং কোনো টাকা কাটা হয়নি। আপনার কার্ট এখনও সংরক্ষিত "
+"আছে — আবার চেষ্টা করুন, অথবা আমাদের কল করুন, আমরা ফোনেই অর্ডার নিয়ে নেব।"
+
+#: web/templates/web/order_failed.html
+msgid "Try again"
+msgstr "আবার চেষ্টা করুন"
+
+#: web/templates/web/order_failed.html web/templates/web/product.html
+msgid "WhatsApp us"
+msgstr "হোয়াটসঅ্যাপ করুন"
+
+#: web/templates/web/order_failed.html
+msgid "Your order was not completed"
+msgstr "আপনার অর্ডার সম্পন্ন হয়নি"
+
+#: web/templates/web/order_success.html
+msgid "Back to home"
+msgstr "হোমে ফিরে যান"
+
+#: web/templates/web/order_success.html
+#: customers/templates/customers/order_detail.html
+msgid "Bangladesh"
+msgstr "বাংলাদেশ"
+
+#: web/templates/web/order_success.html web/static/web/js/app.js
+msgid "Continue shopping"
+msgstr "কেনাকাটা চালিয়ে যান"
+
+#: web/templates/web/order_success.html web/templates/web/track_order.html
+#: customers/templates/customers/_order_rows.html
+#: customers/templates/customers/order_detail.html
+msgid "Date"
+msgstr "তারিখ"
+
+#: web/templates/web/order_success.html web/templates/web/product.html
+#: customers/templates/customers/order_detail.html web/static/web/js/app.js
+msgid "Delivery"
+msgstr "ডেলিভারি"
+
+#: web/templates/web/order_success.html
+msgid "Keep your order number — you will need it for warranty support."
+msgstr "অর্ডার নম্বরটি রেখে দিন — ওয়ারেন্টি সাপোর্টের জন্য এটি লাগবে।"
+
+#: web/templates/web/order_success.html
+msgid "Order confirmed"
+msgstr "অর্ডার নিশ্চিত হয়েছে"
+
+#: web/templates/web/order_success.html
+#: customers/templates/customers/order_detail.html
+msgid "Order details"
+msgstr "অর্ডারের বিস্তারিত"
+
+#: web/templates/web/order_success.html web/templates/web/track_order.html
+#: customers/templates/customers/_order_rows.html
+msgid "Order number"
+msgstr "অর্ডার নম্বর"
+
+#: web/templates/web/order_success.html
+msgid "Our team will call you within a few hours to confirm the order."
+msgstr "অর্ডার নিশ্চিত করতে আমাদের টিম কয়েক ঘণ্টার মধ্যে আপনাকে কল করবে।"
+
+#: web/templates/web/order_success.html web/templates/web/product.html
+#: web/templates/web/track_order.html
+#: customers/templates/customers/order_detail.html
+msgid "Payment"
+msgstr "পেমেন্ট"
+
+#: web/templates/web/order_success.html
+msgid "Print invoice"
+msgstr "ইনভয়েস প্রিন্ট করুন"
+
+#: web/templates/web/order_success.html
+#: customers/templates/customers/order_detail.html web/static/web/js/app.js
+msgid "Subtotal"
+msgstr "সাবটোটাল"
+
+#: web/templates/web/order_success.html
+msgid "Thank you, %(name)s! Your order is placed."
+msgstr "ধন্যবাদ, %(name)s! আপনার অর্ডার নেওয়া হয়েছে।"
+
+#: web/templates/web/order_success.html web/templates/web/track_order.html
+#: customers/templates/customers/_order_rows.html
+#: customers/templates/customers/order_detail.html web/static/web/js/app.js
+msgid "Total"
+msgstr "মোট"
+
+#: web/templates/web/order_success.html web/templates/web/product.html
+msgid "Warranty"
+msgstr "ওয়ারেন্টি"
+
+#: web/templates/web/order_success.html
+msgid "We call to confirm"
+msgstr "নিশ্চিত করতে আমরা কল করব"
+
+#: web/templates/web/order_success.html
+msgid ""
+"We'll check your %(method)s transaction ID <strong>%(trx)s</strong> and "
+"confirm your payment by phone."
+msgstr ""
+"আমরা আপনার %(method)s ট্রানজেকশন আইডি <strong>%(trx)s</strong> যাচাই করে "
+"ফোনে পেমেন্ট নিশ্চিত করব।"
+
+#: web/templates/web/order_success.html
+msgid ""
+"We've received your order and will call <strong>%(phone)s</strong> shortly "
+"to confirm delivery."
+msgstr ""
+"আমরা আপনার অর্ডার পেয়েছি এবং ডেলিভারি নিশ্চিত করতে শীঘ্রই "
+"<strong>%(phone)s</strong> নম্বরে কল করব।"
+
+#: web/templates/web/page.html
+msgid "Call or WhatsApp us — we usually reply within a few hours."
+msgstr "কল বা হোয়াটসঅ্যাপ করুন — আমরা সাধারণত কয়েক ঘণ্টার মধ্যে উত্তর দিই।"
+
+#: web/templates/web/page.html
+msgid "Last updated: %(date)s"
+msgstr "সর্বশেষ হালনাগাদ: %(date)s"
+
+#: web/templates/web/page.html
+msgid "Still have a question?"
+msgstr "আর কোনো প্রশ্ন আছে?"
+
+#: web/templates/web/partials/footer.html
+msgid "%(model)s details"
+msgstr "%(model)s বিস্তারিত"
+
+#: web/templates/web/partials/footer.html
+msgid "About us"
+msgstr "আমাদের সম্পর্কে"
+
+#: web/templates/web/partials/footer.html
+msgid "All products"
+msgstr "সব পণ্য"
+
+#: web/templates/web/partials/footer.html
+msgid "Chat on WhatsApp"
+msgstr "হোয়াটসঅ্যাপে চ্যাট করুন"
+
+#: web/templates/web/partials/footer.html
+msgid "Company"
+msgstr "প্রতিষ্ঠান"
+
+#: web/templates/web/partials/footer.html
+msgid "Hi WaRa BD, I have a question about your products."
+msgstr "হ্যালো WaRa BD, আপনাদের পণ্য নিয়ে আমার একটি প্রশ্ন আছে।"
+
+#: web/templates/web/partials/footer.html
+msgid "Product portfolio"
+msgstr "পণ্যের পোর্টফোলিও"
+
+#: web/templates/web/partials/footer.html
+msgid "Shop"
+msgstr "শপ"
+
+#: web/templates/web/partials/footer.html
+#: web/templates/web/partials/header.html
+msgid "Shopping cart"
+msgstr "শপিং কার্ট"
+
+#: web/templates/web/partials/footer.html
+msgid ""
+"Smart, keyless security products from WaRa — genuine items with official "
+"warranty and support across Bangladesh."
+msgstr ""
+"WaRa-এর স্মার্ট, চাবিহীন সিকিউরিটি পণ্য — অফিসিয়াল ওয়ারেন্টি ও সারা "
+"বাংলাদেশে সাপোর্টসহ আসল পণ্য।"
+
+#: web/templates/web/partials/footer.html web/templates/web/track_order.html
+msgid "Track your order"
+msgstr "অর্ডার ট্র্যাক করুন"
+
+#: web/templates/web/partials/footer.html
+msgid "© %(year)s %(name)s. All rights reserved."
+msgstr "© %(year)s %(name)s। সর্বস্বত্ব সংরক্ষিত।"
+
+#: web/templates/web/partials/header.html
+#: customers/templates/customers/login.html
+#: customers/templates/customers/register.html
+msgid "Log in"
+msgstr "লগইন"
+
+#: web/templates/web/partials/header.html
+msgid "Main menu"
+msgstr "প্রধান মেনু"
+
+#: web/templates/web/partials/header.html
+#: customers/templates/customers/_account_layout.html
+#: customers/templates/customers/account.html
+msgid "My account"
+msgstr "আমার অ্যাকাউন্ট"
+
+#: web/templates/web/partials/header.html
+msgid "Open menu"
+msgstr "মেনু খুলুন"
+
+#: web/templates/web/partials/header.html web/templates/web/portfolio.html
+msgid "Portfolio"
+msgstr "পোর্টফোলিও"
+
+#: web/templates/web/partials/header.html web/templates/web/product.html
+#: web/templates/web/products.html web/context_processors.py web/seo.py
+msgid "Products"
+msgstr "পণ্য"
+
+#: web/templates/web/partials/header.html
+msgid "Shop Now"
+msgstr "এখনই কিনুন"
+
+#: web/templates/web/partials/logo.html
+msgid "WaRa BD home"
+msgstr "WaRa BD হোম"
+
+#: web/templates/web/partials/order_tracker.html
+msgid "On the way with %(courier)s"
+msgstr "%(courier)s-এর মাধ্যমে পথে আছে"
+
+#: web/templates/web/partials/order_tracker.html
+msgid "Order status"
+msgstr "অর্ডারের অবস্থা"
+
+#: web/templates/web/partials/order_tracker.html
+msgid "Track parcel"
+msgstr "পার্সেল ট্র্যাক করুন"
+
+#: web/templates/web/partials/order_tracker.html
+msgid "Tracking code"
+msgstr "ট্র্যাকিং কোড"
+
+#: web/templates/web/partials/steps_bar.html
+msgid "Checkout progress"
+msgstr "চেকআউটের ধাপ"
+
+#: web/templates/web/partials/steps_bar.html
+msgid "Order complete"
+msgstr "অর্ডার সম্পন্ন"
+
+#: web/templates/web/portfolio.html
+msgid "Add one to cart"
+msgstr "একটি কার্টে যোগ করুন"
+
+#: web/templates/web/portfolio.html
+msgid "At a glance"
+msgstr "এক নজরে"
+
+#: web/templates/web/portfolio.html
+msgid "Built for every kind of space"
+msgstr "সব ধরনের জায়গার জন্য তৈরি"
+
+#: web/templates/web/portfolio.html
+msgid "Click any photo to enlarge it."
+msgstr "যেকোনো ছবিতে ক্লিক করে বড় করে দেখুন।"
+
+#: web/templates/web/portfolio.html
+msgid ""
+"Filter by setting to see how homes, offices and businesses put the lock to "
+"work."
+msgstr ""
+"বাসা, অফিস ও ব্যবসায় লকটি কীভাবে কাজে লাগে তা দেখতে জায়গা অনুযায়ী ফিল্টার"
+" করুন।"
+
+#: web/templates/web/portfolio.html
+msgid "Filter use cases"
+msgstr "ব্যবহারের ধরন ফিল্টার করুন"
+
+#: web/templates/web/portfolio.html
+msgid "Gallery"
+msgstr "গ্যালারি"
+
+#: web/templates/web/portfolio.html
+msgid ""
+"Hotels, gyms, schools and offices — talk to us about bulk orders and "
+"installation support."
+msgstr ""
+"হোটেল, জিম, স্কুল ও অফিস — পাইকারি অর্ডার ও লাগানোর সাপোর্টের জন্য আমাদের "
+"সাথে কথা বলুন।"
+
+#: web/templates/web/portfolio.html
+msgid "Need locks for a whole building?"
+msgstr "পুরো ভবনের জন্য লক দরকার?"
+
+#: web/templates/web/portfolio.html
+msgid ""
+"One keypad lock, twelve ways to use it. Explore the FT-SCL029 up close and "
+"see where it fits best."
+msgstr ""
+"একটি কিপ্যাড লক, ব্যবহারের বারোটি উপায়। FT-SCL029 কাছ থেকে দেখুন এবং জানুন "
+"কোথায় এটি সবচেয়ে মানানসই।"
+
+#: web/templates/web/portfolio.html web/seo.py
+msgid "Product Portfolio"
+msgstr "পণ্যের পোর্টফোলিও"
+
+#: web/templates/web/portfolio.html
+msgid "Request a quote"
+msgstr "দাম জানতে চাই"
+
+#: web/templates/web/portfolio.html
+msgid "Small lock, serious specs"
+msgstr "ছোট লক, দারুণ স্পেসিফিকেশন"
+
+#: web/templates/web/portfolio.html
+msgid "The FT-SCL029 up close"
+msgstr "কাছ থেকে FT-SCL029"
+
+#: web/templates/web/portfolio.html
+msgid "Use cases"
+msgstr "ব্যবহারের ক্ষেত্র"
+
+#: web/templates/web/portfolio.html
+msgid "View full specifications"
+msgstr "সম্পূর্ণ স্পেসিফিকেশন দেখুন"
+
+#: web/templates/web/product.html web/static/web/js/app.js
+msgid "%(amount)s Off"
+msgstr "%(amount)s ছাড়"
+
+#: web/templates/web/product.html
+msgid "%(warranty)s warranty"
+msgstr "%(warranty)s ওয়ারেন্টি"
+
+#: web/templates/web/product.html
+msgid "%(warranty)s warranty against manufacturing defects."
+msgstr "উৎপাদনজনিত ত্রুটির বিপরীতে %(warranty)s ওয়ারেন্টি।"
+
+#: web/templates/web/product.html
+msgid "Add to cart"
+msgstr "কার্টে যোগ করুন"
+
+#: web/templates/web/product.html
+msgid "Against manufacturing defects"
+msgstr "উৎপাদনজনিত ত্রুটির বিপরীতে"
+
+#: web/templates/web/product.html
+msgid "Brand"
+msgstr "ব্র্যান্ড"
+
+#: web/templates/web/product.html
+msgid "Call or WhatsApp us with your order number for support."
+msgstr "সাপোর্টের জন্য অর্ডার নম্বরসহ আমাদের কল বা হোয়াটসঅ্যাপ করুন।"
+
+#: web/templates/web/product.html
+msgid ""
+"Cash on delivery anywhere in Bangladesh, or pay in advance with bKash or "
+"Nagad and enter your transaction ID at checkout."
+msgstr ""
+"বাংলাদেশের যেকোনো জায়গায় ক্যাশ অন ডেলিভারি, অথবা বিকাশ বা নগদে আগে পেমেন্ট"
+" করে চেকআউটে ট্রানজেকশন আইডি দিন।"
+
+#: web/templates/web/product.html
+msgid "Cash on delivery available"
+msgstr "ক্যাশ অন ডেলিভারি সুবিধা আছে"
+
+#: web/templates/web/product.html
+msgid "Click to enlarge"
+msgstr "বড় করে দেখতে ক্লিক করুন"
+
+#: web/templates/web/product.html
+msgid "Delivery & Warranty"
+msgstr "ডেলিভারি ও ওয়ারেন্টি"
+
+#: web/templates/web/product.html
+msgid "Delivery in %(eta)s"
+msgstr "%(eta)s-এর মধ্যে ডেলিভারি"
+
+#: web/templates/web/product.html
+msgid "Description"
+msgstr "বিবরণ"
+
+#: web/templates/web/product.html
+msgid "FAQ"
+msgstr "সাধারণ প্রশ্ন"
+
+#: web/templates/web/product.html
+msgid "Features"
+msgstr "বৈশিষ্ট্য"
+
+#: web/templates/web/product.html
+msgid "Hi WaRa BD, I want to order %(name)s."
+msgstr "হ্যালো WaRa BD, আমি %(name)s অর্ডার করতে চাই।"
+
+#: web/templates/web/product.html
+msgid "How to use"
+msgstr "ব্যবহারের নিয়ম"
+
+#: web/templates/web/product.html web/models.py web/static/web/js/app.js
+msgid "Inside Dhaka"
+msgstr "ঢাকার ভেতরে"
+
+#: web/templates/web/product.html web/static/web/js/app.js
+msgid "Model"
+msgstr "মডেল"
+
+#: web/templates/web/product.html
+msgid "Official warranty against manufacturing defects."
+msgstr "উৎপাদনজনিত ত্রুটির বিপরীতে অফিসিয়াল ওয়ারেন্টি।"
+
+#: web/templates/web/product.html
+msgid "Or pay with bKash / Nagad at checkout"
+msgstr "অথবা চেকআউটে বিকাশ / নগদে পেমেন্ট করুন"
+
+#: web/templates/web/product.html web/models.py web/static/web/js/app.js
+msgid "Outside Dhaka"
+msgstr "ঢাকার বাইরে"
+
+#: web/templates/web/product.html
+msgid "Prefer to order by phone?"
+msgstr "ফোনে অর্ডার করতে চান?"
+
+#: web/templates/web/product.html
+msgid "Product details"
+msgstr "পণ্যের বিস্তারিত"
+
+#: web/templates/web/product.html
+msgid "Product information"
+msgstr "পণ্যের তথ্য"
+
+#: web/templates/web/product.html
+msgid "Related products"
+msgstr "সম্পর্কিত পণ্য"
+
+#: web/templates/web/product.html
+msgid "Save %(pct)s%%"
+msgstr "%(pct)s%% সাশ্রয়"
+
+#: web/templates/web/product.html
+msgid "Show image %(n)s"
+msgstr "%(n)s নম্বর ছবি দেখুন"
+
+#: web/templates/web/product.html
+msgid "Specifications"
+msgstr "স্পেসিফিকেশন"
+
+#: web/templates/web/product.html
+msgid "This product is %(status)s. Call or WhatsApp us to pre-order."
+msgstr ""
+"এই পণ্যটি এখন %(status)s। প্রি-অর্ডার করতে আমাদের কল বা হোয়াটসঅ্যাপ করুন।"
+
+#: web/templates/web/product.html web/static/web/js/app.js
+msgid "View details"
+msgstr "বিস্তারিত দেখুন"
+
+#: web/templates/web/product.html
+msgid "Where people use it"
+msgstr "যেখানে মানুষ এটি ব্যবহার করে"
+
+#: web/templates/web/product.html
+msgid "Works with"
+msgstr "যেগুলোতে লাগানো যায়"
+
+#: web/templates/web/product.html
+msgid "You may also like"
+msgstr "আপনার পছন্দ হতে পারে"
+
+#: web/templates/web/product.html
+msgid "or"
+msgstr "অথবা"
+
+#: web/templates/web/products.html
+msgid "Availability"
+msgstr "প্রাপ্যতা"
+
+#: web/templates/web/products.html
+msgid "Categories"
+msgstr "ক্যাটাগরি"
+
+#: web/templates/web/products.html
+#: customers/templates/customers/addresses.html
+msgid "Default"
+msgstr "ডিফল্ট"
+
+#: web/templates/web/products.html
+msgid "Filters"
+msgstr "ফিল্টার"
+
+#: web/templates/web/products.html
+msgid "Genuine WaRa smart security products, delivered across Bangladesh."
+msgstr "আসল WaRa স্মার্ট সিকিউরিটি পণ্য, সারা বাংলাদেশে ডেলিভারি।"
+
+#: web/templates/web/products.html
+msgid "Maximum price"
+msgstr "সর্বোচ্চ দাম"
+
+#: web/templates/web/products.html
+msgid "Maximum price (৳)"
+msgstr "সর্বোচ্চ দাম (৳)"
+
+#: web/templates/web/products.html
+msgid "Minimum price"
+msgstr "সর্বনিম্ন দাম"
+
+#: web/templates/web/products.html
+msgid "Minimum price (৳)"
+msgstr "সর্বনিম্ন দাম (৳)"
+
+#: web/templates/web/products.html
+msgid "Name: A to Z"
+msgstr "নাম: A থেকে Z"
+
+#: web/templates/web/products.html
+msgid "Newest first"
+msgstr "নতুনগুলো আগে"
+
+#: web/templates/web/products.html
+msgid "Our Products"
+msgstr "আমাদের পণ্য"
+
+#: web/templates/web/products.html
+msgid "Price Range"
+msgstr "দামের সীমা"
+
+#: web/templates/web/products.html
+msgid "Price: High to Low"
+msgstr "দাম: বেশি থেকে কম"
+
+#: web/templates/web/products.html
+msgid "Price: Low to High"
+msgstr "দাম: কম থেকে বেশি"
+
+#: web/templates/web/products.html
+msgid "Product filters"
+msgstr "পণ্যের ফিল্টার"
+
+#: web/templates/web/products.html web/static/web/js/app.js
+msgid "Reset filters"
+msgstr "ফিল্টার মুছুন"
+
+#: web/templates/web/products.html
+msgid "Search"
+msgstr "খুঁজুন"
+
+#: web/templates/web/products.html
+msgid "Search products"
+msgstr "পণ্য খুঁজুন"
+
+#: web/templates/web/products.html
+msgid "Search products…"
+msgstr "পণ্য খুঁজুন…"
+
+#: web/templates/web/products.html
+msgid "Sort products"
+msgstr "পণ্য সাজান"
+
+#: web/templates/web/track_order.html
+msgid ""
+"Enter the order number from your confirmation and the mobile number you "
+"ordered with."
+msgstr ""
+"কনফার্মেশনে পাওয়া অর্ডার নম্বর এবং যে মোবাইল নম্বর দিয়ে অর্ডার করেছিলেন তা"
+" লিখুন।"
+
+#: web/templates/web/track_order.html
+#: customers/templates/customers/order_detail.html
+msgid "Order %(number)s"
+msgstr "অর্ডার %(number)s"
+
+#: web/templates/web/track_order.html
+#: customers/templates/customers/_order_rows.html
+#: customers/templates/customers/order_detail.html
+msgid "Status"
+msgstr "অবস্থা"
+
+#: web/templates/web/track_order.html
+msgid "Track order"
+msgstr "ট্র্যাক করুন"
+
+#: web/views.py
+msgid "\"%(name)s\" added to cart."
+msgstr "\"%(name)s\" কার্টে যোগ হয়েছে।"
+
+#: web/views.py
+msgid "\"%(name)s\" removed."
+msgstr "\"%(name)s\" সরানো হয়েছে।"
+
+#: web/views.py
+msgid "Confirmed"
+msgstr "নিশ্চিত"
+
+#: web/views.py web/static/web/js/app.js
+msgid "Enter a valid email address."
+msgstr "সঠিক ইমেইল ঠিকানা দিন।"
+
+#: web/views.py
+msgid "Enter the transaction ID (TrxID) from your payment SMS."
+msgstr "পেমেন্ট এসএমএস থেকে ট্রানজেকশন আইডি (TrxID) লিখুন।"
+
+#: web/views.py
+msgid "Invalid request."
+msgstr "অনুরোধটি সঠিক নয়।"
+
+#: web/views.py
+msgid "No order found with this order number and mobile number."
+msgstr "এই অর্ডার নম্বর ও মোবাইল নম্বরে কোনো অর্ডার পাওয়া যায়নি।"
+
+#: web/views.py
+msgid "Order %(number)s cancelled."
+msgstr "অর্ডার %(number)s বাতিল করা হয়েছে।"
+
+#: web/views.py
+msgid "Order placed"
+msgstr "অর্ডার নেওয়া হয়েছে"
+
+#: web/views.py
+msgid "Please enter your full address (house, road, area / thana)."
+msgstr "আপনার পূর্ণ ঠিকানা লিখুন (বাড়ি, রোড, এলাকা / থানা)।"
+
+#: web/views.py web/static/web/js/app.js
+msgid "Please enter your full name."
+msgstr "আপনার পূর্ণ নাম লিখুন।"
+
+#: web/views.py web/static/web/js/app.js
+msgid "Please select an option."
+msgstr "একটি অপশন নির্বাচন করুন।"
+
+#: web/views.py
+msgid "Please select your thana / upazila."
+msgstr "অনুগ্রহ করে আপনার থানা / উপজেলা নির্বাচন করুন।"
+
+#: web/views.py web/static/web/js/app.js
+msgid "Please write at least 10 characters."
+msgstr "কমপক্ষে ১০টি অক্ষর লিখুন।"
+
+#: web/views.py
+msgid "Thanks! Your message has been sent."
+msgstr "ধন্যবাদ! আপনার বার্তা পাঠানো হয়েছে।"

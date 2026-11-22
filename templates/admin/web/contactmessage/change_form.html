@@ -25,8 +25,8 @@
         
         .submit-row { background: #fff; padding: 16px 24px; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); display: flex; gap: 12px; align-items: center; margin-bottom: 24px; border: none; }
         .submit-row input, .submit-row button { color: #ffffff !important; border: none !important; padding: 10px 24px !important; border-radius: 6px !important; font-weight: 600 !important; font-size: 14px; cursor: pointer; }
-        .submit-row input[name="_save"], .submit-row input.default { background: #10b981 !important; }
-        .submit-row a.deletelink { background: #ef4444 !important; color: #fff !important; text-decoration: none !important; padding: 10px 24px !important; border-radius: 6px !important; font-weight: 600 !important; }
+        .submit-row input[name="_save"], .submit-row input.default { background: #d7182a !important; }
+        .submit-row a.deletelink { background: #fff !important; color: #d7182a !important; border: 1px solid #f6c4ca !important; text-decoration: none !important; padding: 10px 24px !important; border-radius: 6px !important; font-weight: 600 !important; }
     </style>
 {% endblock %}
 
@@ -92,7 +92,7 @@
                         <label>Mark as Read</label>
                         <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
                             {{ adminform.form.is_read }}
-                            <label for="{{ adminform.form.is_read.id_for_label }}" style="font-weight: 600; margin: 0; cursor: pointer; font-size: 14px; color: #4f46e5;">This message has been read</label>
+                            <label for="{{ adminform.form.is_read.id_for_label }}" style="font-weight: 600; margin: 0; cursor: pointer; font-size: 14px; color: #d7182a;">This message has been read</label>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,25 @@
 {# web/templates/web/_site_config.html #}
+{{ js_i18n|json_script:"wara-i18n" }}
 <script>
   window.__WARA__ = window.__WARA__ || {};
+  // Active language and the Bangla text for every T('...') string in app.js.
+  window.__WARA__.lang = "{{ lang|default:'en' }}";
+  window.__WARA__.i18n = JSON.parse(document.getElementById("wara-i18n").textContent || "{}");
+  // Links built by Django, so Bangla pages keep their /bn/ prefix.
+  window.__WARA__.urls = {
+    home: "{% url 'web:home' %}",
+    products: "{% url 'web:product_list' %}",
+    portfolio: "{% url 'web:portfolio' %}",
+    about: "{% url 'web:about' %}",
+    contact: "{% url 'web:contact' %}",
+    cart: "{% url 'web:cart' %}",
+    checkout: "{% url 'web:checkout' %}",
+    product: "{% url 'web:product_detail' '__slug__' %}",
+    orderSuccess: "{% url 'web:order_success' '__slug__' %}",
+    orderFailed: "{% url 'web:order_failed' %}",
+    apiCheckout: "{% url 'web:api_checkout' %}",
+    apiContact: "{% url 'web:api_contact' %}"
+  };
   window.__WARA__.site = {
     name: "{{ site_settings.name|escapejs }}",
     phone: "{{ site_settings.phone|escapejs }}",

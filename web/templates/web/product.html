@@ -1,24 +1,15 @@
-{% load static bd_tags %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ product.name }}{% if product.model_number %} ({{ product.model_number }}){% endif %} | {{ site_settings.name|default:"WaRa BD" }}</title>
-  <meta name="description" content="{% firstof product.short_description product.description|striptags|truncatechars:160 product.name %}">
-  <link rel="icon" href="{% static 'web/img/favicon.svg' %}" type="image/svg+xml">
-  <link rel="stylesheet" href="{% static 'web/css/style.css' %}">
-</head>
-<body data-page="product">
-  <div id="site-header"></div>
+{% extends "web/layout.html" %}
+{% load i18n bd_tags cms_tags %}
 
-  <main>
+{% block page %}product{% endblock %}
+
+{% block content %}
     {# Breadcrumbs #}
     <div class="crumb-bar">
       <div class="container">
-        <nav class="crumbs light" aria-label="Breadcrumb">
-          <a href="{% url 'web:home' %}">Home</a><span class="sep">/</span>
-          <a href="{% url 'web:product_list' %}">Products</a><span class="sep">/</span>
+        <nav class="crumbs light" aria-label="{% translate 'Breadcrumb' %}">
+          <a href="{% url 'web:home' %}">{% translate "Home" %}</a><span class="sep">/</span>
+          <a href="{% url 'web:product_list' %}">{% translate "Products" %}</a><span class="sep">/</span>
           {% if product.category %}<a href="{% url 'web:product_list' %}?category={{ product.category.slug|urlencode }}">{{ product.category.name }}</a><span class="sep">/</span>{% endif %}
           <strong aria-current="page">{{ product.model_number|default:product.name }}</strong>
         </nav>
@@ -31,14 +22,14 @@
 
           {# Gallery #}
           <div>
-            <div class="gallery-main" id="gMain" title="Click to enlarge">
-              {% if save_pct %}<span class="gallery-badge">Save {{ save_pct }}%</span>{% endif %}
+            <div class="gallery-main" id="gMain" title="{% translate 'Click to enlarge' %}">
+              {% if save_pct %}<span class="gallery-badge">{% blocktranslate trimmed with pct=save_pct|digits %}Save {{ pct }}%{% endblocktranslate %}</span>{% endif %}
               <img id="gMainImg" src="{% if images %}{{ images.0.src }}{% endif %}" alt="{% if images %}{{ images.0.caption }}{% else %}{{ product.name }}{% endif %}" data-fallback>
             </div>
             {% if images|length > 1 %}
             <div class="thumbs" id="gThumbs">
               {% for im in images %}
-              <button type="button" data-i="{{ forloop.counter0 }}" aria-label="Show image {{ forloop.counter }}"{% if forloop.first %} class="active"{% endif %}>
+              <button type="button" data-i="{{ forloop.counter0 }}" aria-label="{% blocktranslate trimmed with n=forloop.counter|digits %}Show image {{ n }}{% endblocktranslate %}"{% if forloop.first %} class="active"{% endif %}>
                 <img src="{{ im.src }}" alt="{{ im.caption }}" loading="lazy">
               </button>
               {% endfor %}
@@ -49,8 +40,8 @@
           {# Product info + buy box #}
           <div data-buy-scope data-id="{{ product.slug }}">
             <div class="p-brand">
-              {% if product.brand %}<span>Brand: <strong>{{ product.brand }}</strong></span><span>·</span>{% endif %}
-              {% if product.model_number %}<span>Model: <strong>{{ product.model_number }}</strong></span><span>·</span>{% endif %}
+              {% if product.brand %}<span>{% translate "Brand" %}: <strong>{{ product.brand }}</strong></span><span>·</span>{% endif %}
+              {% if product.model_number %}<span>{% translate "Model" %}: <strong>{{ product.model_number }}</strong></span><span>·</span>{% endif %}
               <span class="stock{% if not can_buy %} out{% endif %}">{{ product.get_stock_status_display }}</span>
             </div>
 
@@ -61,7 +52,7 @@
               <span class="price-now">{{ price_now|taka }}</span>
               {% if price_old %}
                 <span class="price-old">{{ price_old|taka }}</span>
-                <span class="price-save">Save {{ save|taka }}</span>
+                <span class="price-save">{% translate "Save" %} {{ save|taka }}</span>
               {% endif %}
             </div>
 
@@ -74,52 +65,52 @@
             {% if can_buy %}
             <div class="buy-row" id="buyRow">
               <div data-qty-mount></div>
-              <button type="button" class="btn btn-green" data-add-to-cart><i data-icon="cart"></i> Add to Cart</button>
-              <button type="button" class="btn btn-red" data-buy-now><i data-icon="zap"></i> Buy Now</button>
+              <button type="button" class="btn btn-green" data-add-to-cart><i data-icon="cart"></i> {% translate "Add to Cart" %}</button>
+              <button type="button" class="btn btn-red" data-buy-now><i data-icon="zap"></i> {% translate "Buy Now" %}</button>
             </div>
             {% else %}
             <div class="form-alert show" style="margin-bottom:22px">
               <i data-icon="info"></i>
-              <span>This product is {{ product.get_stock_status_display|lower }}. Call or WhatsApp us to pre-order.</span>
+              <span>{% blocktranslate trimmed with status=product.get_stock_status_display|lower %}This product is {{ status }}. Call or WhatsApp us to pre-order.{% endblocktranslate %}</span>
             </div>
             {% endif %}
 
             <div class="delivery-box">
-              <div class="row"><i data-icon="truck"></i><div><strong>Inside Dhaka — {{ site_settings.delivery_inside_fee|taka }}</strong><span>Delivery in {{ site_settings.delivery_inside_eta }}</span></div></div>
-              <div class="row"><i data-icon="truck"></i><div><strong>Outside Dhaka — {{ site_settings.delivery_outside_fee|taka }}</strong><span>Delivery in {{ site_settings.delivery_outside_eta }}</span></div></div>
-              <div class="row"><i data-icon="cash"></i><div><strong>Cash on delivery available</strong><span>Or pay with bKash / Nagad at checkout</span></div></div>
-              {% if product.warranty %}<div class="row"><i data-icon="shield"></i><div><strong>{{ product.warranty }} warranty</strong><span>Against manufacturing defects</span></div></div>{% endif %}
+              <div class="row"><i data-icon="truck"></i><div><strong>{% translate "Inside Dhaka" %} — {{ site_settings.delivery_inside_fee|taka }}</strong><span>{% blocktranslate trimmed with eta=site_settings.delivery_inside_eta %}Delivery in {{ eta }}{% endblocktranslate %}</span></div></div>
+              <div class="row"><i data-icon="truck"></i><div><strong>{% translate "Outside Dhaka" %} — {{ site_settings.delivery_outside_fee|taka }}</strong><span>{% blocktranslate trimmed with eta=site_settings.delivery_outside_eta %}Delivery in {{ eta }}{% endblocktranslate %}</span></div></div>
+              <div class="row"><i data-icon="cash"></i><div><strong>{% translate "Cash on delivery available" %}</strong><span>{% translate "Or pay with bKash / Nagad at checkout" %}</span></div></div>
+              {% if product.warranty %}<div class="row"><i data-icon="shield"></i><div><strong>{% blocktranslate trimmed with warranty=product.warranty %}{{ warranty }} warranty{% endblocktranslate %}</strong><span>{% translate "Against manufacturing defects" %}</span></div></div>{% endif %}
             </div>
 
             <div class="call-order">
-              <i data-icon="phone"></i> Prefer to order by phone?
-              <a data-href="tel">{{ site_settings.phone }}</a> or
-              <a data-href="wa" data-wa-text="Hi WaRa BD, I want to order {{ product.name }}{% if product.model_number %} ({{ product.model_number }}){% endif %}.">WhatsApp us</a>
+              <i data-icon="phone"></i> {% translate "Prefer to order by phone?" %}
+              <a href="tel:{{ site_settings.phone|tel_href }}">{{ site_settings.phone|digits }}</a> {% translate "or" %}
+              <a data-href="wa" data-wa-text="{% blocktranslate trimmed with name=product.name %}Hi WaRa BD, I want to order {{ name }}.{% endblocktranslate %}">{% translate "WhatsApp us" %}</a>
             </div>
           </div>
         </div>
 
         {# Tabs #}
         <div class="tabs" id="productTabs">
-          <div class="tab-list" role="tablist" aria-label="Product information">
-            <button type="button" role="tab" id="tab-btn-description" data-tab="description" aria-controls="tab-description" aria-selected="true" class="active">Description</button>
-            {% if specs %}<button type="button" role="tab" id="tab-btn-specs" data-tab="specs" aria-controls="tab-specs" aria-selected="false">Specifications</button>{% endif %}
-            {% if features %}<button type="button" role="tab" id="tab-btn-features" data-tab="features" aria-controls="tab-features" aria-selected="false">Features</button>{% endif %}
-            {% if steps %}<button type="button" role="tab" id="tab-btn-howto" data-tab="howto" aria-controls="tab-howto" aria-selected="false">How to use</button>{% endif %}
-            {% if faq %}<button type="button" role="tab" id="tab-btn-faq" data-tab="faq" aria-controls="tab-faq" aria-selected="false">FAQ</button>{% endif %}
-            <button type="button" role="tab" id="tab-btn-warranty" data-tab="warranty" aria-controls="tab-warranty" aria-selected="false">Delivery &amp; Warranty</button>
+          <div class="tab-list" role="tablist" aria-label="{% translate 'Product information' %}">
+            <button type="button" role="tab" id="tab-btn-description" data-tab="description" aria-controls="tab-description" aria-selected="true" class="active">{% translate "Description" %}</button>
+            {% if specs %}<button type="button" role="tab" id="tab-btn-specs" data-tab="specs" aria-controls="tab-specs" aria-selected="false">{% translate "Specifications" %}</button>{% endif %}
+            {% if features %}<button type="button" role="tab" id="tab-btn-features" data-tab="features" aria-controls="tab-features" aria-selected="false">{% translate "Features" %}</button>{% endif %}
+            {% if steps %}<button type="button" role="tab" id="tab-btn-howto" data-tab="howto" aria-controls="tab-howto" aria-selected="false">{% translate "How to use" %}</button>{% endif %}
+            {% if faq %}<button type="button" role="tab" id="tab-btn-faq" data-tab="faq" aria-controls="tab-faq" aria-selected="false">{% translate "FAQ" %}</button>{% endif %}
+            <button type="button" role="tab" id="tab-btn-warranty" data-tab="warranty" aria-controls="tab-warranty" aria-selected="false">{% translate "Delivery & Warranty" %}</button>
           </div>
 
           {# Description #}
           <div class="tab-panel active" id="tab-description" role="tabpanel" aria-labelledby="tab-btn-description">
             <div class="spotlight" style="gap:48px;align-items:start">
               <div>
-                <h2 style="font-size:26px">{{ product.description_title|default:"Product details" }}</h2>
-                {% for para in paragraphs %}
-                  <p class="rich">{{ para|linebreaksbr }}</p>
-                {% empty %}
+                <h2 style="font-size:26px">{% firstof product.description_title _("Product details") %}</h2>
+                {% if product.description %}
+                  <div class="rich rich-text">{{ product.description|rich }}</div>
+                {% else %}
                   <p class="rich">{{ product.short_description|default:product.name }}</p>
-                {% endfor %}
+                {% endif %}
                 {% if tags %}
                 <div class="tags" style="margin-top:20px">
                   {% for t in tags %}<span><i data-icon="award"></i>{{ t }}</span>{% endfor %}
@@ -134,11 +125,11 @@
             {% if has_applications %}
             <div style="margin-top:40px">
               {% if applications.compatible %}
-                <h3 style="font-size:19px">Works with</h3>
+                <h3 style="font-size:19px">{% translate "Works with" %}</h3>
                 <div class="tags">{% for a in applications.compatible %}<span><i data-icon="check"></i>{{ a }}</span>{% endfor %}</div>
               {% endif %}
               {% if applications.places %}
-                <h3 style="font-size:19px;margin-top:24px">Where people use it</h3>
+                <h3 style="font-size:19px;margin-top:24px">{% translate "Where people use it" %}</h3>
                 <div class="tags">{% for a in applications.places %}<span>{{ a }}</span>{% endfor %}</div>
               {% endif %}
             </div>
@@ -205,20 +196,20 @@
             <div class="grid grid-3">
               <div class="card">
                 <div class="icon-box"><i data-icon="truck"></i></div>
-                <h3>Delivery</h3>
-                <p>Inside Dhaka: {{ site_settings.delivery_inside_fee|taka }}, {{ site_settings.delivery_inside_eta }}.<br>
-                   Outside Dhaka: {{ site_settings.delivery_outside_fee|taka }}, {{ site_settings.delivery_outside_eta }}.</p>
+                <h3>{% translate "Delivery" %}</h3>
+                <p>{% translate "Inside Dhaka" %}: {{ site_settings.delivery_inside_fee|taka }}, {{ site_settings.delivery_inside_eta }}.<br>
+                   {% translate "Outside Dhaka" %}: {{ site_settings.delivery_outside_fee|taka }}, {{ site_settings.delivery_outside_eta }}.</p>
               </div>
               <div class="card">
                 <div class="icon-box green"><i data-icon="cash"></i></div>
-                <h3>Payment</h3>
-                <p>Cash on delivery anywhere in Bangladesh, or pay in advance with bKash or Nagad and enter your transaction ID at checkout.</p>
+                <h3>{% translate "Payment" %}</h3>
+                <p>{% translate "Cash on delivery anywhere in Bangladesh, or pay in advance with bKash or Nagad and enter your transaction ID at checkout." %}</p>
               </div>
               <div class="card">
                 <div class="icon-box"><i data-icon="shield"></i></div>
-                <h3>Warranty</h3>
-                <p>{% if product.warranty %}{{ product.warranty }} warranty against manufacturing defects.{% else %}Official warranty against manufacturing defects.{% endif %}
-                   Call or WhatsApp us with your order number for support.</p>
+                <h3>{% translate "Warranty" %}</h3>
+                <p>{% if product.warranty %}{% blocktranslate trimmed with warranty=product.warranty %}{{ warranty }} warranty against manufacturing defects.{% endblocktranslate %}{% else %}{% translate "Official warranty against manufacturing defects." %}{% endif %}
+                   {% translate "Call or WhatsApp us with your order number for support." %}</p>
               </div>
             </div>
           </div>
@@ -231,15 +222,15 @@
     <section class="section section-soft">
       <div class="container">
         <div class="section-head">
-          <span class="eyebrow">You may also like</span>
-          <h2>Related products</h2>
+          <span class="eyebrow">{% translate "You may also like" %}</span>
+          <h2>{% translate "Related products" %}</h2>
         </div>
         <div class="product-grid">
           {% for r in related %}{% with p=r.product %}
           <article class="p-card" data-buy-scope data-id="{{ p.slug }}">
             <a class="p-card-media" href="{{ p.get_absolute_url }}">
               <img src="{{ r.image }}" alt="{{ p.name }}" loading="lazy" data-fallback>
-              {% if r.save %}<span class="p-card-badge">{{ r.save|taka }} Off</span>{% endif %}
+              {% if r.save %}<span class="p-card-badge">{% blocktranslate trimmed with amount=r.save|taka %}{{ amount }} Off{% endblocktranslate %}</span>{% endif %}
               {% if not r.can_buy %}<span class="p-card-badge stock-out">{{ p.get_stock_status_display }}</span>{% endif %}
             </a>
             <div class="p-card-body">
@@ -248,10 +239,10 @@
               <div class="p-card-price"><strong>{{ r.price_now|taka }}</strong>{% if r.price_old %}<s>{{ r.price_old|taka }}</s>{% endif %}</div>
               <div class="p-card-actions">
                 {% if r.can_buy %}
-                  <button type="button" class="btn btn-green" data-add-to-cart><i data-icon="cart"></i> Add to Cart</button>
-                  <button type="button" class="btn btn-red" data-buy-now>Buy Now</button>
+                  <button type="button" class="btn btn-green" data-add-to-cart><i data-icon="cart"></i> {% translate "Add to Cart" %}</button>
+                  <button type="button" class="btn btn-red" data-buy-now>{% translate "Buy Now" %}</button>
                 {% else %}
-                  <a class="btn btn-outline" href="{{ p.get_absolute_url }}">View details</a>
+                  <a class="btn btn-outline" href="{{ p.get_absolute_url }}">{% translate "View details" %}</a>
                 {% endif %}
               </div>
             </div>
@@ -261,22 +252,19 @@
       </div>
     </section>
     {% endif %}
-  </main>
+{% endblock %}
 
+{% block after_main %}
   {# Mobile sticky buy bar — app.js shows it when the main buy buttons scroll away #}
   {% if can_buy %}
   <div class="sticky-buy" id="stickyBuy" data-buy-scope data-id="{{ product.slug }}">
     <div><small>{{ product.model_number|default:product.name }}</small><span class="sp">{{ price_now|taka }}</span></div>
     <div style="display:flex;gap:8px">
-      <button type="button" class="btn btn-green btn-sm" data-add-to-cart aria-label="Add to cart"><i data-icon="cart"></i></button>
-      <button type="button" class="btn btn-red btn-sm" data-buy-now>Buy Now</button>
+      <button type="button" class="btn btn-green btn-sm" data-add-to-cart aria-label="{% translate 'Add to cart' %}"><i data-icon="cart"></i></button>
+      <button type="button" class="btn btn-red btn-sm" data-buy-now>{% translate "Buy Now" %}</button>
     </div>
   </div>
   {% endif %}
 
   {{ images|json_script:"product-images" }}
-
-  <div id="site-footer"></div>
-  {% include "web/_products_bridge.html" %}
-</body>
-</html>
+{% endblock %}

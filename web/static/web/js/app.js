@@ -6,15 +6,32 @@
 (function () {
   'use strict';
 
-  /* ---------- URLs ---------- */
+  /* ---------- Language ----------
+     Django sets window.__WARA__.lang ("en" at "/", "bn" at "/bn/") and
+     window.__WARA__.i18n = { "English text": "বাংলা" } for every string in
+     this file wrapped in T() or TF() (see web/i18n_js.py + locale/bn/).
+     `manage.py i18n_sync` picks those strings up automatically. */
+  const WARA = window.__WARA__ || {};
+  const LANG = WARA.lang || document.documentElement.lang || 'en';
+  const I18N = WARA.i18n || {};
+  const T = s => (I18N[s] ? I18N[s] : s);
+  // TF() fills named placeholders such as %(n)s, like Django's blocktrans.
+  const TF = (s, vars) => T(s).replace(/%\((\w+)\)s/g, (m, k) => (vars && vars[k] != null ? vars[k] : m));
+  const BN_DIGITS = '০১২৩৪৫৬৭৮৯';
+  const num = v => (LANG === 'bn' ? String(v).replace(/\d/g, d => BN_DIGITS[d]) : String(v));
+
+  /* ---------- URLs (from Django, so Bangla pages keep their /bn/ prefix) ---------- */
+  const DU = WARA.urls || {};
+  const urlFrom = (p, fallback) => v => (p || fallback).replace('__slug__', encodeURIComponent(v));
   const URLS = {
-    home: '/', products: '/products/', portfolio: '/portfolio/', about: '/about/',
-    contact: '/contact/', cart: '/cart/', checkout: '/checkout/',
-    product: (slug) => '/products/' + encodeURIComponent(slug) + '/',
-    orderSuccess: (num) => '/order/success/' + encodeURIComponent(num) + '/',
-    orderFailed: '/order/failed/',
-    apiCheckout: '/api/checkout/',
-    apiContact: '/api/contact/'
+    home: DU.home || '/', products: DU.products || '/products/', portfolio: DU.portfolio || '/portfolio/',
+    about: DU.about || '/about/', contact: DU.contact || '/contact/', cart: DU.cart || '/cart/',
+    checkout: DU.checkout || '/checkout/',
+    product: urlFrom(DU.product, '/__slug__'),
+    orderSuccess: urlFrom(DU.orderSuccess, '/order/success/__slug__/'),
+    orderFailed: DU.orderFailed || '/order/failed/',
+    apiCheckout: DU.apiCheckout || '/api/checkout/',
+    apiContact: DU.apiContact || '/api/contact/'
   };
 
   /* ---------- Site settings (DB-injected, with fallback) ---------- */
@@ -47,9 +64,9 @@
   const PRODUCT = CATALOG.find(p => p.featured) || CATALOG[0] || FALLBACK_PRODUCT;
 
   const STOCK = {
-    'in-stock':     { label: 'In stock',     buy: true  },
-    'out-of-stock': { label: 'Out of stock', buy: false },
-    'upcoming':     { label: 'Upcoming',     buy: false }
+    'in-stock':     { label: T('In stock'),     buy: true  },
+    'out-of-stock': { label: T('Out of stock'), buy: false },
+    'upcoming':     { label: T('Upcoming'),     buy: false }
   };
   const stockOf = p => STOCK[p.stock] || STOCK['in-stock'];
 
@@ -57,11 +74,11 @@
   const deliveryData = (window.__WARA__ && window.__WARA__.site && window.__WARA__.site.delivery) || {};
   const DELIVERY = {
     // `??` (not `||`) so a fee of 0 set in Site Settings means free delivery.
-    inside:  { label: 'Inside Dhaka',  fee: deliveryData.inside?.fee  ?? 60,  eta: deliveryData.inside?.eta  || '1-2 days' },
-    outside: { label: 'Outside Dhaka', fee: deliveryData.outside?.fee ?? 120, eta: deliveryData.outside?.eta || '2-4 days' }
+    inside:  { label: T('Inside Dhaka'),  fee: deliveryData.inside?.fee  ?? 60,  eta: deliveryData.inside?.eta  || '1-2 days' },
+    outside: { label: T('Outside Dhaka'), fee: deliveryData.outside?.fee ?? 120, eta: deliveryData.outside?.eta || '2-4 days' }
   };
 
-  const PAYMENTS = { cod: { label: 'Cash on Delivery' }, bkash: { label: 'bKash' }, nagad: { label: 'Nagad' } };
+  const PAYMENTS = { cod: { label: T('Cash on Delivery') }, bkash: { label: T('bKash') }, nagad: { label: T('Nagad') } };
   const MAX_QTY = 20;
 
   /* Full 64-district list */
@@ -97,7 +114,7 @@
   /* ---------- Helpers ---------- */
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
-  const money = n => '৳' + Number(n).toLocaleString('en-IN');
+  const money = n => '৳' + num(Number(n).toLocaleString('en-IN'));
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const clampQty = n => Math.min(MAX_QTY, Math.max(1, parseInt(n, 10) || 1));
   const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -159,6 +176,7 @@
     file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
     wifioff: '<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>',
     send: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
     /* Copied from the original storefront icon set */
     key: '<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>',
     battery: '<rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/><line x1="5" y1="10" x2="5" y2="14"/>',
@@ -200,7 +218,7 @@
   const FALLBACK_IMG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500"><rect width="600" height="500" fill="#ffffff"/>' +
     keypadSVG('x="160" y="80" width="280" height="280"') +
-    '<text x="300" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#0f0f0f">Image coming soon</text></svg>'
+    '<text x="300" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#0f0f0f">' + esc(T('Image coming soon')) + '</text></svg>'
   );
   window.WARA_FALLBACK = FALLBACK_IMG;
 
@@ -286,53 +304,8 @@
     setTimeout(close, opts.duration || 3800);
   }
 
-  /* ---------- Layout ---------- */
-  const NAV = [[URLS.home, 'Home', 'home'], [URLS.products, 'Products', 'products'], [URLS.portfolio, 'Portfolio', 'portfolio'], [URLS.about, 'About Us', 'about'], [URLS.contact, 'Contact', 'contact']];
-  const logoHTML = '<a class="logo" href="' + URLS.home + '" aria-label="WaRa BD home"><span class="logo-mark">' + icon('lock') + '</span><span><span class="wa">Wa</span><span class="ra">Ra</span></span><small>BD</small></a>';
-
+  /* ---------- Layout (header & footer are rendered by Django: web/partials/) ---------- */
   function renderLayout() {
-    const page = document.body.dataset.page;
-    const header = $('#site-header');
-    if (header) {
-      header.outerHTML =
-        '<div class="topbar"><div class="container"><div class="topbar-group"><span><span class="dot"></span>' + esc(SITE.announcement) + '</span></div>' +
-        '<div class="topbar-group"><a href="tel:' + SITE.phone.replace(/[^\d+]/g, '') + '">' + icon('phone') + esc(SITE.phone) + '</a>' +
-        '<a class="hide-sm" href="mailto:' + SITE.email + '">' + icon('mail') + esc(SITE.email) + '</a></div></div></div>' +
-        '<header class="site-header" id="siteHeader"><div class="container nav">' + logoHTML +
-        '<nav class="nav-links" id="navLinks" aria-label="Main">' +
-        NAV.map(n => '<a href="' + n[0] + '"' + (n[2] === page || (n[2] === 'products' && page === 'product') ? ' class="active" aria-current="page"' : '') + '>' + n[1] + '</a>').join('') +
-        '</nav><div class="nav-actions"><a class="btn btn-red btn-sm hide-sm" href="' + URLS.products + '">Shop Now</a>' +
-        '<a class="cart-btn" href="' + URLS.cart + '" aria-label="Shopping cart">' + icon('cart') + '<span class="cart-count">0</span></a>' +
-        '<button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">' + icon('menu') + '</button></div></div></header>';
-    }
-
-    const footer = $('#site-footer');
-    if (footer) {
-      footer.outerHTML =
-        '<footer class="site-footer"><div class="container footer-grid"><div>' + logoHTML +
-        '<p>Smart, keyless security products from WaRa — genuine items with official warranty and support across Bangladesh.</p>' +
-        '<div class="socials"><a href="' + SITE.social.facebook + '" aria-label="Facebook">' + icon('facebook') + '</a>' +
-        '<a href="' + SITE.social.instagram + '" aria-label="Instagram">' + icon('instagram') + '</a>' +
-        '<a href="' + SITE.social.youtube + '" aria-label="YouTube">' + icon('youtube') + '</a></div></div>' +
-        '<div><h4>Shop</h4><ul class="footer-links"><li><a href="' + URLS.products + '">All products</a></li>' +
-        '<li><a href="' + productUrl(PRODUCT) + '">' + esc(PRODUCT.model) + ' details</a></li>' +
-        '<li><a href="' + URLS.portfolio + '">Product portfolio</a></li>' +
-        '<li><a href="' + URLS.cart + '">Shopping cart</a></li>' +
-        '<li><a href="' + URLS.checkout + '">Checkout</a></li></ul></div>' +
-        '<div><h4>Company</h4><ul class="footer-links"><li><a href="' + URLS.about + '">About us</a></li>' +
-        '<li><a href="' + URLS.contact + '">Contact us</a></li>' +
-        '<li><a href="' + productUrl(PRODUCT) + '#faq">FAQ</a></li>' +
-        '<li><a href="' + productUrl(PRODUCT) + '#warranty">Warranty & delivery</a></li></ul></div>' +
-        '<div><h4>Get in touch</h4><ul class="footer-contact">' +
-        '<li>' + icon('pin') + '<span>' + esc(SITE.address) + '</span></li>' +
-        '<li>' + icon('phone') + '<a href="tel:' + SITE.phone.replace(/[^\d+]/g, '') + '">' + esc(SITE.phone) + '</a></li>' +
-        '<li>' + icon('mail') + '<a href="mailto:' + SITE.email + '">' + esc(SITE.email) + '</a></li>' +
-        '<li>' + icon('clock') + '<span>' + esc(SITE.hours) + '</span></li></ul></div></div>' +
-        '<div class="footer-bottom"><div class="container"><span>© ' + new Date().getFullYear() + ' ' + esc(SITE.name) + '. All rights reserved.</span>' +
-        '<span class="pay-chips"><span>Cash on Delivery</span><span>bKash</span><span>Nagad</span></span></div></div></footer>' +
-        '<a class="wa-float" href="' + waLink('Hi WaRa BD, I have a question about your products.') + '" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">' + icon('message') + '</a>';
-    }
-
     const toggle = $('#menuToggle');
     if (toggle) toggle.addEventListener('click', () => {
       const open = $('#navLinks').classList.toggle('open');
@@ -366,7 +339,7 @@
       if (t === 'tel') el.href = 'tel:' + SITE.phone.replace(/[^\d+]/g, '');
       if (t === 'mail') el.href = 'mailto:' + SITE.email;
       if (t === 'wa') {
-        el.href = waLink(el.dataset.waText || 'Hi WaRa BD, I want to place an order.');
+        el.href = waLink(el.dataset.waText || T('Hi WaRa BD, I want to place an order.'));
         el.target = '_blank'; el.rel = 'noopener';
       }
     });
@@ -378,6 +351,11 @@
       if (!el.alt) el.alt = PRODUCT.name + ' — ' + im.caption;
     });
     $$('[data-qty-mount]', root).forEach(el => { el.outerHTML = qtyHTML(1, el.dataset.size, el.id); });
+    // Server-rendered images: missing or broken photos fall back to the keypad illustration.
+    $$('img[data-fallback]', root).forEach(img => {
+      const useFallback = () => { img.onerror = null; img.src = FALLBACK_IMG; };
+      if (!img.getAttribute('src')) useFallback(); else img.onerror = useFallback;
+    });
   }
 
   function qtyHTML(value, size, id) {
@@ -420,7 +398,7 @@
         const wrap = step.closest('.qty');
         const input = $('input', wrap);
         const next = (parseInt(input.value, 10) || 1) + Number(step.dataset.step);
-        if (next > MAX_QTY) { toast('Maximum ' + MAX_QTY + ' units per order.', { type: 'error' }); return; }
+        if (next > MAX_QTY) { toast(TF('Maximum %(n)s units per order.', { n: num(MAX_QTY) }), { type: 'error' }); return; }
         input.value = clampQty(next);
         syncQty(wrap);
         input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -434,17 +412,17 @@
         const id = add.dataset.id || (scope && scope.dataset.id) || (PRODUCT && PRODUCT.id);
         const p = PRODUCTS[id];
 
-        if (!p || !stockOf(p).buy) { toast('Not available.', { type: 'error' }); return; }
+        if (!p || !stockOf(p).buy) { toast(T('Not available.'), { type: 'error' }); return; }
 
         const qtyInput = scope ? $('.qty input', scope) : null;
         const qty = qtyInput ? clampQty(qtyInput.value) : 1;
 
         const added = Cart.add(p.id, qty);
-        if (!added) { toast('Cart has max units.', { type: 'error', href: URLS.cart, linkText: 'View cart' }); return; }
+        if (!added) { toast(T('Cart has max units.'), { type: 'error', href: URLS.cart, linkText: T('View cart') }); return; }
 
-        toast(added + ' × ' + esc(p.model) + ' added to cart', { href: URLS.cart, linkText: 'View cart' });
+        toast(TF('%(n)s × %(model)s added to cart', { n: num(added), model: esc(p.model) }), { href: URLS.cart, linkText: T('View cart') });
         const label = add.innerHTML;
-        add.innerHTML = icon('check') + ' Added';
+        add.innerHTML = icon('check') + ' ' + T('Added');
         add.disabled = true;
         setTimeout(() => { add.innerHTML = label; add.disabled = false; }, 1400);
         return;
@@ -457,7 +435,7 @@
         const id = buy.dataset.id || (scope && scope.dataset.id) || (PRODUCT && PRODUCT.id);
         const p = PRODUCTS[id];
 
-        if (!p || !stockOf(p).buy) { toast('Not available.', { type: 'error' }); return; }
+        if (!p || !stockOf(p).buy) { toast(T('Not available.'), { type: 'error' }); return; }
 
         const qtyInput = scope ? $('.qty input', scope) : null;
         const qty = qtyInput ? clampQty(qtyInput.value) : 1;
@@ -482,7 +460,7 @@
     if (!('IntersectionObserver' in window)) { items.forEach(el => el.classList.add('in')); return; }
     const io = new IntersectionObserver(entries => {
       entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
-    }, { threshold: 0.12 });
+    }, { threshold: 0, rootMargin: '0px 0px 80px 0px' });  // show sections just before they scroll in (no blank areas)
     items.forEach(el => io.observe(el));
   }
 
@@ -497,10 +475,10 @@
       lb.className = 'lightbox';
       lb.setAttribute('role', 'dialog');
       lb.setAttribute('aria-modal', 'true');
-      lb.innerHTML = '<button class="lb-close" aria-label="Close">' + icon('x') + '</button>' +
-        '<button class="gallery-nav prev" aria-label="Previous image">' + icon('arrow') + '</button>' +
+      lb.innerHTML = '<button class="lb-close" aria-label="' + T('Close') + '">' + icon('x') + '</button>' +
+        '<button class="gallery-nav prev" aria-label="' + T('Previous image') + '">' + icon('arrow') + '</button>' +
         '<img alt="">' +
-        '<button class="gallery-nav next" aria-label="Next image">' + icon('arrow') + '</button>' +
+        '<button class="gallery-nav next" aria-label="' + T('Next image') + '">' + icon('arrow') + '</button>' +
         '<div class="lb-cap"></div>';
       document.body.appendChild(lb);
       lb.addEventListener('click', e => {
@@ -528,7 +506,7 @@
     img.onerror = () => { img.onerror = null; img.src = FALLBACK_IMG; };
     img.src = lbImages[lbIndex].src;
     img.alt = lbImages[lbIndex].caption;
-    $('.lb-cap', lb).textContent = (lbIndex + 1) + ' / ' + n + (lbImages[lbIndex].caption ? ' — ' + lbImages[lbIndex].caption : '');
+    $('.lb-cap', lb).textContent = num(lbIndex + 1) + ' / ' + num(n) + (lbImages[lbIndex].caption ? ' — ' + lbImages[lbIndex].caption : '');
   }
   function closeLightbox() {
     $('#lightbox').classList.remove('open');
@@ -537,16 +515,18 @@
 
   /* ---------- Totals / empty helpers ---------- */
   function totalsHTML(t, deliveryText) {
-    return '<div class="sum-row"><span>Subtotal (' + t.count + ' item' + (t.count === 1 ? '' : 's') + ')</span><span>' + money(t.subtotal) + '</span></div>' +
-      (t.savings > 0 ? '<div class="sum-row save"><span>You save</span><span>− ' + money(t.savings) + '</span></div>' : '') +
-      '<div class="sum-row"><span>Delivery</span><span>' + (deliveryText || money(t.delivery)) + '</span></div>' +
-      '<div class="sum-row total"><span>Total</span><span>' + money(t.total) + '</span></div>';
+    const n = { n: num(t.count) };
+    const items = t.count === 1 ? TF('Subtotal (%(n)s item)', n) : TF('Subtotal (%(n)s items)', n);
+    return '<div class="sum-row"><span>' + items + '</span><span>' + money(t.subtotal) + '</span></div>' +
+      (t.savings > 0 ? '<div class="sum-row save"><span>' + T('You save') + '</span><span>− ' + money(t.savings) + '</span></div>' : '') +
+      '<div class="sum-row"><span>' + T('Delivery') + '</span><span>' + (deliveryText || money(t.delivery)) + '</span></div>' +
+      '<div class="sum-row total"><span>' + T('Total') + '</span><span>' + money(t.total) + '</span></div>';
   }
   function emptyCartHTML(title, text) {
     return '<div class="empty-state"><div class="big-icon">' + icon('cart') + '</div>' +
-      '<h2>' + (title || 'Your cart is empty') + '</h2>' +
-      '<p>' + (text || 'Browse our WaRa products and add your favourites to the cart.') + '</p>' +
-      '<a class="btn btn-red" href="' + URLS.products + '">' + icon('bag') + ' Browse products</a></div>';
+      '<h2>' + (title || T('Your cart is empty')) + '</h2>' +
+      '<p>' + (text || T('Browse our WaRa products and add your favourites to the cart.')) + '</p>' +
+      '<a class="btn btn-red" href="' + URLS.products + '">' + icon('bag') + ' ' + T('Browse products') + '</a></div>';
   }
 
   /* =========================================================
@@ -568,13 +548,13 @@
       status.classList.toggle('ok', ok);
       led.setAttribute('fill', ok ? '#12924a' : '#d7182a');
     };
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setState('Locked', false); return; }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setState(T('Locked'), false); return; }
     const code = ['2', '5', '8', '0', '#'];
     (async function loop() {
       for (;;) {
-        setState('Locked', false);
+        setState(T('Locked'), false);
         await wait(1600);
-        setState('Entering code…', false);
+        setState(T('Entering code…'), false);
         for (const k of code) {
           keyEl(k).classList.add('pressed');
           await wait(230);
@@ -582,7 +562,7 @@
           await wait(170);
         }
         $$('.key', wrap).forEach(el => el.classList.add('ok'));
-        setState('Unlocked', true);
+        setState(T('Unlocked'), true);
         await wait(380);
         $$('.key', wrap).forEach(el => el.classList.remove('ok'));
         await wait(2400);
@@ -595,25 +575,25 @@
     const save = p.oldPrice > p.price ? p.oldPrice - p.price : 0;
     return '<article class="p-card" data-buy-scope data-id="' + esc(p.id) + '">' +
       '<a class="p-card-media" href="' + productUrl(p) + '">' + productImg(p, 0) +
-      (save ? '<span class="p-card-badge">' + money(save) + ' Off</span>' : '') +
+      (save ? '<span class="p-card-badge">' + TF('%(amount)s Off', { amount: money(save) }) + '</span>' : '') +
       (st.buy ? '' : '<span class="p-card-badge stock-out">' + st.label + '</span>') + '</a>' +
       '<div class="p-card-body"><span class="p-card-cat">' + esc(p.brand) + ' · ' + esc(p.category) + '</span>' +
       '<h3><a href="' + productUrl(p) + '">' + esc(p.name) + '</a></h3>' +
       '<div class="p-card-price"><strong>' + money(p.price) + '</strong>' + (save ? '<s>' + money(p.oldPrice) + '</s>' : '') + '</div>' +
       '<div class="p-card-actions">' +
       (st.buy
-        ? '<button type="button" class="btn btn-green" data-add-to-cart>' + icon('cart') + ' Add to Cart</button>' +
-          '<button type="button" class="btn btn-red" data-buy-now>Buy Now</button>'
-        : '<a class="btn btn-outline" href="' + productUrl(p) + '">View details</a>') +
+        ? '<button type="button" class="btn btn-green" data-add-to-cart>' + icon('cart') + ' ' + T('Add to Cart') + '</button>' +
+          '<button type="button" class="btn btn-red" data-buy-now>' + T('Buy Now') + '</button>'
+        : '<a class="btn btn-outline" href="' + productUrl(p) + '">' + T('View details') + '</a>') +
       '</div></div></article>';
   }
 
   function comingSoonHTML() {
     if (CATALOG.length >= 4) return '';
     return '<div class="p-card soon"><div class="icon-box green">' + icon('box') + '</div>' +
-      '<h3>More WaRa products coming soon</h3>' +
-      '<p>New smart security products are on the way. Message us to hear first when they arrive.</p>' +
-      '<a class="link-arrow" target="_blank" rel="noopener" href="' + waLink('Hi WaRa BD, please let me know when new products arrive.') + '">Get notified ' + icon('arrow') + '</a></div>';
+      '<h3>' + T('More WaRa products coming soon') + '</h3>' +
+      '<p>' + T('New smart security products are on the way. Message us to hear first when they arrive.') + '</p>' +
+      '<a class="link-arrow" target="_blank" rel="noopener" href="' + waLink(T('Hi WaRa BD, please let me know when new products arrive.')) + '">' + T('Get notified') + ' ' + icon('arrow') + '</a></div>';
   }
 
   function initProducts() {
@@ -632,7 +612,7 @@
     if (!CATALOG.length) {
       dbg('Empty catalog — check products.js bridge and Django admin.');
       grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="big-icon">' + icon('box') + '</div>' +
-        '<h2>No products yet</h2><p>Products added in the admin panel will appear here.</p></div>';
+        '<h2>' + T('No products yet') + '</h2><p>' + T('Products added in the admin panel will appear here.') + '</p></div>';
       return;
     }
 
@@ -642,7 +622,7 @@
     if (ceil <= floor) ceil = floor + 500;
     if (minR) [minR, maxR, minN, maxN].forEach(el => { el.min = floor; el.max = ceil; el.step = 50; });
 
-    const optHTML = (group, value, label, n) => '<label class="filter-opt"><span><input type="checkbox" name="' + group + '" value="' + esc(value) + '"> ' + esc(label) + '</span><span class="count">' + n + '</span></label>';
+    const optHTML = (group, value, label, n) => '<label class="filter-opt"><span><input type="checkbox" name="' + group + '" value="' + esc(value) + '"> ' + esc(label) + '</span><span class="count">' + num(n) + '</span></label>';
     const cats = Array.from(new Set(CATALOG.map(p => p.category)));
     if ($('#fCats')) $('#fCats').innerHTML = cats.map(c => optHTML('cat', c, c, CATALOG.filter(p => p.category === c).length)).join('');
     if ($('#fStock')) $('#fStock').innerHTML = Object.keys(STOCK).map(k => optHTML('stock', k, STOCK[k].label, CATALOG.filter(p => (p.stock || 'in-stock') === k).length)).join('');
@@ -687,9 +667,12 @@
         (!q || [p.name, p.subtitle, p.model, p.brand, p.category].join(' ').toLowerCase().includes(q))
       );
       if (sortSel && SORTS[sortSel.value]) list = list.slice().sort(SORTS[sortSel.value]);
-      if ($('#shopCount')) $('#shopCount').innerHTML = 'Showing <b>' + list.length + '</b> of <b>' + CATALOG.length + '</b> product' + (CATALOG.length === 1 ? '' : 's');
+      const counts = { shown: '<b>' + num(list.length) + '</b>', total: '<b>' + num(CATALOG.length) + '</b>' };
+      if ($('#shopCount')) $('#shopCount').innerHTML = CATALOG.length === 1
+        ? TF('Showing %(shown)s of %(total)s product', counts)
+        : TF('Showing %(shown)s of %(total)s products', counts);
       if (!list.length) {
-        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="big-icon">' + icon('zoom') + '</div><h2>No products match your filters</h2><p>Try a wider price range or clear the filters.</p><button type="button" class="btn btn-red" data-reset-filters>Reset filters</button></div>';
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="big-icon">' + icon('zoom') + '</div><h2>' + T('No products match your filters') + '</h2><p>' + T('Try a wider price range or clear the filters.') + '</p><button type="button" class="btn btn-red" data-reset-filters>' + T('Reset filters') + '</button></div>';
         return;
       }
       grid.innerHTML = list.map(productCardHTML).join('') + comingSoonHTML();
@@ -726,12 +709,6 @@
      The page is rendered by Django (web/templates/web/product.html);
      this only adds behaviour: gallery, lightbox, tabs, sticky buy bar. */
   function initProduct() {
-    // Missing or broken photos fall back to the keypad illustration.
-    $$('img[data-fallback]').forEach(img => {
-      const useFallback = () => { img.onerror = null; img.src = FALLBACK_IMG; };
-      if (!img.getAttribute('src')) useFallback(); else img.onerror = useFallback;
-    });
-
     let images = [];
     try {
       const data = $('#product-images');
@@ -808,13 +785,13 @@
   const USE_CASES = (window.__WARA__ && window.__WARA__.useCases && window.__WARA__.useCases.length > 0)
     ? window.__WARA__.useCases
     : [{ cat: 'home', icon: 'archive', tone: '', title: 'Bedroom Wardrobes', place: 'Homes & apartments', mode: 'private', text: 'Keep jewellery, cash and documents behind a code only your family knows.' }];
-  const CATS = { all: 'All', home: 'Home', office: 'Office', hospitality: 'Hospitality & Health', public: 'Public Spaces', commercial: 'Commercial' };
+  const CATS = { all: T('All'), home: T('Home'), office: T('Office'), hospitality: T('Hospitality & Health'), public: T('Public Spaces'), commercial: T('Commercial') };
 
   function initPortfolio() {
     const pg = $('#photoGrid');
     if (!pg) return;
     pg.innerHTML = PRODUCT.images.map((im, i) =>
-      '<figure data-i="' + i + '" tabindex="0" role="button" aria-label="Enlarge: ' + esc(im.caption) + '">' +
+      '<figure data-i="' + i + '" tabindex="0" role="button" aria-label="' + T('Enlarge') + ': ' + esc(im.caption) + '">' +
       imgTag(i) + '<figcaption><span>' + esc(im.caption) + '</span>' + icon('zoom') + '</figcaption></figure>'
     ).join('');
     pg.addEventListener('click', e => {
@@ -835,7 +812,7 @@
     ).join('');
     const pG = $('#pfGrid');
     if (pG) pG.innerHTML = USE_CASES.map(u =>
-      '<article class="pf-card" data-cat="' + u.cat + '"><div class="pf-visual ' + u.tone + '"><span class="pf-cat">' + CATS[u.cat] + '</span>' + icon(u.icon, 'big') + '</div><div class="pf-body"><h3>' + esc(u.title) + '</h3><p>' + esc(u.text) + '</p><span class="pf-mode' + (u.mode === 'public' ? ' red' : '') + '">' + icon(u.mode === 'public' ? 'users' : 'user') + (u.mode === 'public' ? 'Public (visitor) mode' : 'Private mode') + (u.place ? ' · ' + esc(u.place) : '') + '</span></div></article>'
+      '<article class="pf-card" data-cat="' + u.cat + '"><div class="pf-visual ' + u.tone + '"><span class="pf-cat">' + CATS[u.cat] + '</span>' + icon(u.icon, 'big') + '</div><div class="pf-body"><h3>' + esc(u.title) + '</h3><p>' + esc(u.text) + '</p><span class="pf-mode' + (u.mode === 'public' ? ' red' : '') + '">' + icon(u.mode === 'public' ? 'users' : 'user') + (u.mode === 'public' ? T('Public (visitor) mode') : T('Private mode')) + (u.place ? ' · ' + esc(u.place) : '') + '</span></div></article>'
     ).join('');
 
     if (pF) pF.addEventListener('click', e => {
@@ -847,15 +824,18 @@
   }
 
   /* ---------- Contact ---------- */
+  const toAsciiDigits = v => String(v).replace(/[০-৯]/g, d => String(BN_DIGITS.indexOf(d)));
+  const DRAFT_KEY = 'wara_checkout_draft';
   const RULES = {
-    name: v => v.trim().length >= 3 || 'Please enter your full name.',
-    phone: v => /^(?:\+?88)?01[3-9]\d{8}$/.test(v.replace(/[\s-]/g, '')) || 'Enter a valid Bangladeshi mobile number.',
-    email: v => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Enter a valid email address.',
-    address: v => v.trim().length >= 10 || 'Please enter your full address.',
-    required: v => v.trim().length > 0 || 'This field is required.',
-    choice: v => v.trim().length > 0 || 'Please select an option.',
-    message: v => v.trim().length >= 10 || 'Please write at least 10 characters.',
-    trx: v => /^[A-Za-z0-9]{6,}$/.test(v.trim()) || 'Enter the transaction ID from your payment SMS.'
+    name: v => v.trim().length >= 3 || T('Please enter your full name.'),
+    // Bangla digits typed on a Bangla keyboard are accepted and converted.
+    phone: v => /^(?:\+?88)?01[3-9]\d{8}$/.test(toAsciiDigits(v).replace(/[\s-]/g, '')) || T('Enter a valid Bangladeshi mobile number.'),
+    email: v => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || T('Enter a valid email address.'),
+    address: v => v.trim().length >= 10 || T('Please enter your full address.'),
+    required: v => v.trim().length > 0 || T('This field is required.'),
+    choice: v => v.trim().length > 0 || T('Please select an option.'),
+    message: v => v.trim().length >= 10 || T('Please write at least 10 characters.'),
+    trx: v => /^[A-Za-z0-9]{6,}$/.test(v.trim()) || T('Enter the transaction ID from your payment SMS.')
   };
 
   function checkField(input) {
@@ -919,13 +899,13 @@
     form.addEventListener('submit', async e => {
       e.preventDefault();
       const bad = validateForm(form);
-      if (bad) { bad.focus(); toast('Please fix the highlighted fields.', { type: 'error' }); return; }
+      if (bad) { bad.focus(); toast(T('Please fix the highlighted fields.'), { type: 'error' }); return; }
 
       const data = Object.fromEntries(new FormData(form).entries());
 
       const btn = form.querySelector('button[type="submit"]');
       const originalText = btn.innerHTML;
-      btn.innerHTML = 'Sending...';
+      btn.innerHTML = T('Sending…');
       btn.disabled = true;
 
       try {
@@ -949,12 +929,12 @@
           }
         } else {
           showServerErrors(form, result.errors);
-          toast(result.error || 'Could not send your message.', { type: 'error' });
+          toast(result.error || T('Could not send your message.'), { type: 'error' });
           btn.innerHTML = originalText;
           btn.disabled = false;
         }
       } catch (err) {
-        toast('Network error. Please try again.', { type: 'error' });
+        toast(T('Network error. Please try again.'), { type: 'error' });
         btn.innerHTML = originalText;
         btn.disabled = false;
       }
@@ -968,7 +948,7 @@
       if (panel) panel.classList.remove('show');
       const btn = form.querySelector('button[type="submit"]');
       if (btn) {
-        btn.innerHTML = '<i data-icon="send"></i> Send message';
+        btn.innerHTML = '<i data-icon="send"></i> ' + T('Send message');
         btn.disabled = false;
       }
       bindContent(form);
@@ -979,26 +959,26 @@
   function initCart() {
     const mount = $('#cartMount');
     if (!mount) return;
-    const summaryHTML = t => '<h3>Order summary</h3>' + totalsHTML(t, 'At checkout') +
-      '<a class="btn btn-red btn-block" href="' + URLS.checkout + '">Proceed to checkout ' + icon('arrow') + '</a>' +
-      '<p class="summary-note">' + icon('truck') + 'Delivery from ' + money(DELIVERY.inside.fee) + ' · Cash on delivery</p>';
+    const summaryHTML = t => '<h3>' + T('Order summary') + '</h3>' + totalsHTML(t, T('At checkout')) +
+      '<a class="btn btn-red btn-block" href="' + URLS.checkout + '">' + T('Proceed to checkout') + ' ' + icon('arrow') + '</a>' +
+      '<p class="summary-note">' + icon('truck') + TF('Delivery from %(fee)s · Cash on delivery', { fee: money(DELIVERY.inside.fee) }) + '</p>';
     const render = () => {
       const t = Cart.totals();
       if (!t.lines.length) { mount.innerHTML = emptyCartHTML(); return; }
       mount.innerHTML =
-        '<div class="cart-layout"><div><table class="cart-table"><thead><tr><th>Product</th><th>Price</th><th>Quantity</th><th>Total</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody>' +
+        '<div class="cart-layout"><div><table class="cart-table"><thead><tr><th>' + T('Product') + '</th><th>' + T('Price') + '</th><th>' + T('Quantity') + '</th><th>' + T('Total') + '</th><th><span class="sr-only">' + T('Remove') + '</span></th></tr></thead><tbody>' +
         t.lines.map(l =>
           '<tr data-id="' + l.id + '"><td><div class="cart-prod"><a href="' + productUrl(l.product) + '">' + productImg(l.product) + '</a>' +
           '<div><h3><a href="' + productUrl(l.product) + '">' + esc(l.product.name) + '</a></h3>' +
-          '<span>Model: ' + esc(l.product.model) + (l.product.color ? ' · Color: ' + esc(l.product.color) : '') + '</span></div></div></td>' +
-          '<td data-label="Price">' + money(l.product.price) + '</td>' +
-          '<td data-label="Quantity">' + qtyHTML(l.qty, 'sm') + '</td>' +
-          '<td data-label="Total" class="line-total" data-line-total>' + money(l.total) + '</td>' +
-          '<td class="rm"><button type="button" class="remove-btn" data-remove="' + l.id + '" aria-label="Remove">' + icon('trash') + '</button></td></tr>'
+          '<span>' + T('Model') + ': ' + esc(l.product.model) + (l.product.color ? ' · ' + T('Color') + ': ' + esc(l.product.color) : '') + '</span></div></div></td>' +
+          '<td data-label="' + T('Price') + '">' + money(l.product.price) + '</td>' +
+          '<td data-label="' + T('Quantity') + '">' + qtyHTML(l.qty, 'sm') + '</td>' +
+          '<td data-label="' + T('Total') + '" class="line-total" data-line-total>' + money(l.total) + '</td>' +
+          '<td class="rm"><button type="button" class="remove-btn" data-remove="' + l.id + '" aria-label="' + T('Remove') + '">' + icon('trash') + '</button></td></tr>'
         ).join('') +
         '</tbody></table><div class="cart-actions">' +
-        '<a class="btn btn-outline" href="' + URLS.products + '">' + icon('back') + ' Continue shopping</a>' +
-        '<button type="button" class="btn btn-outline" data-clear-cart>' + icon('trash') + ' Clear cart</button></div></div>' +
+        '<a class="btn btn-outline" href="' + URLS.products + '">' + icon('back') + ' ' + T('Continue shopping') + '</a>' +
+        '<button type="button" class="btn btn-outline" data-clear-cart>' + icon('trash') + ' ' + T('Clear cart') + '</button></div></div>' +
         '<aside class="summary" id="cartSummary">' + summaryHTML(t) + '</aside></div>';
     };
     const update = () => {
@@ -1024,16 +1004,105 @@
       if (rm) {
         const snapshot = Cart.items();
         Cart.remove(rm.dataset.remove);
-        toast('Item removed from cart', { actionText: 'Undo', onAction: () => Cart.restore(snapshot) });
+        toast(T('Item removed from cart'), { actionText: T('Undo'), onAction: () => Cart.restore(snapshot) });
       }
       if (e.target.closest('[data-clear-cart]')) {
         const snapshot = Cart.items();
         Cart.clear();
-        toast('Cart cleared', { actionText: 'Undo', onAction: () => Cart.restore(snapshot) });
+        toast(T('Cart cleared'), { actionText: T('Undo'), onAction: () => Cart.restore(snapshot) });
       }
     });
     document.addEventListener('cart:change', update);
     render();
+  }
+
+  /* ---------- District → thana dropdowns (Select2) ----------
+     Data comes from Django (<script id="wara-locations">): districts with
+     their delivery charge and thanas (a thana may have its own charge).
+     Values stay in English (what the server stores); labels follow the page language. */
+  function bindLocationSelects(root, opts) {
+    opts = opts || {};
+    const dEl = $('[data-district-select]', root);
+    const tEl = $('[data-thana-select]', root);
+    const dataEl = $('#wara-locations');
+    if (!dEl || !tEl || !dataEl) return null;
+    let data = [];
+    try { data = JSON.parse(dataEl.textContent) || []; } catch (e) { data = []; }
+    const byName = {};
+    data.forEach(d => { byName[d.v] = d; });
+    const $j = window.jQuery && window.jQuery.fn && window.jQuery.fn.select2 ? window.jQuery : null;
+    const onChange = typeof opts.onChange === 'function' ? opts.onChange : () => {};
+
+    const option = (value, label) => '<option value="' + esc(value) + '">' + esc(label) + '</option>';
+    dEl.innerHTML = option('', T('Select your district')) + data.map(d => option(d.v, d.l)).join('');
+
+    const fillThanas = (selected) => {
+      const d = byName[dEl.value];
+      const list = d ? d.t : [];
+      tEl.innerHTML = option('', d ? T('Select thana / upazila') : T('Select district first')) +
+        list.map(t => option(t[0], t[1])).join('');
+      if (selected) {
+        if (!list.some(t => t[0] === selected)) tEl.insertAdjacentHTML('beforeend', option(selected, selected));
+        tEl.value = selected;
+      }
+      tEl.disabled = !d;
+    };
+
+    const district = () => byName[dEl.value] || null;
+    const thanaRow = () => {
+      const d = district();
+      return d ? d.t.find(t => t[0] === tEl.value) || null : null;
+    };
+    const api = {
+      district,
+      fee: () => {
+        const d = district();
+        if (!d) return null;
+        const t = thanaRow();
+        return t && t[2] != null ? t[2] : d.f;
+      },
+      placeLabel: () => {
+        const d = district();
+        const t = thanaRow();
+        return t ? t[1] + ', ' + d.l : (tEl.value && d ? tEl.value + ', ' + d.l : (d ? d.l : ''));
+      }
+    };
+
+    dEl.value = opts.district || dEl.dataset.selected || '';
+    fillThanas(opts.thana || tEl.dataset.selected || '');
+
+    const changed = (which) => () => {
+      if (which === 'district') { fillThanas(''); if ($j) $j(tEl).trigger('change.select2'); }
+      const wrap = (which === 'district' ? dEl : tEl).closest('.field');
+      if (wrap && wrap.classList.contains('invalid')) checkField(which === 'district' ? dEl : tEl);
+      onChange();
+    };
+
+    if ($j) {
+      const language = {
+        noResults: () => T('No results found'),
+        searching: () => T('Searching…')
+      };
+      const common = { width: '100%', language };
+      $j(dEl).select2(Object.assign({ placeholder: T('Select your district') }, common));
+      $j(tEl).select2(Object.assign({
+        placeholder: T('Select thana / upazila'),
+        tags: true,  // a thana missing from the list can be typed
+        createTag: p => { const term = p.term.trim(); return term ? { id: term, text: term + ' (' + T('type your own') + ')', newTag: true } : null; }
+      }, common));
+      $j(dEl).on('change', changed('district'));
+      $j(tEl).on('change', changed('thana'));
+    } else {
+      dEl.addEventListener('change', changed('district'));
+      tEl.addEventListener('change', changed('thana'));
+    }
+    return api;
+  }
+
+  function initAccount() {
+    // My Account → address form: same district → thana dropdowns.
+    const form = $('form[data-address-form]');
+    if (form) bindLocationSelects(form);
   }
 
   /* ---------- Checkout ---------- */
@@ -1043,39 +1112,65 @@
     if (!mount || !form) return;
 
     if (!Cart.count()) {
-      mount.innerHTML = emptyCartHTML('Nothing to check out yet', 'Your cart is empty. Add a product first.');
+      mount.innerHTML = emptyCartHTML(T('Nothing to check out yet'), T('Your cart is empty. Add a product first.'));
       return;
     }
 
-    const districtEl = $('#coDistrict');
-    if (districtEl && districtEl.options.length <= 1) {
-      districtEl.insertAdjacentHTML('beforeend', DISTRICTS.map(d => '<option>' + esc(d) + '</option>').join(''));
+    // District → thana dropdowns (Select2). The delivery charge is never chosen
+    // by the customer: it follows the district / thana (server checks it again).
+    const draft = store.get(DRAFT_KEY, null);
+    const loc = bindLocationSelects(form, {
+      district: (draft && draft.district) || undefined,
+      thana: (draft && draft.thana) || undefined,
+      onChange: () => { paintSummary(); paintPayment(); paintQuote(); }
+    });
+
+    // Form values saved before going to the SMS code page come back here
+    // (e.g. after "Change number"), so nothing has to be typed twice.
+    if (draft && typeof draft === 'object') {
+      ['name', 'phone', 'email', 'address', 'note', 'sender', 'trx'].forEach(k => {
+        if (draft[k] != null && form.elements[k]) form.elements[k].value = draft[k];
+      });
+      const radio = draft.payment && form.querySelector('input[name="payment"][value="' + draft.payment + '"]');
+      if (radio) radio.checked = true;
+    }
+    if (params.get('change') === 'phone' && form.elements.phone) {
+      form.elements.phone.focus();
+      form.elements.phone.select();
     }
 
     const summaryMount = $('#coSummary');
-    const zone = () => {
-      const el = form.elements.zone;
-      if (!el) return 'inside';
-      if (el.value !== undefined && el.value !== '') return el.value;
-      return 'inside';
-    };
-
     const pay = () => {
       const el = form.elements.payment;
       if (!el) return 'cod';
       const v = el.value;
       return v && PAYMENTS[v] ? v : 'cod';
     };
+    const deliveryFee = () => (loc ? loc.fee() : null);  // null until a district is chosen
+    const orderTotal = () => Cart.totals().subtotal + (deliveryFee() || 0);
+
+    const paintQuote = () => {
+      const box = $('#deliveryQuote');
+      if (!box || !loc) return;
+      const d = loc.district();
+      $('[data-quote-text]', box).innerHTML = d
+        ? TF('Delivery charge to %(place)s: %(fee)s', { place: '<strong>' + esc(loc.placeLabel()) + '</strong>', fee: '<strong>' + money(loc.fee()) + '</strong>' }) +
+          (d.e ? ' · ' + esc(d.e) : '')
+        : esc(T('Choose your district to see the delivery charge.'));
+      box.classList.toggle('ready', !!d);
+    };
 
     const paintSummary = () => {
       if (!summaryMount) return;
-      const t = Cart.totals(zone());
-      summaryMount.innerHTML = '<h3>Your order</h3>' +
-        t.lines.map(l => '<div class="sum-item"><div class="meta"><h4>' + esc(l.product.name) + '</h4><span>Qty: ' + l.qty + '</span></div><div class="price">' + money(l.total) + '</div></div>').join('') +
-        '<div class="sum-row"><span>Subtotal</span><span>' + money(t.subtotal) + '</span></div>' +
-        '<div class="sum-row"><span>Delivery (' + (DELIVERY[zone()] ? DELIVERY[zone()].label : '') + ')</span><span>' + money(t.delivery) + '</span></div>' +
-        '<div class="sum-row total"><span>Total</span><span>' + money(t.total) + '</span></div>' +
-        '<button type="submit" class="btn btn-red btn-block mt-3" id="placeOrder">' + icon('lock') + ' Place order · ' + money(t.total) + '</button>';
+      const t = Cart.totals();
+      const fee = deliveryFee();
+      summaryMount.innerHTML = '<h3>' + T('Your order') + '</h3>' +
+        t.lines.map(l => '<div class="sum-item"><div class="meta"><h4>' + esc(l.product.name) + '</h4><span>' + T('Qty') + ': ' + num(l.qty) + '</span></div><div class="price">' + money(l.total) + '</div></div>').join('') +
+        '<div class="sum-row"><span>' + T('Subtotal') + '</span><span>' + money(t.subtotal) + '</span></div>' +
+        '<div class="sum-row"><span>' + T('Delivery') + (loc && loc.district() ? ' (' + esc(loc.placeLabel()) + ')' : '') + '</span><span>' +
+          (fee == null ? T('Select district') : money(fee)) + '</span></div>' +
+        '<div class="sum-row total"><span>' + T('Total') + '</span><span>' + money(orderTotal()) + '</span></div>' +
+        '<button type="submit" class="btn btn-red btn-block mt-3" id="placeOrder">' + icon('lock') + ' ' + T('Place order') + ' · ' + money(orderTotal()) + '</button>';
     };
 
     // bKash / Nagad: show the "Send Money" steps, amount, merchant number
@@ -1088,26 +1183,26 @@
       mobilePay.classList.toggle('show', isMobile);
       if (!isMobile) return;
       $$('.pay-name', mobilePay).forEach(el => { el.textContent = PAYMENTS[p].label; });
-      $$('.pay-amount', mobilePay).forEach(el => { el.textContent = money(Cart.totals(zone()).total); });
+      $$('.pay-amount', mobilePay).forEach(el => { el.textContent = money(orderTotal()); });
       const merchant = $('#payMerchant');
       if (merchant) merchant.textContent = (SITE.merchant && SITE.merchant[p]) || '';
     };
 
     paintSummary();
     paintPayment();
+    paintQuote();
     liveValidate(form);
 
-    $$('input[name="zone"]', form).forEach(r => r.addEventListener('change', () => { paintSummary(); paintPayment(); }));
     $$('input[name="payment"]', form).forEach(r => r.addEventListener('change', paintPayment));
 
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
       const bad = validateForm(form);
-      if (bad) { bad.focus(); toast('Please fix the highlighted fields.', { type: 'error' }); return; }
+      if (bad) { bad.focus(); toast(T('Please fix the highlighted fields.'), { type: 'error' }); return; }
 
       const terms = form.elements.terms;
-      if (!terms || !terms.checked) { toast('Please confirm your details and accept the delivery & warranty policy.', { type: 'error' }); return; }
+      if (!terms || !terms.checked) { toast(T('Please confirm your details and accept the delivery & warranty policy.'), { type: 'error' }); return; }
 
       const csrfInput = form.querySelector('[name="csrfmiddlewaretoken"]');
       const csrfToken = csrfInput ? csrfInput.value : '';
@@ -1115,15 +1210,15 @@
 
       const payload = {
         name: form.elements.name.value.trim(),
-        phone: form.elements.phone.value.trim(),
+        phone: toAsciiDigits(form.elements.phone.value.trim()),
         email: form.elements.email.value.trim(),
         district: form.elements.district.value,
         address: form.elements.address.value.trim(),
         note: form.elements.note ? form.elements.note.value.trim() : '',
         payment: pay(),
-        sender: isMobile && form.elements.sender ? form.elements.sender.value.trim() : '',
+        sender: isMobile && form.elements.sender ? toAsciiDigits(form.elements.sender.value.trim()) : '',
         trx: isMobile && form.elements.trx ? form.elements.trx.value.trim().toUpperCase() : '',
-        zone: zone(),
+        thana: form.elements.thana ? form.elements.thana.value : '',
         lines: Cart.items()
       };
 
@@ -1141,17 +1236,57 @@
 
         if (response.ok && result.success) {
           Cart.clear();
+          store.remove(DRAFT_KEY);
           location.href = URLS.orderSuccess(result.order_number);
+        } else if (result.otp_required && result.redirect) {
+          // Guest: confirm the mobile number with an SMS code; the order is
+          // placed on the code page. Keep the form in case they change number.
+          store.set(DRAFT_KEY, Object.assign({}, payload, { lines: undefined }));
+          location.href = result.redirect;
         } else {
           if (proc) proc.classList.remove('show');
           showServerErrors(form, result.errors);
-          toast(result.error || 'Could not place your order. Please try again.', { type: 'error' });
+          toast(result.error || T('Could not place your order. Please try again.'), { type: 'error' });
         }
       } catch (err) {
         if (proc) proc.classList.remove('show');
-        toast('Network error. Please try again.', { type: 'error' });
+        toast(T('Network error. Please try again.'), { type: 'error' });
       }
     });
+  }
+
+  /* ---------- Order placed: empty the cart and the saved checkout form ---------- */
+  function initSuccess() {
+    Cart.clear();
+    store.remove(DRAFT_KEY);
+  }
+
+  /* ---------- SMS code page ---------- */
+  function initOtp() {
+    const input = $('.otp-input');
+    if (input) {
+      // Submit as soon as 6 digits (English or Bangla) are typed or pasted.
+      input.addEventListener('input', () => {
+        const digits = toAsciiDigits(input.value).replace(/\D/g, '');
+        if (digits.length === 6 && input.form) { input.value = digits; input.form.requestSubmit(); }
+      });
+    }
+    const resend = $('#otpResend');
+    if (!resend) return;
+    const label = $('span', resend);
+    let wait = parseInt(resend.dataset.wait, 10) || 0;
+    const tick = () => {
+      if (wait > 0) {
+        resend.disabled = true;
+        label.textContent = label.dataset.waitLabel.replace('%(s)s', num(wait));
+        wait -= 1;
+        setTimeout(tick, 1000);
+      } else {
+        resend.disabled = false;
+        label.textContent = label.dataset.label;
+      }
+    };
+    tick();
   }
 
   /* ---------- Boot ---------- */
@@ -1168,7 +1303,10 @@
       portfolio: initPortfolio,
       contact: initContact,
       cart: initCart,
-      checkout: initCheckout
+      checkout: initCheckout,
+      success: initSuccess,
+      otp: initOtp,
+      account: initAccount
     };
 
     const init = pages[document.body.dataset.page];

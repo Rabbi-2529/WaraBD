@@ -1,0 +1,28 @@
+{% extends "customers/_account_layout.html" %}
+{% load i18n %}
+{% block title %}{% translate "Addresses" %} | {{ site_settings.name }}{% endblock %}
+{% block heading %}{% if address %}{% translate "Edit address" %}{% else %}{% translate "Add address" %}{% endif %}{% endblock %}
+
+{% block extra_head %}{% include "web/partials/select2_head.html" %}{% endblock %}
+{% block extra_js %}{% include "web/partials/select2_js.html" %}{% endblock %}
+
+{% block account %}
+<div class="form-card">
+  <form method="post" novalidate data-address-form>
+    {% csrf_token %}
+    <div class="form-grid">
+      {% include "customers/_field.html" with field=form.label %}
+      {% include "customers/_field.html" with field=form.name %}
+      {% include "customers/_field.html" with field=form.phone %}
+      {% include "customers/_field.html" with field=form.district %}
+      {% include "customers/_field.html" with field=form.thana %}
+      {% include "customers/_field.html" with field=form.address full=True %}
+      <label class="check full">{{ form.is_default }} <span>{{ form.is_default.label }}</span></label>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
+      <button type="submit" class="btn btn-green"><i data-icon="check"></i> {% translate "Save address" %}</button>
+      <a class="btn btn-outline" href="{% url 'customers:addresses' %}">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

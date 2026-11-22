@@ -1,0 +1,28 @@
+{% extends "customers/_account_layout.html" %}
+{% load i18n bd_tags %}
+{% block title %}{% translate "Addresses" %} | {{ site_settings.name }}{% endblock %}
+{% block heading %}{% translate "Addresses" %}{% endblock %}
+
+{% block account %}
+<div class="address-grid">
+  {% for address in addresses %}
+  <div class="box address-card{% if address.is_default %} is-default{% endif %}">
+    <h3><i data-icon="pin"></i>{% firstof address.label _("Address") %}{% if address.is_default %} <span class="status-pill status-delivered">{% translate "Default" %}</span>{% endif %}</h3>
+    <address style="font-style:normal;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--ink)">{{ address.name }}</strong> · {{ address.phone|digits }}<br>
+      {{ address.address }}{% if address.thana %}, {{ address.thana }}{% endif %}<br>{% translate address.district %}
+    </address>
+    <div class="address-actions">
+      <a class="btn btn-outline btn-sm" href="{% url 'customers:address_edit' address.pk %}">{% translate "Edit" %}</a>
+      {% if not address.is_default %}
+      <form method="post" action="{% url 'customers:address_default' address.pk %}">{% csrf_token %}<button type="submit" class="btn btn-outline btn-sm">{% translate "Make default" %}</button></form>
+      {% endif %}
+      <form method="post" action="{% url 'customers:address_delete' address.pk %}" data-confirm="{% translate 'Delete this address?' %}" onsubmit="return confirm(this.dataset.confirm)">{% csrf_token %}<button type="submit" class="btn btn-outline btn-sm">{% translate "Delete" %}</button></form>
+    </div>
+  </div>
+  {% empty %}
+  <p style="color:var(--muted)">{% translate "No saved addresses yet." %}</p>
+  {% endfor %}
+</div>
+<a class="btn btn-red" href="{% url 'customers:address_add' %}" style="margin-top:18px"><i data-icon="plus"></i> {% translate "Add address" %}</a>
+{% endblock %}

@@ -1,0 +1,63 @@
+{# Courier card on the order page (Phase 5). Buttons post to admin:web_order_courier via formaction. #}
+<div class="ubold-card courier-card">
+    <div class="card-body">
+        <div class="sidebar-title"><span><i class="bx bxs-truck"></i> Courier</span>
+            {% if original.courier_status %}<span class="chip chip-info">{{ original.courier_status }}</span>{% endif %}
+        </div>
+
+        {% if original.courier_consignment_id or original.courier_tracking_code %}
+            <dl class="courier-facts">
+                <dt>Courier</dt><dd>{{ courier_label|default:"—" }}</dd>
+                {% if original.courier_consignment_id %}<dt>Consignment</dt><dd><code>{{ original.courier_consignment_id }}</code></dd>{% endif %}
+                {% if original.courier_tracking_code %}<dt>Tracking code</dt><dd><code>{{ original.courier_tracking_code }}</code></dd>{% endif %}
+                {% if original.courier_sent_at %}<dt>Sent</dt><dd>{{ original.courier_sent_at|date:"j M Y, g:i A" }}</dd>{% endif %}
+                {% if original.courier_checked_at %}<dt>Checked</dt><dd>{{ original.courier_checked_at|date:"j M, g:i A" }}</dd>{% endif %}
+            </dl>
+            <div class="courier-actions">
+                {% if courier_link %}<a class="courier-btn ghost" href="{{ courier_link }}" target="_blank" rel="noopener"><i class="bx bx-link-external"></i> Track parcel</a>{% endif %}
+                {% if original.courier == 'steadfast' or original.courier == 'pathao' %}
+                <button type="submit" class="courier-btn ghost" formaction="{% url 'admin:web_order_courier' original.pk 'refresh' %}" formnovalidate>
+                    <i class="bx bx-refresh"></i> Refresh status
+                </button>
+                {% endif %}
+            </div>
+        {% elif original.status == 'cancelled' %}
+            <p class="courier-note">Cancelled orders are not sent to a courier.</p>
+        {% elif courier_ready %}
+            <p class="courier-note">Book this parcel with <b>{{ courier_name }}</b>. The rider collects <b>৳{{ courier_cod|floatformat:0 }}</b>{% if courier_cod == 0 %} (already paid){% endif %}.</p>
+            <button type="submit" class="courier-btn" formaction="{% url 'admin:web_order_courier' original.pk 'send' %}" formnovalidate
+                    onclick="return confirm('Send this order to {{ courier_name }} now?');">
+                <i class="bx bx-send"></i> Send to {{ courier_name }}
+            </button>
+        {% else %}
+            <p class="courier-note">{{ courier_reason }}</p>
+        {% endif %}
+
+        <details class="courier-manual" {% if original.courier and original.courier != 'steadfast' and original.courier != 'pathao' %}open{% endif %}>
+            <summary>Other courier (type by hand)</summary>
+            <label class="editable-label">Courier name</label>
+            <input type="text" name="courier" value="{{ original.courier }}" placeholder="e.g. RedX, Sundarban, SA Paribahan">
+            <label class="editable-label">Tracking code</label>
+            <input type="text" name="courier_tracking_code" value="{{ original.courier_tracking_code }}" placeholder="Tracking / CN number">
+            <label class="editable-label">Tracking link</label>
+            <input type="url" name="courier_tracking_url" value="{{ original.courier_tracking_url }}" placeholder="https://…">
+            <button type="submit" name="_save" class="courier-btn ghost mt-2"><i class="bx bx-save"></i> Save courier details</button>
+        </details>
+    </div>
+</div>
+<style>
+    .courier-card .sidebar-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .courier-facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 4px 0 12px; font-size: 13.5px; }
+    .courier-facts dt { color: #6b7280; font-weight: 500; }
+    .courier-facts dd { margin: 0; color: #111827; font-weight: 600; word-break: break-all; }
+    .courier-note { color: #374151; font-size: 13.5px; margin: 4px 0 12px; }
+    .courier-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .admin-content .courier-btn { display: inline-flex !important; align-items: center; gap: 6px; padding: 9px 14px !important; border-radius: 8px !important;
+        border: 0 !important; background: #d7182a !important; color: #fff !important; font-size: 13.5px !important; font-weight: 600 !important; cursor: pointer; text-decoration: none !important; }
+    .admin-content .courier-btn:hover { background: #b31322 !important; }
+    .admin-content .courier-btn.ghost { background: #fff !important; color: #111827 !important; border: 1px solid #d6dae1 !important; }
+    .admin-content .courier-btn.ghost:hover { background: #f8f9fb !important; }
+    .courier-manual { margin-top: 14px; border-top: 1px dashed #e7e9ee; padding-top: 10px; }
+    .courier-manual summary { cursor: pointer; font-size: 13px; font-weight: 600; color: #6b7280; }
+    .courier-manual input { margin-bottom: 8px; }
+</style>

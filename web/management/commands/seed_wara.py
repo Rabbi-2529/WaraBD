@@ -12,17 +12,22 @@ Product photos are not included — upload them in the admin
 
 from decimal import Decimal
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import translation
 
 from web.models import (
     Category,
     Product,
     SiteFeature,
     SiteHighlight,
+    SiteSettings,
     TimelineStep,
     UseCase,
 )
+
+from . import _seed_wara_bn as bn
 
 
 PRODUCT = {
@@ -189,8 +194,15 @@ USE_CASES = [
 class Command(BaseCommand):
     help = "Load the FT-SCL029 product and Home/About/Portfolio content (only where empty)."
 
-    @transaction.atomic
     def handle(self, *args, **options):
+        # Always write the English text into the English (_en) columns, even if
+        # a Bangla request left "bn" active in this thread.
+        with translation.override("en"), transaction.atomic():
+            self._seed()
+        # Page text, page lists and policy pages (Phase 3).
+        call_command("sync_content", stdout=self.stdout)
+
+    def _seed(self):
         self._product()
         self._fill(SiteHighlight, "Home highlights", [
             SiteHighlight(title=t, subtitle=s, icon=i, order=n)
@@ -211,6 +223,64 @@ class Command(BaseCommand):
             UseCase(category=c, icon=i, tone=tone, title=t, place=p, mode=m, text=x, order=n)
             for n, (c, i, tone, t, p, m, x) in enumerate(USE_CASES, 1)
         ])
+        self._bangla()
+
+    def _bangla(self):
+        """Fill empty Bangla (_bn) fields for rows that still have the seeded English."""
+        changed = 0
+
+        def untranslated(obj, field):
+            # Empty, or just a copy of the English / the field default
+            # (modeltranslation fills new _bn columns with the English default).
+            current = getattr(obj, f"{field}_bn")
+            default = obj._meta.get_field(f"{field}_bn").default
+            return not current or current == getattr(obj, f"{field}_en") or current == default
+
+        def fill(obj, values):
+            nonlocal changed
+            dirty = []
+            for field, value in values.items():
+                if untranslated(obj, field):
+                    setattr(obj, f"{field}_bn", value)
+                    dirty.append(f"{field}_bn")
+            if dirty:
+                obj.save(update_fields=dirty)
+                changed += 1
+
+        product = Product.objects.filter(slug=PRODUCT["slug"], name_en=PRODUCT["name"]).first()
+        if product:
+            fill(product, bn.PRODUCT_BN)
+        for category in Category.objects.filter(name_en__in=bn.CATEGORY_BN):
+            fill(category, {"name": bn.CATEGORY_BN[category.name_en]})
+        for row in SiteHighlight.objects.filter(title_en__in=bn.HIGHLIGHTS_BN):
+            title, subtitle = bn.HIGHLIGHTS_BN[row.title_en]
+            fill(row, {"title": title, "subtitle": subtitle})
+        for row in SiteFeature.objects.all():
+            values = bn.FEATURES_BN.get((row.section, row.title_en))
+            if values:
+                fill(row, values)
+        for row in TimelineStep.objects.filter(title_en__in=bn.TIMELINE_BN):
+            title, text = bn.TIMELINE_BN[row.title_en]
+            fill(row, {"title": title, "text": text})
+        for row in UseCase.objects.filter(title_en__in=bn.USE_CASES_BN):
+            title, place, text = bn.USE_CASES_BN[row.title_en]
+            fill(row, {"title": title, "place": place, "text": text})
+
+        site = SiteSettings.load()
+        values = {}
+        for field, mapping in bn.SETTINGS_BN.items():
+            english = getattr(site, f"{field}_en") or ""
+            if english in mapping:
+                values[field] = mapping[english]
+        for field, (prefix, bangla) in bn.SETTINGS_BN_PREFIX.items():
+            if (getattr(site, f"{field}_en") or "").startswith(prefix):
+                values[field] = bangla
+        fill(site, values)
+
+        if changed:
+            self.stdout.write(self.style.SUCCESS(f"  added Bangla text to {changed} rows"))
+        else:
+            self.stdout.write("  skip  Bangla text (already filled or English was edited)")
 
     def _product(self):
         if Product.objects.filter(slug=PRODUCT["slug"]).exists():

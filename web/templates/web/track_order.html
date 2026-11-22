@@ -1,0 +1,59 @@
+{% extends "web/layout.html" %}
+{% load i18n bd_tags %}
+
+{% block title %}{% translate "Track your order" %} | {{ site_settings.name }}{% endblock %}
+{% block robots %}<meta name="robots" content="noindex">{% endblock %}
+{% block page %}track{% endblock %}
+
+{% block content %}
+    <section class="page-banner">
+      <div class="container">
+        <nav class="crumbs" aria-label="{% translate 'Breadcrumb' %}"><a href="{% url 'web:home' %}">{% translate "Home" %}</a><span class="sep">/</span><span>{% translate "Track your order" %}</span></nav>
+        <h1>{% translate "Track your order" %}</h1>
+        <p>{% translate "Enter the order number from your confirmation and the mobile number you ordered with." %}</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container" style="max-width:880px">
+        <div class="form-card">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% if error %}<div class="form-alert show" role="alert"><i data-icon="info"></i><span>{{ error }}</span></div>{% endif %}
+            <div class="form-grid">
+              <div class="field">
+                <label for="tOrder">{% translate "Order number" %} <span class="req">*</span></label>
+                <input id="tOrder" name="order_number" type="text" value="{{ number }}" placeholder="ORD-XXXXXXXXXX" autocomplete="off" style="text-transform:uppercase" required>
+              </div>
+              <div class="field">
+                <label for="tPhone">{% translate "Mobile number" %} <span class="req">*</span></label>
+                <input id="tPhone" name="phone" type="tel" value="{{ phone_input }}" placeholder="01XXXXXXXXX" autocomplete="tel" required>
+              </div>
+              <div class="full">
+                <button type="submit" class="btn btn-red btn-block"><i data-icon="zoom"></i> {% translate "Track order" %}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {% if order %}
+        <div class="box" style="margin-top:30px">
+          <h3><i data-icon="truck"></i>{% blocktranslate trimmed with number=order.order_number %}Order {{ number }}{% endblocktranslate %}</h3>
+          {% include "web/partials/order_tracker.html" %}
+          <div class="order-meta">
+            <div><small>{% translate "Date" %}</small><strong>{{ order.created_at|date:"d M Y"|digits }}</strong></div>
+            <div><small>{% translate "Status" %}</small><strong>{{ order.get_status_display }}</strong></div>
+            <div><small>{% translate "Payment" %}</small><strong>{{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</strong></div>
+            <div><small>{% translate "Total" %}</small><strong>{{ order.total|taka }}</strong></div>
+          </div>
+          {% for item in order.items.all %}
+          <div class="sum-item">
+            <div class="meta"><h4>{{ item.product.name }}</h4><span style="color:var(--muted);font-size:14px">{{ item.price|taka }} × {{ item.quantity|digits }}</span></div>
+            <div class="price">{{ item.line_total|taka }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </section>
+{% endblock %}

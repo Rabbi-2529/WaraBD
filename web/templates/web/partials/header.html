@@ -1,0 +1,48 @@
+{% load i18n bd_tags %}{% with url_name=request.resolver_match.url_name %}
+<div class="topbar">
+  <div class="container">
+    <div class="topbar-group">
+      {% if site_settings.announcement %}<span><span class="dot"></span>{{ site_settings.announcement }}</span>{% endif %}
+    </div>
+    <div class="topbar-group">
+      <a href="tel:{{ site_settings.phone|tel_href }}"><i data-icon="phone"></i>{{ site_settings.phone|digits }}</a>
+      <a class="hide-sm" href="mailto:{{ site_settings.email }}"><i data-icon="mail"></i>{{ site_settings.email }}</a>
+    </div>
+  </div>
+</div>
+
+<header class="site-header" id="siteHeader">
+  <div class="container nav">
+    {% include "web/partials/logo.html" %}
+
+    <nav class="nav-links" id="navLinks" aria-label="{% translate 'Main menu' %}">
+      <a href="{% url 'web:home' %}"{% if url_name == "home" %} class="active" aria-current="page"{% endif %}>{% translate "Home" %}</a>
+      <a href="{% url 'web:product_list' %}"{% if url_name == "product_list" or url_name == "product_detail" %} class="active" aria-current="page"{% endif %}>{% translate "Products" %}</a>
+      <a href="{% url 'web:portfolio' %}"{% if url_name == "portfolio" %} class="active" aria-current="page"{% endif %}>{% translate "Portfolio" %}</a>
+      <a href="{% url 'web:about' %}"{% if url_name == "about" %} class="active" aria-current="page"{% endif %}>{% translate "About Us" %}</a>
+      <a href="{% url 'web:contact' %}"{% if url_name == "contact" %} class="active" aria-current="page"{% endif %}>{% translate "Contact" %}</a>
+    </nav>
+
+    <div class="nav-actions">
+      {% if other_language %}
+      <a class="lang-switch" href="{{ other_language.url }}" hreflang="{{ other_language.code }}" lang="{{ other_language.code }}"
+         title="{% if other_language.code == 'bn' %}বাংলায় দেখুন{% else %}View in English{% endif %}">
+        <i data-icon="globe"></i><span>{{ other_language.label }}</span>
+      </a>
+      {% endif %}
+      <a class="btn btn-red btn-sm hide-sm" href="{% url 'web:product_list' %}">{% translate "Shop Now" %}</a>
+      {% if customer %}
+      <a class="cart-btn account-btn is-in" href="{% url 'customers:account' %}" aria-label="{% translate 'My account' %}" title="{{ customer.name }}"><i data-icon="user"></i></a>
+      {% else %}
+      <a class="cart-btn account-btn" href="{% url 'customers:login' %}" aria-label="{% translate 'Log in' %}" title="{% translate 'Log in' %}"><i data-icon="user"></i></a>
+      {% endif %}
+      <a class="cart-btn" href="{% url 'web:cart' %}" aria-label="{% translate 'Shopping cart' %}">
+        <i data-icon="cart"></i><span class="cart-count">0</span>
+      </a>
+      <button class="menu-toggle" id="menuToggle" type="button" aria-label="{% translate 'Open menu' %}" aria-expanded="false" aria-controls="navLinks">
+        <i data-icon="menu"></i>
+      </button>
+    </div>
+  </div>
+</header>
+{% endwith %}

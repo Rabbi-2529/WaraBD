@@ -6,27 +6,27 @@
     <style>
         body { background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .ubold-card { background: #fff; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); padding: 32px; max-width: 900px; margin: 40px auto; }
-        .card-title { font-size: 20px; font-weight: 600; color: #313a46; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eef2f7; }
+        .card-title { font-size: 20px; font-weight: 600; color: #111827; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #eef2f7; }
         
         /* 2 Column Layout */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         .form-grid .full { grid-column: 1 / -1; }
         
-        .form-group label { display: block; font-weight: 600; font-size: 14px; color: #313a46; margin-bottom: 8px; }
+        .form-group label { display: block; font-weight: 600; font-size: 14px; color: #111827; margin-bottom: 8px; }
         
         /* Input Styling */
         .form-group input, .form-group select, .form-group textarea { 
             width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 6px; 
-            font-size: 14px; color: #313a46; background: #fff; transition: all 0.2s;
+            font-size: 14px; color: #111827; background: #fff; transition: all 0.2s;
         }
-        .form-group input:focus, .form-group select:focus { border-color: #727cf5; outline: none; box-shadow: 0 0 0 3px rgba(114, 124, 245, 0.1); }
+        .form-group input:focus, .form-group select:focus { border-color: #d7182a; outline: none; box-shadow: 0 0 0 3px rgba(215, 24, 42, 0.1); }
         .form-group input::placeholder { color: #adb5bd; }
         
         /* Buttons */
         .form-actions { display: flex; justify-content: center; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid #eef2f7; }
-        .btn-cancel { background: #f1f5f9; color: #313a46; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; text-decoration: none; }
-        .btn-save { background: #4f46e5; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; }
-        .btn-save:hover { background: #4338ca; }
+        .btn-cancel { background: #f1f5f9; color: #111827; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; text-decoration: none; }
+        .btn-save { background: #d7182a; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; }
+        .btn-save:hover { background: #b31322; }
         
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
     </style>
@@ -144,7 +144,7 @@
 </div>
 {% endblock %}
 
-{% block admin_change_form_document_ready %}
+{% block footer %}{# page scripts: this template replaces the whole content block #}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // Style Django-generated fields to match the custom ones

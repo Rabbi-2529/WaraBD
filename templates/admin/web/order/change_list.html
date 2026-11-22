@@ -5,13 +5,13 @@
     {{ block.super }}
     <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #313a46; }
+        body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111827; }
         
         /* KPI CARDS */
         .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
         .kpi-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); display: flex; justify-content: space-between; align-items: center; }
-        .kpi-value { font-size: 24px; font-weight: 700; margin: 0 0 4px 0; color: #313a46; }
-        .kpi-label { font-size: 12px; font-weight: 700; color: #98a6ad; text-transform: uppercase; margin: 0; }
+        .kpi-value { font-size: 24px; font-weight: 700; margin: 0 0 4px 0; color: #111827; }
+        .kpi-label { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin: 0; }
         .kpi-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; }
         
         .ubold-card { background: #fff; border-radius: 8px; box-shadow: 0 0 35px 0 rgba(154, 161, 171, 0.15); overflow: hidden; margin-bottom: 24px; }
@@ -19,11 +19,11 @@
         /* TOOLBAR */
         .toolbar-area { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 20px 24px; border-bottom: 1px solid #eef2f7; }
         .toolbar-search { position: relative; width: 250px; }
-        .toolbar-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #98a6ad; font-size: 16px; }
-        .toolbar-search input { padding: 0 14px 0 40px; border-radius: 6px; border: 1px solid #eef2f7; font-size: 13px; height: 38px; width: 100%; box-shadow: none; color: #313a46; }
-        .toolbar-search input:focus { border-color: #727cf5; outline: none; }
+        .toolbar-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #6b7280; font-size: 16px; }
+        .toolbar-search input { padding: 0 14px 0 40px; border-radius: 6px; border: 1px solid #eef2f7; font-size: 13px; height: 38px; width: 100%; box-shadow: none; color: #111827; }
+        .toolbar-search input:focus { border-color: #d7182a; outline: none; }
         
-        .btn-add-order { background-color: #ff5b5c; color: #fff; height: 38px; font-size: 13px; font-weight: 600; padding: 0 20px; display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; text-decoration: none; }
+        .btn-add-order { background-color: #dc2626; color: #fff; height: 38px; font-size: 13px; font-weight: 600; padding: 0 20px; display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; text-decoration: none; }
         .btn-add-order:hover { background-color: #e04a4b; color: #fff; }
 
         /* BULK ACTIONS BAR */
@@ -35,35 +35,35 @@
 
         /* TABLE */
         .table-custom { width: 100%; border-collapse: collapse; }
-        .table-custom th { background: #fff; color: #98a6ad; font-weight: 600; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #eef2f7; padding: 16px 24px; text-align: left; }
-        .table-custom td { padding: 16px 24px; border-bottom: 1px solid #eef2f7; vertical-align: middle; font-size: 14px; color: #313a46; }
+        .table-custom th { background: #fff; color: #6b7280; font-weight: 600; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #eef2f7; padding: 16px 24px; text-align: left; }
+        .table-custom td { padding: 16px 24px; border-bottom: 1px solid #eef2f7; vertical-align: middle; font-size: 14px; color: #111827; }
         
-        .order-id { font-weight: 600; color: #313a46; text-decoration: none; }
-        .order-id:hover { color: #727cf5; }
+        .order-id { font-weight: 600; color: #111827; text-decoration: none; }
+        .order-id:hover { color: #d7182a; }
         
         .customer-cell { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 36px; height: 36px; border-radius: 50%; background: #eef2ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; background: #fdecee; color: #d7182a; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
         
         .status-text { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; }
-        .status-paid { color: #0acf97; }
-        .status-pending { color: #ffbc00; }
+        .status-paid { color: #12924a; }
+        .status-pending { color: #d97706; }
         
         .badge-pill { padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; }
-        .bg-delivered { background: #d1fae5; color: #0acf97; }
-        .bg-processing { background: #fff3cd; color: #ffbc00; }
-        .bg-shipped { background: #e0f2fe; color: #50a5f1; }
-        .bg-cancelled { background: #fee2e2; color: #fa5c7c; }
+        .bg-delivered { background: #d1fae5; color: #12924a; }
+        .bg-processing { background: #fff3cd; color: #d97706; }
+        .bg-shipped { background: #e0f2fe; color: #0284c7; }
+        .bg-cancelled { background: #fee2e2; color: #dc2626; }
         
-        .action-btn { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid #eef2f7; color: #98a6ad; text-decoration: none; margin-left: 4px; }
-        .action-btn:hover { color: #727cf5; border-color: #727cf5; background: #f3f2fe; }
+        .action-btn { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid #eef2f7; color: #6b7280; text-decoration: none; margin-left: 4px; }
+        .action-btn:hover { color: #d7182a; border-color: #d7182a; background: #fdecee; }
 
         /* PAGINATION */
         .pagination-wrapper { padding: 16px 24px; border-top: 1px solid #eef2f7; display: flex; justify-content: space-between; align-items: center; }
-        .pagination-info { font-size: 13px; color: #98a6ad; }
+        .pagination-info { font-size: 13px; color: #6b7280; }
         .pagination { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
         .page-link { display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; border-radius: 4px; border: 1px solid #eef2f7; color: #6c757d; text-decoration: none; font-size: 13px; font-weight: 600; }
-        .page-link:hover { background: #f3f2fe; color: #727cf5; }
-        .page-item.active .page-link { background: #727cf5; color: #fff; border-color: #727cf5; }
+        .page-link:hover { background: #fdecee; color: #d7182a; }
+        .page-item.active .page-link { background: #d7182a; color: #fff; border-color: #d7182a; }
     </style>
 {% endblock %}
 
@@ -74,23 +74,23 @@
     <div class="kpi-row">
         <div class="kpi-card">
             <div><h3 class="kpi-value">{{ kpi_completed }}</h3><p class="kpi-label">Completed Orders</p></div>
-            <div class="kpi-icon" style="background: #0acf97;"><i class="bx bx-check"></i></div>
+            <div class="kpi-icon" style="background: #12924a;"><i class="bx bx-check"></i></div>
         </div>
         <div class="kpi-card">
             <div><h3 class="kpi-value">{{ kpi_pending }}</h3><p class="kpi-label">Pending Orders</p></div>
-            <div class="kpi-icon" style="background: #ffbc00;"><i class="bx bx-hourglass"></i></div>
+            <div class="kpi-icon" style="background: #d97706;"><i class="bx bx-hourglass"></i></div>
         </div>
         <div class="kpi-card">
             <div><h3 class="kpi-value">{{ kpi_canceled }}</h3><p class="kpi-label">Canceled Orders</p></div>
-            <div class="kpi-icon" style="background: #fa5c7c;"><i class="bx bx-x"></i></div>
+            <div class="kpi-icon" style="background: #dc2626;"><i class="bx bx-x"></i></div>
         </div>
         <div class="kpi-card">
             <div><h3 class="kpi-value">{{ kpi_new }}</h3><p class="kpi-label">New Orders</p></div>
-            <div class="kpi-icon" style="background: #50a5f1;"><i class="bx bx-cart-alt"></i></div>
+            <div class="kpi-icon" style="background: #0284c7;"><i class="bx bx-cart-alt"></i></div>
         </div>
         <div class="kpi-card">
             <div><h3 class="kpi-value">0</h3><p class="kpi-label">Returned Orders</p></div>
-            <div class="kpi-icon" style="background: #727cf5;"><i class="bx bx-revision"></i></div>
+            <div class="kpi-icon" style="background: #d7182a;"><i class="bx bx-revision"></i></div>
         </div>
     </div>
 
@@ -145,7 +145,7 @@
                                 <div class="avatar">{{ order.full_name|first|upper }}</div>
                                 <div>
                                     <div style="font-weight: 600;">{{ order.full_name }}</div>
-                                    <div style="font-size: 12px; color: #98a6ad;">{{ order.email }}</div>
+                                    <div style="font-size: 12px; color: #6b7280;">{{ order.email }}</div>
                                 </div>
                             </div>
                         </td>
@@ -179,7 +179,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 40px; color: #98a6ad;">
+                        <td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">
                             <i class="bx bx-package" style="font-size: 48px; opacity: 0.5; display: block; margin-bottom: 12px;"></i>
                             No orders found matching your criteria.
                         </td>

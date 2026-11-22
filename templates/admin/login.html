@@ -1,0 +1,78 @@
+{% extends "admin/auth_layout.html" %}
+{% load i18n %}
+
+{% block card %}
+<h2>Welcome back</h2>
+<p class="lead">Sign in with your staff email to open the admin panel.</p>
+
+{% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+        <div class="notice notice-error" role="alert"><i class="bx bx-error-circle"></i><span>{{ error }}</span></div>
+    {% endfor %}
+{% elif form.errors %}
+    <div class="notice notice-error" role="alert"><i class="bx bx-error-circle"></i><span>Please fix the field marked below.</span></div>
+{% endif %}
+
+{% if user.is_authenticated %}
+    <div class="notice notice-warn"><i class="bx bx-lock-alt"></i>
+        <span>You are signed in as <b>{{ username }}</b>, but this account cannot open this page. Sign in with a staff account instead.</span>
+    </div>
+{% endif %}
+
+<form action="{{ app_path }}" method="post" id="login-form" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+
+    <div class="field {% if form.username.errors %}has-error{% endif %}">
+        <label for="id_username">Email address</label>
+        <div class="control">
+            <i class="bx bx-envelope"></i>
+            <input type="email" name="{{ form.username.html_name }}" id="id_username" value="{{ form.username.value|default:'' }}"
+                   autocomplete="username" autocapitalize="none" required autofocus placeholder="you@warabd.com">
+        </div>
+        {% for error in form.username.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="field {% if form.password.errors %}has-error{% endif %}">
+        <label for="id_password">Password</label>
+        <div class="control">
+            <i class="bx bx-lock-alt"></i>
+            <input type="password" name="{{ form.password.html_name }}" id="id_password" autocomplete="current-password" required placeholder="Your password">
+            <button type="button" class="toggle-pass" aria-label="Show password" data-toggle-pass><i class="bx bx-show"></i></button>
+        </div>
+        {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    <div class="row-between">
+        <span></span>
+        {% url 'account_reset_password' as reset_url %}
+        {% if reset_url %}<a href="{{ reset_url }}">Forgot password?</a>{% endif %}
+    </div>
+
+    <button type="submit" class="btn" id="loginBtn"><i class="bx bx-log-in"></i> Sign in</button>
+</form>
+
+<div class="secure"><i class="bx bx-shield-quarter"></i> Staff accounts only. Customers sign in on the store with their phone number.</div>
+<a class="back" href="/"><i class="bx bx-arrow-back"></i> Back to the store</a>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var btn = document.querySelector("[data-toggle-pass]");
+    var input = document.getElementById("id_password");
+    if (btn && input) btn.addEventListener("click", function () {
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+        btn.innerHTML = show ? '<i class="bx bx-hide"></i>' : '<i class="bx bx-show"></i>';
+        input.focus();
+    });
+    var form = document.getElementById("login-form");
+    if (form) form.addEventListener("submit", function () {
+        var b = document.getElementById("loginBtn");
+        b.disabled = true; b.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Signing in…';
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div style="max-width:640px;background:#fff;border-radius:8px;padding:24px;box-shadow:0 0 35px 0 rgba(154,161,171,.15)">
+  <h2 style="margin-top:0">Send a test SMS</h2>
+  {% if not ready %}
+    <p style="background:#fff7ed;border:1px solid #fed7aa;padding:12px;border-radius:6px">
+      Test mode: “Send real SMS” is off, or the API key / sender ID is empty — nothing will be sent, only logged.
+      Fill them in under Site Settings → SMS gateway first.
+    </p>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <label for="phone" style="font-weight:700;display:block;margin-bottom:6px">Mobile number</label>
+    <input id="phone" name="phone" value="{{ phone_value }}" placeholder="01XXXXXXXXX" class="vTextField" style="width:260px">
+    <button type="submit" class="button default" style="margin-left:8px">Send test SMS</button>
+  </form>
+  {% if error %}<p style="color:#dc2626;font-weight:700">{{ error }}</p>{% endif %}
+  {% if result %}
+    <h3>Result: {{ result.get_status_display }}</h3>
+    <p><strong>Gateway answer:</strong></p>
+    <pre style="white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;padding:12px;border-radius:6px">{{ result.response }}</pre>
+  {% endif %}
+  <p style="margin-top:20px"><a href="../">← Back to Site Settings</a> · <a href="{% url 'admin:customers_smslog_changelist' %}">SMS log</a></p>
+</div>
+{% endblock %}

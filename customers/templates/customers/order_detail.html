@@ -1,0 +1,39 @@
+{% extends "customers/_account_layout.html" %}
+{% load i18n bd_tags %}
+{% block title %}{{ order.order_number }} | {{ site_settings.name }}{% endblock %}
+{% block heading %}{% blocktranslate trimmed with number=order.order_number %}Order {{ number }}{% endblocktranslate %}{% endblock %}
+
+{% block account %}
+<div class="box">
+  {% include "web/partials/order_tracker.html" %}
+  <div class="order-meta">
+    <div><small>{% translate "Date" %}</small><strong>{{ order.created_at|date:"d M Y, h:i A"|digits }}</strong></div>
+    <div><small>{% translate "Status" %}</small><strong>{{ order.get_status_display }}</strong></div>
+    <div><small>{% translate "Payment" %}</small><strong>{{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</strong></div>
+    <div><small>{% translate "Total" %}</small><strong>{{ order.total|taka }}</strong></div>
+  </div>
+  <div class="result-cols">
+    <div>
+      <h3 style="font-size:17px">{% translate "Order details" %}</h3>
+      {% for item in order.items.all %}
+      <div class="sum-item">
+        <img src="{% if item.product.image %}{{ item.product.image.url }}{% endif %}" alt="{{ item.product.name }}" data-fallback>
+        <div class="meta"><h4><a href="{{ item.product.get_absolute_url }}">{{ item.product.name }}</a></h4><span style="color:var(--muted);font-size:14px">{{ item.price|taka }} × {{ item.quantity|digits }}</span></div>
+        <div class="price">{{ item.line_total|taka }}</div>
+      </div>
+      {% endfor %}
+      <div class="sum-row"><span>{% translate "Subtotal" %}</span><span>{{ order.subtotal|taka }}</span></div>
+      <div class="sum-row"><span>{% translate "Delivery" %} ({{ order.get_delivery_zone_display }})</span><span>{{ order.shipping|taka }}</span></div>
+      <div class="sum-row total"><span>{% translate "Total" %}</span><span>{{ order.total|taka }}</span></div>
+    </div>
+    <div>
+      <h3 style="font-size:17px">{% translate "Delivery address" %}</h3>
+      <address style="font-style:normal;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--ink)">{{ order.full_name }}</strong><br>
+        {{ order.address_line1 }}<br>{% translate order.city %}, {% translate "Bangladesh" %}<br>{{ order.phone|digits }}
+      </address>
+    </div>
+  </div>
+  <p style="margin:0"><a class="link-arrow" href="{% url 'customers:orders' %}"><i data-icon="back"></i> {% translate "All orders" %}</a></p>
+</div>
+{% endblock %}
