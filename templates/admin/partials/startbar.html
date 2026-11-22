@@ -75,7 +75,10 @@
             <i class="bx bx-file"></i><span>Policy pages</span>
         </a>
         <a href="{% url 'admin:web_pageseo_changelist' %}" class="menu-link {% if '/web/pageseo/' in p %}active{% endif %}">
-            <i class="bx bx-search-alt"></i><span>Page SEO</span>
+            <i class="bx bx-search-alt"></i><span>Page SEO &amp; FAQ</span>
+        </a>
+        <a href="{% url 'admin:web_seokeyword_changelist' %}" class="menu-link {% if '/web/seokeyword/' in p %}active{% endif %}">
+            <i class="bx bx-purchase-tag"></i><span>SEO keywords</span>
         </a>
         <details class="menu-dropdown" {% if '/web/contentitem/' in p or '/web/site' in p and '/web/sitesettings/' not in p or '/web/usecase/' in p or '/web/timelinestep/' in p or '/web/portfolioproject/' in p %}open{% endif %}>
             <summary class="menu-link">

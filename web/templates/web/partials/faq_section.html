@@ -1,0 +1,21 @@
+{% load i18n %}{# FAQ block for a page / category / fixed site page. Needs faq_items = [{"q": .., "a": ..}]. #}
+{% if faq_items %}
+<section class="section faq-section" id="faq" aria-labelledby="faqTitle">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">{% translate "FAQ" %}</span>
+      <h2 id="faqTitle">{% translate "Frequently asked questions" %}</h2>
+    </div>
+    <div class="faq">
+      {% for item in faq_items %}
+      <div class="faq-item{% if forloop.first %} open{% endif %}">
+        <button type="button" class="faq-q" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}">
+          <span>{{ item.q }}</span> <i data-icon="chevron"></i>
+        </button>
+        <div class="faq-a">{{ item.a|linebreaksbr }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

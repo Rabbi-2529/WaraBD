@@ -1,0 +1,133 @@
+/* Admin → Orders → Create order (templates/admin/web/order/add_form.html) */
+.oc { max-width: 1320px; }
+.oc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+.oc-side { position: sticky; top: calc(var(--topbar-height, 68px) + 96px); }
+.oc-number { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line); color: var(--ink-2); }
+.oc-number b { color: var(--accent); font-weight: 800; letter-spacing: .3px; }
+.oc-head { display: flex; gap: 12px; align-items: flex-start; }
+.oc-step { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: 13px; font-weight: 800; }
+.oc-opt { margin-left: 4px; font-weight: 500; color: var(--ink-4); font-size: 12px; }
+
+/* Mobile number */
+.oc-phone { display: flex; align-items: stretch; border: 1px solid #cfd6e0; border-radius: 10px; background: #fff; overflow: hidden; transition: border-color .15s, box-shadow .15s; }
+.oc-phone:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(215, 24, 42, .12); }
+.has-error .oc-phone { border-color: var(--accent); }
+.oc-phone-cc { display: flex; align-items: center; padding: 0 14px; background: var(--soft); border-right: 1px solid var(--line); font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.admin-content .oc-phone input { flex: 1; min-width: 0; border: 0 !important; box-shadow: none !important; font-size: 20px !important; font-weight: 700; letter-spacing: 1.5px; padding: 12px 14px !important; }
+.oc-phone-state { display: flex; align-items: center; padding: 0 14px; font-size: 12.5px; font-weight: 700; color: var(--ink-4); white-space: nowrap; }
+.oc-phone-state.ok { color: var(--ok); }
+.oc-phone-state.bad { color: var(--accent); }
+.oc-phone-state.busy { color: var(--info); }
+
+/* Customer found / new */
+.oc-cust { border-radius: 12px; padding: 14px 16px; border: 1px solid var(--line); background: var(--soft); }
+.oc-cust.found { background: linear-gradient(135deg, #f3fbf6, #fff); border-color: #c7e8d3; }
+.oc-cust.new { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13.5px; color: var(--ink-3); }
+.oc-cust-top { display: flex; align-items: center; gap: 12px; }
+.oc-cust-top > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.oc-cust-top strong { font-size: 15.5px; color: var(--ink); }
+.oc-cust-top > div span { font-size: 12.5px; color: var(--ink-3); }
+.oc-avatar { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--ok); color: #fff; font-weight: 800; font-size: 17px; }
+.oc-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--info-soft); color: var(--info); white-space: nowrap; }
+.oc-badge.ok { background: var(--ok-soft); color: var(--ok); }
+.oc-last, .oc-warn { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; color: var(--ink-2); }
+.oc-warn { color: var(--accent); }
+.oc-addrs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: 12px; }
+.admin-content .oc-addr { display: flex !important; align-items: center; justify-content: space-between; gap: 10px; text-align: left; padding: 10px 12px !important; border: 1px solid var(--line) !important; border-radius: 10px !important; background: #fff !important; color: var(--ink-2) !important; font-size: 12.5px !important; line-height: 1.45; cursor: pointer; }
+.oc-addr b { color: var(--ink); }
+.oc-addr em { font-style: normal; font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--soft); color: var(--ink-3); }
+.oc-use { flex: none; font-weight: 700; color: var(--accent); }
+.admin-content .oc-addr.on { border-color: var(--ok) !important; box-shadow: 0 0 0 3px var(--ok-soft) !important; }
+.oc-addr.on .oc-use { color: var(--ok); }
+
+/* Delivery */
+.oc-quote { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--info-soft); color: #075985; font-size: 13.5px; }
+.oc-quote i { font-size: 20px; }
+
+/* Select2 in this form */
+.oc .select2-container--default .select2-selection--single { height: 44px; border: 1px solid #cfd6e0; border-radius: 8px; }
+.oc .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 42px; padding-left: 14px; color: var(--ink); }
+.oc .select2-container--default .select2-selection--single .select2-selection__arrow { height: 42px; right: 8px; }
+.oc .select2-container--default.select2-container--disabled .select2-selection--single { background: var(--soft); }
+.oc .has-error .select2-selection { border-color: var(--accent) !important; }
+#productSearch + .select2 .select2-selection--single { height: 50px; border: 2px dashed #e1c3c7; background: #fffafa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d7182a' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 14px center / 18px; }
+#productSearch + .select2 .select2-selection__rendered { line-height: 46px !important; color: var(--ink-3) !important; padding-left: 40px !important; }
+#productSearch + .select2 .select2-selection__arrow { height: 46px !important; }
+.oc-result { display: flex; align-items: center; gap: 12px; }
+.oc-result > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.oc-result strong { font-size: 13.5px; }
+.oc-result span { font-size: 12px; opacity: .8; }
+.oc-result b { white-space: nowrap; }
+.oc-result img, .oc-result .oc-noimg, .oc-prod img, .oc-prod .oc-noimg { flex: none; width: 44px; height: 44px; border-radius: 8px; object-fit: contain; background: #fff; border: 1px solid var(--line); }
+.oc-noimg { display: grid; place-items: center; color: var(--ink-4); font-size: 20px; }
+.oc-stock { color: var(--ok); font-weight: 600; }
+.oc-stock.out, .oc-stock.off { color: var(--accent); }
+
+/* Order lines */
+.oc-lines { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; overflow-x: auto; }
+.oc-lines table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.oc-lines th { padding: 10px 12px; background: var(--soft); border-bottom: 1px solid var(--line); text-align: left; font-size: 11.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-3); }
+.oc-lines td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.oc-lines tr:last-child td { border-bottom: 0; }
+.oc-lines .num { text-align: right; }
+.oc-lines tr.flash td { animation: ocFlash 1s ease; }
+@keyframes ocFlash { from { background: var(--ok-soft); } to { background: transparent; } }
+.oc-prod { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+.oc-prod > div { display: flex; flex-direction: column; min-width: 0; }
+.oc-prod strong { font-size: 14px; color: var(--ink); }
+.oc-prod span { font-size: 12px; color: var(--ink-3); }
+.oc-short { font-style: normal; font-size: 12px; font-weight: 700; color: var(--warn); }
+.admin-content .oc-price { width: 110px !important; text-align: right; display: inline-block !important; }
+.oc-qty { display: inline-flex; align-items: center; border: 1px solid #cfd6e0; border-radius: 8px; overflow: hidden; }
+.admin-content .oc-qty button { width: 32px; height: 38px; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: #fff !important; color: var(--ink) !important; font-size: 17px !important; cursor: pointer; }
+.admin-content .oc-qty button:hover { background: var(--soft) !important; }
+.admin-content .oc-qty input { width: 52px !important; height: 38px; padding: 0 !important; border: 0 !important; border-left: 1px solid var(--line) !important; border-right: 1px solid var(--line) !important; border-radius: 0 !important; text-align: center; font-weight: 700; box-shadow: none !important; -moz-appearance: textfield; }
+.oc-qty input::-webkit-outer-spin-button, .oc-qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.oc-line-total { font-weight: 800; color: var(--ink); white-space: nowrap; }
+.admin-content .oc-remove { width: 34px; height: 34px; padding: 0 !important; display: grid; place-items: center; border: 1px solid var(--line) !important; border-radius: 8px !important; background: #fff !important; color: var(--ink-3) !important; font-size: 17px; cursor: pointer; }
+.admin-content .oc-remove:hover { background: #fef2f2 !important; color: #b91c1c !important; border-color: #f3c2c2 !important; }
+.oc-empty { padding: 26px 12px; text-align: center; color: var(--ink-3); font-size: 13.5px; }
+.oc-empty i { font-size: 32px; color: var(--ink-4); }
+.oc-empty p { margin: 4px 0 0; }
+.oc-empty.bad { color: var(--accent); background: var(--accent-soft); }
+
+/* Payment */
+.oc-pay { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.oc-pay label { position: relative; margin: 0 !important; cursor: pointer; }
+.oc-pay input { position: absolute; opacity: 0; }
+.oc-pay span { display: flex; align-items: center; justify-content: center; gap: 4px; height: 44px; padding: 0 6px; border: 1px solid var(--line-2); border-radius: 10px; background: #fff; font-size: 12.5px; font-weight: 700; color: var(--ink-2); text-align: center; line-height: 1.15; }
+.oc-pay span.bk { color: #d12053; }
+.oc-pay span.ng { color: #ec6608; }
+.oc-pay input:checked + span { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
+.oc-pay input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.oc-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Totals */
+.oc-totals .wf-card-head { margin-bottom: 8px; }
+.oc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; font-size: 14px; color: var(--ink-2); }
+.oc-row small { color: var(--ink-4); font-weight: 500; }
+.oc-row strong { color: var(--ink); font-size: 15px; }
+.oc-row-input label { margin: 0 !important; font-weight: 500 !important; font-size: 14px !important; color: var(--ink-2) !important; }
+.oc-auto { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 999px; background: var(--ok-soft); color: var(--ok) !important; font-size: 11px !important; font-weight: 700 !important; cursor: pointer; }
+.oc-auto.manual { background: var(--warn-soft); color: var(--warn) !important; }
+.oc-money { display: flex; align-items: center; width: 130px; border: 1px solid #cfd6e0; border-radius: 8px; overflow: hidden; background: #fff; }
+.oc-money span { padding: 0 10px; color: var(--ink-3); font-weight: 700; }
+.admin-content .oc-money input { border: 0 !important; box-shadow: none !important; padding: 9px 10px 9px 0 !important; text-align: right; font-weight: 700; }
+.oc-disc { display: flex; align-items: center; gap: 6px; }
+.oc-disc-type { display: inline-flex; padding: 3px; border-radius: 8px; background: var(--soft); border: 1px solid var(--line); }
+.oc-disc-type label { margin: 0 !important; cursor: pointer; }
+.oc-disc-type input { position: absolute; opacity: 0; }
+.oc-disc-type span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; font-weight: 800; color: var(--ink-3); }
+.oc-disc-type input:checked + span { background: #fff; color: var(--accent); box-shadow: 0 1px 3px rgba(17, 24, 39, .15); }
+.admin-content .oc-disc > input { width: 92px !important; text-align: right; font-weight: 700; padding: 8px 10px !important; }
+.oc-disc-line strong { color: var(--ok); }
+.oc-grand { margin-top: 6px; padding-top: 14px; border-top: 2px solid var(--ink); }
+.oc-grand span { font-size: 16px; font-weight: 800; color: var(--ink); }
+.oc-grand strong { font-size: 24px; font-weight: 900; color: var(--accent); }
+.oc-submit { width: 100%; height: 48px !important; margin-top: 14px; font-size: 15px !important; }
+.oc-small { margin: 10px 0 0; text-align: center; font-size: 12px; color: var(--ink-4); }
+
+@media (max-width: 1100px) {
+    .oc-layout { grid-template-columns: 1fr; }
+    .oc-side { position: static; }
+}

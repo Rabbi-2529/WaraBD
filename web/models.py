@@ -2,7 +2,7 @@
 from decimal import Decimal
 
 from django.conf import settings as django_settings
-from django.db import models
+from django.db import IntegrityError, models, transaction
 from django.urls import reverse
 from django.utils.text import slugify
 from django.utils import timezone
@@ -11,6 +11,36 @@ import uuid
 
 
 # ─────────────────────────────────────────────────────────────
+# 0. SEO KEYWORDS (shared by products, categories and pages)
+# ─────────────────────────────────────────────────────────────
+class SeoKeyword(models.Model):
+    """One search keyword. Typed once, then picked from the list on any product / category / page."""
+
+    name = models.CharField(max_length=80, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "SEO keyword"
+        verbose_name_plural = "SEO keywords"
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def from_names(cls, names):
+        """Existing keywords for these names (case-insensitive), creating the new ones."""
+        found = []
+        for raw in names:
+            name = " ".join(str(raw).split())[:80]
+            if not name:
+                continue
+            keyword = cls.objects.filter(name__iexact=name).first() or cls.objects.create(name=name)
+            if keyword not in found:
+                found.append(keyword)
+        return found
+
+
 # 1. CATEGORY
 # ─────────────────────────────────────────────────────────────
 class Category(models.Model):
@@ -19,6 +49,17 @@ class Category(models.Model):
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # SEO & sharing for the category page (/category/<slug>/)
+    seo_title = models.CharField("SEO title", max_length=70, blank=True,
+                                 help_text="Empty = “category name | shop name”.")
+    seo_description = models.CharField("SEO description", max_length=170, blank=True,
+                                       help_text="Empty = the category description.")
+    share_image = models.ImageField("Share image", upload_to="seo/categories/", blank=True, null=True,
+                                    help_text="Empty = the default share image from Site settings. 1200×630 works best.")
+    seo_keywords = models.ManyToManyField(SeoKeyword, blank=True, related_name="categories",
+                                          verbose_name="SEO keywords")
+    faq = models.JSONField("FAQ", default=list, blank=True, help_text="Questions and answers shown on the category page.")
 
     class Meta:
         verbose_name_plural = "Categories"
@@ -31,6 +72,9 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse("web:category", kwargs={"slug": self.slug})
 
 
 # ─────────────────────────────────────────────────────────────
@@ -100,6 +144,8 @@ class Product(models.Model):
                                        help_text="Google / share text, up to ~155 characters. Leave empty to build it from the name and description.")
     share_image = models.ImageField("Share image", upload_to="seo/products/", blank=True, null=True,
                                     help_text="Picture shown on Facebook / WhatsApp. Empty = the main product image. 1200×630 works best.")
+    seo_keywords = models.ManyToManyField(SeoKeyword, blank=True, related_name="products",
+                                          verbose_name="SEO keywords")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -135,11 +181,12 @@ class Product(models.Model):
 
     @property
     def current_price(self):
+        # Never below zero, even if an old discount is larger than the price.
         if self.discount_type == "percent" and self.discount_price:
-            discount_amount = self.price * (self.discount_price / 100)
-            return self.price - discount_amount
+            discount_amount = self.price * (min(self.discount_price, Decimal("100")) / Decimal("100"))
+            return max(Decimal("0"), self.price - discount_amount)
         elif self.discount_type == "fixed" and self.discount_price:
-            return max(0, self.price - self.discount_price)
+            return max(Decimal("0"), self.price - self.discount_price)
         elif self.discount_price:
             return self.discount_price
         return self.price
@@ -277,6 +324,8 @@ class Order(models.Model):
     delivery_zone = models.CharField(max_length=10, choices=ZONE_CHOICES, default=ZONE_INSIDE)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping = models.DecimalField("Delivery fee", max_digits=10, decimal_places=2, default=0)
+    discount = models.DecimalField("Discount", max_digits=10, decimal_places=2, default=0,
+                                   help_text="Taken off the subtotal (total = subtotal − discount + delivery).")
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
@@ -297,16 +346,63 @@ class Order(models.Model):
     courier_checked_at = models.DateTimeField("Status checked", null=True, blank=True)
 
     notes = models.TextField(blank=True)
+    # Invoice: "Sales person" (staff who made the order in admin; empty = placed on the website)
+    # and "Delivery date" (set the first time the order is marked delivered).
+    created_by = models.ForeignKey(
+        django_settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="orders_created", verbose_name="Sales person",
+    )
+    delivered_at = models.DateTimeField("Delivered on", null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
 
+    ORDER_PREFIX = "WB"
+
+    @classmethod
+    def next_order_number(cls, day=None):
+        """WB + order date (YYYYMMDD) + that day's running number, 3 digits: WB20261122001."""
+        day = day or timezone.localdate()
+        prefix = f"{cls.ORDER_PREFIX}{day:%Y%m%d}"
+        last = 0
+        for number in cls.objects.filter(order_number__startswith=prefix).values_list("order_number", flat=True):
+            tail = number[len(prefix):]
+            if tail.isdigit():
+                last = max(last, int(tail))
+        return f"{prefix}{last + 1:03d}"
+
+    @property
+    def payable_before_delivery(self):
+        return self.subtotal - self.discount
+
+    @property
+    def sales_person(self):
+        user = self.created_by
+        if user is None:
+            return "Website"
+        return (getattr(user, "name", "") or "").strip() or (user.email or "").split("@")[0] or "Staff"
+
     def save(self, *args, **kwargs):
-        if not self.order_number:
-            self.order_number = f"ORD-{uuid.uuid4().hex[:10].upper()}"
-        super().save(*args, **kwargs)
+        if self.status == self.STATUS_DELIVERED and not self.delivered_at:
+            self.delivered_at = timezone.now()
+            if kwargs.get("update_fields") is not None:
+                kwargs["update_fields"] = set(kwargs["update_fields"]) | {"delivered_at"}
+        if self.order_number:
+            return super().save(*args, **kwargs)
+        day = timezone.localdate(self.created_at) if self.created_at else timezone.localdate()
+        # Two orders placed in the same second could pick the same number: try the next one.
+        for attempt in range(5):
+            self.order_number = Order.next_order_number(day)
+            try:
+                with transaction.atomic():
+                    return super().save(*args, **kwargs)
+            except IntegrityError:
+                taken = Order.objects.filter(order_number=self.order_number).exists()
+                if attempt == 4 or not taken:
+                    self.order_number = ""
+                    raise
 
     def __str__(self):
         return f"{self.order_number} — {self.full_name}"
@@ -355,6 +451,26 @@ class SiteSettings(models.Model):
     delivery_outside_eta = models.CharField(max_length=50, default="2–4 working days")
     bkash_number = models.CharField(max_length=50, default="01958-666999")
     nagad_number = models.CharField(max_length=50, default="01958-666999")
+    # Which payment methods the checkout offers, and which one is picked when the page opens.
+    pay_cod_enabled = models.BooleanField("Cash on delivery", default=True)
+    pay_bkash_enabled = models.BooleanField("bKash", default=True)
+    pay_nagad_enabled = models.BooleanField("Nagad", default=True)
+    invoice_terms = models.TextField(
+        "Invoice terms & conditions", blank=True,
+        default=(
+            "In case of product mismatch, damage or billing errors, the customer must immediately return the product "
+            "to the delivery person or inform us by calling {phone} ({hours}).\n"
+            "For eligible cases, refunds or returns are processed within 7–10 working days from the date of the claim.\n"
+            "If no refund or cancellation policy applies to a product, it is stated on the product page or in our policies.\n"
+            "For any queries, complaints or feedback, please contact us at {phone}."
+        ),
+        help_text="Printed at the bottom of every invoice. {phone}, {hours} and {email} are replaced with the shop's details.",
+    )
+    pay_default = models.CharField(
+        "Selected first", max_length=10, default="cod",
+        choices=[("cod", "Cash on delivery"), ("bkash", "bKash"), ("nagad", "Nagad")],
+        help_text="The payment method already ticked when the checkout opens (if it is switched on).",
+    )
     facebook = models.CharField(max_length=200, blank=True, default="#")
     instagram = models.CharField(max_length=200, blank=True, default="#")
     youtube = models.CharField(max_length=200, blank=True, default="#")
@@ -382,7 +498,8 @@ class SiteSettings(models.Model):
         default=10, help_text="Most SMS codes requested from one internet connection per day (stops SMS abuse).",
     )
     otp_valid_minutes = models.PositiveSmallIntegerField(default=5)
-    otp_resend_seconds = models.PositiveSmallIntegerField(default=60, help_text="Wait before 'Resend code' is allowed.")
+    otp_resend_seconds = models.PositiveSmallIntegerField(
+        default=300, help_text="Seconds to wait before 'Resend code' is allowed (300 = 5 minutes).")
     otp_max_attempts = models.PositiveSmallIntegerField(default=5, help_text="Wrong tries before the code stops working.")
     otp_sms_text = models.CharField(
         max_length=160,
@@ -456,6 +573,24 @@ class SiteSettings(models.Model):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+    @property
+    def invoice_terms_lines(self):
+        text = self.invoice_terms or ""
+        for key, value in (("{phone}", self.phone), ("{hours}", self.hours), ("{email}", self.email)):
+            text = text.replace(key, value or "")
+        return [line.strip() for line in text.splitlines() if line.strip()]
+
+    def payment_methods(self):
+        """Codes of the payment methods the checkout offers (never empty: falls back to cash on delivery)."""
+        enabled = [code for code, on in (("cod", self.pay_cod_enabled), ("bkash", self.pay_bkash_enabled),
+                                          ("nagad", self.pay_nagad_enabled)) if on]
+        return enabled or ["cod"]
+
+    @property
+    def default_payment_method(self):
+        methods = self.payment_methods()
+        return self.pay_default if self.pay_default in methods else methods[0]
 
 
 class SiteHighlight(models.Model):
@@ -639,6 +774,8 @@ class Page(models.Model):
                                  help_text="Empty = “page title | shop name”.")
     share_image = models.ImageField("Share image", upload_to="seo/pages/", blank=True, null=True,
                                     help_text="Empty = the default share image from Site settings.")
+    seo_keywords = models.ManyToManyField(SeoKeyword, blank=True, related_name="pages", verbose_name="SEO keywords")
+    faq = models.JSONField("FAQ", default=list, blank=True, help_text="Questions and answers shown under this page.")
     show_in_footer = models.BooleanField(default=True)
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
@@ -672,6 +809,9 @@ class PageSeo(models.Model):
                                    help_text="Empty = the built-in description.")
     share_image = models.ImageField("Share image", upload_to="seo/pages/", blank=True, null=True,
                                     help_text="Empty = the default share image from Site settings. 1200×630 works best.")
+    seo_keywords = models.ManyToManyField(SeoKeyword, blank=True, related_name="site_pages",
+                                          verbose_name="SEO keywords")
+    faq = models.JSONField("FAQ", default=list, blank=True, help_text="Questions and answers shown at the bottom of this page.")
     noindex = models.BooleanField("Hide from Google", default=False)
 
     class Meta:

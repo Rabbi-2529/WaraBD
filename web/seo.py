@@ -9,7 +9,8 @@ Every storefront page gets, from one place (layout.html → {% seo_data as seo %
 * Open Graph + Twitter card tags, so Facebook / WhatsApp / Messenger show a
   title, text and picture when a link is shared;
 * JSON-LD: Organization + WebSite on the home page, Product + BreadcrumbList
-  on product pages (price in BDT, stock).
+  on product pages (price in BDT, stock), FAQPage wherever a page has an FAQ;
+* meta keywords from the SEO keywords picked on the product / category / page.
 """
 
 import json
@@ -19,7 +20,8 @@ from django.utils.html import strip_tags
 from django.utils.text import Truncator
 from django.utils.translation import gettext as _
 
-from .models import Page, PageSeo, Product, SiteSettings
+from .models import Category, Page, PageSeo, Product, SiteSettings
+from .product_page import clean_faq
 
 DEFAULTS = {
     # url name: (title, description) — same msgids as before, so the Bangla catalog keeps working.
@@ -93,6 +95,8 @@ def build(context):
 
     product = context.get("product")
     page = context.get("page")
+    category = context.get("category")
+    faq, keywords_from = [], None
     if url_name == "product_detail" and isinstance(product, Product):
         title = product.name + (f" ({product.model_number})" if product.model_number else "")
         seo.update({
@@ -104,6 +108,7 @@ def build(context):
             "type": "product",
         })
         seo["jsonld"] = _product_jsonld(request, product, site, seo)
+        faq, keywords_from = clean_faq(product.faq), product
     elif url_name == "page" and isinstance(page, Page):
         seo.update({
             "title": page.seo_title or f"{page.title} | {name}",
@@ -111,6 +116,20 @@ def build(context):
             "image": _file_url(page.share_image) or seo["image"],
             "type": "article",
         })
+        faq, keywords_from = clean_faq(page.faq), page
+        if page.kind == Page.KIND_FAQ:
+            from .templatetags.cms_tags import faq_pairs
+
+            faq = faq_pairs(page.body) + faq
+    elif url_name == "category" and isinstance(category, Category):
+        seo.update({
+            "title": category.seo_title or f"{category.name} | {name}",
+            "description": _clean(category.seo_description or category.description
+                                  or DEFAULTS["product_list"][1](), 160),
+            "image": _file_url(category.share_image) or seo["image"],
+        })
+        seo["jsonld"] = [_category_crumbs(request, category)]
+        faq, keywords_from = clean_faq(category.faq), category
     else:
         row = PageSeo.objects.filter(page=url_name).first() if url_name in dict(PageSeo.PAGES) else None
         if url_name in DEFAULTS:
@@ -122,8 +141,14 @@ def build(context):
             seo["description"] = row.description or seo["description"]
             seo["image"] = _file_url(row.share_image) or seo["image"]
             seo["noindex"] = row.noindex
+            faq, keywords_from = clean_faq(row.faq), row
         if url_name == "home":
             seo["jsonld"] = _home_jsonld(request, site, seo)
+
+    if keywords_from is not None and keywords_from.pk:
+        seo["keywords"] = ", ".join(keywords_from.seo_keywords.values_list("name", flat=True))
+    if faq:
+        seo["jsonld"].append(_faq_jsonld(faq))
 
     seo["description"] = _clean(seo["description"], 300)
     seo["image"] = absolute(request, seo["image"])
@@ -132,6 +157,33 @@ def build(context):
     seo["canonical"] = absolute(request, current["url"].split("?")[0]) if current else absolute(request, request.path)
     seo["jsonld"] = [json.dumps(item, ensure_ascii=False) for item in seo["jsonld"]]
     return seo
+
+
+def _faq_jsonld(faq):
+    return {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": item["q"], "acceptedAnswer": {"@type": "Answer", "text": item["a"]}}
+            for item in faq
+        ],
+    }
+
+
+def _category_crumbs(request, category):
+    from django.urls import reverse
+
+    lang_prefix = "/bn" if request.path.startswith("/bn/") else ""
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": _("Home"), "item": absolute(request, lang_prefix + "/")},
+            {"@type": "ListItem", "position": 2, "name": _("Products"),
+             "item": absolute(request, reverse("web:product_list"))},
+            {"@type": "ListItem", "position": 3, "name": category.name, "item": absolute(request, request.path)},
+        ],
+    }
 
 
 def _first_gallery(product):

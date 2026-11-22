@@ -1,4 +1,4 @@
-{% load static i18n seo_tags %}<!DOCTYPE html>
+{% load static i18n seo_tags cms_tags %}<!DOCTYPE html>
 <html lang="{{ lang }}">
 <head>
   <meta charset="UTF-8">
@@ -6,6 +6,7 @@
   {% seo_data as seo %}
   <title>{% block title %}{{ seo.title }}{% endblock %}</title>
   <meta name="description" content="{% block description %}{{ seo.description }}{% endblock %}">
+  {% if seo.keywords %}<meta name="keywords" content="{{ seo.keywords }}">{% endif %}
   {% block robots %}{% if seo.noindex %}<meta name="robots" content="noindex">{% endif %}{% endblock %}
   <link rel="canonical" href="{{ seo.canonical }}">
   {# Share card: Facebook, WhatsApp, Messenger, LinkedIn, X #}
@@ -48,6 +49,8 @@
     </div>
     {% endif %}
     {% block content %}{% endblock %}
+    {# FAQ of the fixed pages (admin → Page SEO & FAQ). Pages with their own FAQ replace this block. #}
+    {% block page_faq %}{% page_faq as faq_items %}{% include "web/partials/faq_section.html" %}{% endblock %}
   </main>
 
   {% block after_main %}{% endblock %}

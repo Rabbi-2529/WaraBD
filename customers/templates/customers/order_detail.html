@@ -12,6 +12,7 @@
     <div><small>{% translate "Payment" %}</small><strong>{{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</strong></div>
     <div><small>{% translate "Total" %}</small><strong>{{ order.total|taka }}</strong></div>
   </div>
+  <p style="margin:0 0 18px"><a class="btn btn-outline btn-sm" href="{% url 'web:order_invoice' order.order_number %}" target="_blank" rel="noopener"><i data-icon="printer"></i> {% translate "Print invoice" %}</a></p>
   <div class="result-cols">
     <div>
       <h3 style="font-size:17px">{% translate "Order details" %}</h3>
@@ -23,6 +24,7 @@
       </div>
       {% endfor %}
       <div class="sum-row"><span>{% translate "Subtotal" %}</span><span>{{ order.subtotal|taka }}</span></div>
+      {% if order.discount %}<div class="sum-row save"><span>{% translate "Discount" %}</span><span>− {{ order.discount|taka }}</span></div>{% endif %}
       <div class="sum-row"><span>{% translate "Delivery" %} ({{ order.get_delivery_zone_display }})</span><span>{{ order.shipping|taka }}</span></div>
       <div class="sum-row total"><span>{% translate "Total" %}</span><span>{{ order.total|taka }}</span></div>
     </div>

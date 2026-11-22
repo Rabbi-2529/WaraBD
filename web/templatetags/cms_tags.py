@@ -273,3 +273,27 @@ def lines(text):
             out.append(line)
 
     return out
+
+
+@register.simple_tag(takes_context=True)
+def page_faq(context):
+    """FAQ rows of the fixed page being shown (Home, Products, Portfolio, About, Contact).
+    Edited in admin → Website → Page SEO & FAQ."""
+    from web.models import PageSeo
+    from web.product_page import clean_faq
+
+    request = context.get("request")
+    match = getattr(request, "resolver_match", None)
+    name = match.url_name if match else ""
+    if name not in dict(PageSeo.PAGES):
+        return []
+    row = PageSeo.objects.filter(page=name).first()
+    return clean_faq(row.faq) if row else []
+
+
+@register.filter
+def faq_list(value):
+    """Stored FAQ JSON → [{"q", "a"}] with empty rows dropped."""
+    from web.product_page import clean_faq
+
+    return clean_faq(value)

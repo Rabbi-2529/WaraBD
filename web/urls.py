@@ -7,6 +7,7 @@ app_name = "web"
 urlpatterns = [
     path("", views.home, name="home"),
     path("products/", views.product_list, name="product_list"),
+    path("category/<slug:slug>/", views.category_detail, name="category"),
     # Old product address (/products/<slug>/) → permanent redirect to /<slug>
     path("products/<slug:slug>/", views.product_old_url, name="product_old_url"),
     path("portfolio/", views.portfolio, name="portfolio"),
@@ -23,7 +24,9 @@ urlpatterns = [
     # Checkout & Orders
     path("checkout/", views.checkout, name="checkout"),
     path("api/checkout/", views.api_checkout, name="api_checkout"),
+    path("api/checkout/lookup/", views.api_checkout_lookup, name="api_checkout_lookup"),
     path("order/success/<str:order_number>/", views.order_success, name="order_success"),
+    path("order/<str:order_number>/invoice/", views.order_invoice, name="order_invoice"),
     path("order/failed/", views.order_failed, name="order_failed"),
     path("track-order/", views.track_order, name="track_order"),
 

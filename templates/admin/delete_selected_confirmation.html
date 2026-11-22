@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls static %}
+{# Delete several items picked on a list (bulk action). #}
+
+{% block extrahead %}{{ block.super }}{{ media }}<script src="{% static 'admin/js/cancel.js' %}" async></script>{% endblock %}
+
+{% block content %}
+<div class="wf-narrow">
+    <section class="wf-card wf-danger-card">
+        <div class="wf-danger-head">
+            <span class="wf-danger-icon"><i class="bx {% if perms_lacking or protected %}bx-block{% else %}bx-trash{% endif %}"></i></span>
+            <div>
+                <h2>{% if perms_lacking or protected %}These items can't be deleted{% else %}Delete {{ queryset|length }} {{ objects_name }}?{% endif %}</h2>
+                <p class="wf-desc">{{ objects_name|capfirst }}</p>
+            </div>
+        </div>
+
+        {% if perms_lacking %}
+            <p>{% blocktranslate %}Deleting the selected {{ objects_name }} would result in deleting related objects, but your account doesn't have permission to delete the following types of objects:{% endblocktranslate %}</p>
+            <ul class="wf-object-list">{{ perms_lacking|unordered_list }}</ul>
+        {% elif protected %}
+            <p>{% blocktranslate %}Deleting the selected {{ objects_name }} would require deleting the following protected related objects:{% endblocktranslate %}</p>
+            <ul class="wf-object-list">{{ protected|unordered_list }}</ul>
+        {% else %}
+            <p>Everything below will be removed for good. This cannot be undone.</p>
+            {% include "admin/includes/object_delete_summary.html" %}
+            {% for deletable_object in deletable_objects %}<ul class="wf-object-list">{{ deletable_object|unordered_list }}</ul>{% endfor %}
+        {% endif %}
+
+        <form method="post" class="wf-danger-actions">{% csrf_token %}
+            {% for obj in queryset %}<input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}">{% endfor %}
+            <input type="hidden" name="action" value="delete_selected">
+            <input type="hidden" name="post" value="yes">
+            <a href="#" class="wf-btn cancel-link"><i class="bx bx-arrow-back"></i> No, take me back</a>
+            {% if not perms_lacking and not protected %}
+                <button type="submit" class="wf-btn wf-btn-danger"><i class="bx bx-trash"></i> Yes, delete them</button>
+            {% endif %}
+        </form>
+    </section>
+</div>
+{% endblock %}

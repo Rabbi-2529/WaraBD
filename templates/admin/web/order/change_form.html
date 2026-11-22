@@ -126,6 +126,7 @@
 
                         <div class="totals-section">
                             <div class="total-row"><span>Subtotal</span><span>৳{{ original.subtotal }}</span></div>
+                            {% if original.discount %}<div class="total-row"><span>Discount</span><span>− ৳{{ original.discount }}</span></div>{% endif %}
                             <div class="total-row"><span>Delivery fee ({{ original.get_delivery_zone_display }})</span><span>৳{{ original.shipping }}</span></div>
                             <div class="total-row grand"><span>GRAND TOTAL</span><span>৳{{ original.total }}</span></div>
                         </div>
@@ -217,8 +218,8 @@
                         <p><strong>{{ original.full_name }}</strong><br>{{ original.address_line1 }}<br>{% if original.thana %}{{ original.thana }}, {% endif %}{{ original.city }}{% if original.postal_code %}, {{ original.postal_code }}{% endif %}<br>{{ original.phone }} · {{ original.get_delivery_zone_display }}</p>
                         <div id="edit-shipping" class="edit-form">
                             <input type="text" name="address_line1" value="{{ original.address_line1 }}" placeholder="Address">
-                            <input type="text" name="thana" value="{{ original.thana }}" placeholder="Thana / upazila">
-                            <input type="text" name="city" value="{{ original.city }}" placeholder="District">
+                            <select name="city" data-order-district data-selected="{{ original.city }}" aria-label="District"><option value="{{ original.city }}">{{ original.city }}</option></select>
+                            <select name="thana" data-order-thana data-selected="{{ original.thana }}" aria-label="Thana / upazila"><option value="{{ original.thana }}">{{ original.thana }}</option></select>
                             <input type="text" name="postal_code" value="{{ original.postal_code }}" placeholder="Postal Code">
                             <button type="submit" name="_save">Save Shipping</button>
                         </div>
@@ -266,6 +267,8 @@
                 </div>
             </div>
         </div>
+
+        {{ delivery_locations|json_script:"order-locations" }}
 
         <!-- HIDDEN SAVE BUTTON -->
         <div class="submit-row" style="display:none;">

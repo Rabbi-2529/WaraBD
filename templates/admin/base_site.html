@@ -28,14 +28,14 @@
     {# Django admin puts form media here (inline "Add another", date pickers, slug prefill). #}
     {% block extrahead %}{% endblock %}
 </head>
-<body class="{% block bodyclass %}{% endblock %}">
+<body class="{% block bodyclass %}{% endblock %}{% if is_popup %} is-popup{% endif %}">
 <div id="container" class="d-contents">{# Django admin JS looks for #container #}
 
 <div class="admin-wrapper">
-    {% include "admin/partials/startbar.html" %}
+    {% if not is_popup %}{% include "admin/partials/startbar.html" %}{% endif %}
 
     <div class="admin-main">
-        {% include "admin/partials/topbar.html" %}
+        {% if not is_popup %}{% include "admin/partials/topbar.html" %}{% endif %}
 
         <main class="admin-content">
             {% block messages %}

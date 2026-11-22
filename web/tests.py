@@ -211,7 +211,7 @@ class SeoAndPagesTests(TestCase):
         self.assertIn('id="tab-howto"', body)
         self.assertIn("What happens if the battery runs out?", body)
         self.assertIn('id="tab-warranty"', body)
-        self.assertIn("Inside Dhaka — ৳", body)
+        self.assertIn("Inside Dhaka · ৳", body)
         # Buy box + breadcrumbs + gallery data for the lightbox
         self.assertIn('id="buyRow"', body)
         self.assertIn('data-id="ft-scl029"', body)

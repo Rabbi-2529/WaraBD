@@ -3,6 +3,7 @@
 {# Policy / info page — edit in admin → Website Content → Policy pages #}
 
 {% block page %}info{% endblock %}
+{% block page_faq %}{% endblock %}
 
 {% block content %}
     <section class="page-banner">
@@ -29,6 +30,22 @@
         {% else %}
           <article class="policy-body">{{ page.body|page_body }}</article>
         {% endif %}
+
+        {% with faq_items=page.faq|faq_list %}{% if faq_items %}
+          <div class="page-faq">
+            <h2>{% translate "Frequently asked questions" %}</h2>
+            <div class="faq">
+              {% for item in faq_items %}
+              <div class="faq-item{% if forloop.first %} open{% endif %}">
+                <button type="button" class="faq-q" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}">
+                  <span>{{ item.q }}</span> <i data-icon="chevron"></i>
+                </button>
+                <div class="faq-a">{{ item.a|linebreaksbr }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}{% endwith %}
 
         <p class="policy-updated">{% blocktranslate trimmed with date=page.updated_at|date:"d M Y" %}Last updated: {{ date }}{% endblocktranslate %}</p>
 

@@ -1,0 +1,37 @@
+{% load admin_dt %}{# One fieldset = one card. Labels sit above the fields; short fields share a row. #}
+{% with collapsed=fieldset.classes|wf_has:'collapse' %}
+{% if collapsed %}<details class="wf-card wf-collapse {{ fieldset.classes }}">{% else %}<section class="wf-card {{ fieldset.classes }}">{% endif %}
+    {% if collapsed %}<summary class="wf-card-head">{% elif fieldset.name or fieldset.description %}<header class="wf-card-head">{% endif %}
+        {% if fieldset.name %}<h2>{{ fieldset.name }}</h2>{% endif %}
+        {% if fieldset.description %}<p class="wf-desc">{{ fieldset.description|safe }}</p>{% endif %}
+    {% if collapsed %}<i class="bx bx-chevron-down wf-chevron"></i></summary>{% elif fieldset.name or fieldset.description %}</header>{% endif %}
+    <div class="wf-grid">
+    {% for line in fieldset %}
+        {% for field in line %}
+            {% if field.field.is_hidden %}{{ field.field }}{% else %}
+            <div class="wf-field{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% if line.fields|length == 2 %} wf-half{% elif line.fields|length == 3 %} wf-third{% elif line.fields|length > 3 %} wf-quarter{% elif field|wf_wide %} wf-wide{% else %} wf-half{% endif %}{% if field.is_checkbox %} wf-check{% endif %}{% if not field.is_readonly and field.errors %} has-error{% endif %}">
+                {% if field.is_checkbox %}
+                    <label class="wf-switch" for="{{ field.field.id_for_label }}">
+                        {{ field.field }}
+                        <span class="wf-switch-ui" aria-hidden="true"></span>
+                        <span class="wf-switch-text">{{ field.field.label }}</span>
+                    </label>
+                {% else %}
+                    <label{% if not field.is_readonly %} for="{{ field.field.id_for_label }}"{% endif %} class="wf-label">
+                        {{ field.field.label|capfirst }}{% if not field.is_readonly and field.field.field.required %} <span class="wf-req">*</span>{% endif %}
+                    </label>
+                    {% if field.is_readonly %}
+                        <div class="wf-readonly">{{ field.contents }}</div>
+                    {% else %}
+                        {{ field.field }}
+                    {% endif %}
+                {% endif %}
+                {% if field.field.help_text %}<p class="wf-help"{% if field.field.id_for_label %} id="{{ field.field.id_for_label }}_helptext"{% endif %}>{{ field.field.help_text|safe }}</p>{% endif %}
+                {% if not field.is_readonly %}{{ field.errors }}{% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    </div>
+{% if collapsed %}</details>{% else %}</section>{% endif %}
+{% endwith %}

@@ -309,7 +309,7 @@ class AccountPagesTests(OtpTestCase):
         page = self.client.get("/checkout/").content.decode()
         self.assertIn('data-selected="Sylhet"', page)
         self.assertIn('data-selected="Zindabazar"', page)        # thana is its own dropdown now
-        self.assertIn(">House 9</textarea>", page)
+        self.assertIn('value="House 9"', page)
         self.assertIn("no SMS code needed", page)
 
     def test_change_phone_with_code_to_new_number(self):
@@ -336,3 +336,37 @@ class AccountPagesTests(OtpTestCase):
         self.assertEqual(self.sent[-1]["msg"], "WaRa BD test message. Your SMS gateway is working.")
         settings_page = staff.get("/admin/web/sitesettings/1/change/").content.decode()
         self.assertNotIn(">test-key<", settings_page)
+
+
+class CodePageChangeNumberTests(OtpTestCase):
+    """“Change number” on the code page: a new code goes to the new number, same page."""
+
+    def test_checkout_code_moves_to_the_new_number(self):
+        Product.objects.create(name="Test Lock", slug="test-lock", price=Decimal("1000"), stock=10)
+        data = {"name": "Guest Buyer", "phone": "01912345678", "district": "Dhaka", "thana": "Dhanmondi",
+                "address": "House 12, Road 5, Dhanmondi", "payment": "cod", "lines": [{"id": "test-lock", "qty": 1}]}
+        self.client.post("/api/checkout/", json.dumps(data), content_type="application/json")
+        r = self.client.post("/account/verify/change-number/", {"phone": "01812345678"})
+        self.assertRedirects(r, "/account/verify/", fetch_redirect_response=False)
+        self.assertTrue(self.sent[-1]["url"])
+        self.assertEqual(OtpCode.objects.filter(cancelled=False).get().phone, "01812345678")
+        self.client.post("/account/verify/", {"code": self.last_code()})
+        self.assertEqual(Order.objects.get().phone, "01812345678")
+
+    def test_login_to_unknown_number_keeps_the_old_code(self):
+        Customer.objects.create(phone="01712345678", name="Rahim")
+        self.client.post("/account/login/", {"phone": "01712345678"})
+        r = self.client.post("/account/verify/change-number/", {"phone": "01812345678"}, follow=True)
+        self.assertContains(r, "No account uses this number yet")
+        self.assertEqual(OtpCode.objects.filter(cancelled=False).get().phone, "01712345678")
+
+    def test_page_has_inline_change_form_and_five_minute_wait(self):
+        Customer.objects.create(phone="01712345678", name="Rahim")
+        site = SiteSettings.load()
+        site.otp_resend_seconds = 300
+        site.save()
+        self.client.post("/account/login/", {"phone": "01712345678"})
+        page = self.client.get("/account/verify/").content.decode()
+        self.assertIn('id="otpChange"', page)
+        self.assertRegex(page, r'data-wait="(29\d|300)"')
+        self.assertEqual(SiteSettings._meta.get_field("otp_resend_seconds").default, 300)

@@ -3,10 +3,10 @@ import re
 
 from django import forms
 
-from .widgets import RichTextarea
+from .widgets import FaqEditor, KeywordTagsWidget, RichTextarea
 from django.utils.text import slugify
 
-from .models import ContactMessage, Order, Product
+from .models import Category, ContactMessage, Order, Page, PageSeo, Product, SeoKeyword
 
 
 def _bs(placeholder=""):
@@ -76,7 +76,7 @@ class CheckoutForm(forms.ModelForm):
 
 # First URL segments used by other pages: a product slug must never be one of these.
 RESERVED_SLUGS = {
-    "products", "portfolio", "about", "contact", "cart", "checkout", "order", "track-order",
+    "products", "category", "portfolio", "about", "contact", "cart", "checkout", "order", "track-order",
     "page", "api", "account", "accounts", "admin", "admin-invoice", "bn", "en", "static",
     "media", "sitemap-xml", "robots-txt",
 }
@@ -220,10 +220,10 @@ class StepsField(TextListField):
 
 
 class FaqField(TextListField):
-    help_text_default = "Write  Q: question  on one line and  A: answer  on the next. Leave a blank line between questions."
+    help_text_default = "Add a question and its answer for each row. Empty rows are skipped."
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("widget", forms.Textarea(attrs={"class": "form-control", "rows": 8}))
+        kwargs.setdefault("widget", FaqEditor())
         super().__init__(*args, **kwargs)
 
     def to_text(self, value):
@@ -255,7 +255,9 @@ class FaqField(TextListField):
             raise forms.ValidationError("Start each question with  Q:  Check: %s" % "; ".join(bad[:3]))
         missing = [r["q"] for r in rows if not r["a"]]
         if missing:
-            raise forms.ValidationError("These questions have no  A:  answer: %s" % "; ".join(missing[:3]))
+            raise forms.ValidationError("These questions have no answer: %s" % "; ".join(missing[:3]))
+        if any(not r["q"] for r in rows):
+            raise forms.ValidationError("Every answer needs a question.")
         return rows
 
 
@@ -287,6 +289,101 @@ class ApplicationsField(TextListField):
                 raise forms.ValidationError("Start the lines with  Works with:  or  Used in:")
             result["compatible" if name == "works with" else "places"] = items
         return result
+
+
+class KeywordTagsField(forms.Field):
+    """SEO keywords: existing ones are picked from the list, new ones are typed and created on save."""
+
+    widget = KeywordTagsWidget
+    MAX_KEYWORDS = 30
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("required", False)
+        kwargs.setdefault("label", "SEO keywords")
+        kwargs.setdefault("help_text", "Pick keywords already used on other pages, or type a new one and press Enter.")
+        super().__init__(*args, **kwargs)
+
+    def prepare_value(self, value):
+        names = []
+        for item in value or []:
+            if isinstance(item, SeoKeyword):
+                names.append(item.name)
+            elif isinstance(item, int) or (isinstance(item, str) and item.isdigit() and SeoKeyword.objects.filter(pk=item).exists()):
+                keyword = SeoKeyword.objects.filter(pk=item).first()
+                if keyword:
+                    names.append(keyword.name)
+            elif str(item).strip():
+                names.append(str(item))
+        return names
+
+    def to_python(self, value):
+        if not value:
+            return []
+        if isinstance(value, str):
+            value = value.split(",")
+        names, seen = [], set()
+        for raw in value:
+            name = " ".join(str(raw).split())
+            if not name or name.lower() in seen:
+                continue
+            if len(name) > 80:
+                raise forms.ValidationError("Keep each keyword under 80 characters: %s" % name[:40])
+            seen.add(name.lower())
+            names.append(name)
+        if len(names) > self.MAX_KEYWORDS:
+            raise forms.ValidationError("Use at most %d keywords." % self.MAX_KEYWORDS)
+        return names
+
+    def has_changed(self, initial, data):
+        before = {n.lower() for n in self.prepare_value(initial)}
+        try:
+            after = {n.lower() for n in self.to_python(data)}
+        except forms.ValidationError:
+            return True
+        return before != after
+
+
+class SeoKeywordsFormMixin:
+    """Turns the typed keyword names into SeoKeyword rows when the form is saved."""
+
+    def _save_m2m(self):
+        names = self.cleaned_data.get("seo_keywords")
+        if names is not None and "seo_keywords" in self.fields:
+            self.cleaned_data["seo_keywords"] = SeoKeyword.from_names(names)
+        super()._save_m2m()
+
+
+FAQ_BN_HELP = "Leave empty to show the English questions on the Bangla page."
+
+
+class CategoryAdminForm(SeoKeywordsFormMixin, forms.ModelForm):
+    seo_keywords = KeywordTagsField()
+    faq_en = FaqField(label="FAQ (English)")
+    faq_bn = FaqField(label="FAQ (বাংলা)", help_text=FAQ_BN_HELP)
+
+    class Meta:
+        model = Category
+        fields = "__all__"
+
+
+class PageAdminForm(SeoKeywordsFormMixin, forms.ModelForm):
+    seo_keywords = KeywordTagsField()
+    faq_en = FaqField(label="FAQ (English)")
+    faq_bn = FaqField(label="FAQ (বাংলা)", help_text=FAQ_BN_HELP)
+
+    class Meta:
+        model = Page
+        fields = "__all__"
+
+
+class PageSeoAdminForm(SeoKeywordsFormMixin, forms.ModelForm):
+    seo_keywords = KeywordTagsField()
+    faq_en = FaqField(label="FAQ (English)")
+    faq_bn = FaqField(label="FAQ (বাংলা)", help_text=FAQ_BN_HELP)
+
+    class Meta:
+        model = PageSeo
+        fields = "__all__"
 
 
 class TagsField(forms.CharField):
@@ -330,11 +427,13 @@ def product_form_fields():
         names += [f"{field}_en", f"{field}_bn"]
     for field, _label, _cls in PRODUCT_LIST_FIELDS:
         names += [f"{field}_en", f"{field}_bn"]
-    names += ["seo_title_en", "seo_title_bn", "seo_description_en", "seo_description_bn", "share_image"]
+    names += ["seo_title_en", "seo_title_bn", "seo_description_en", "seo_description_bn", "share_image",
+              "seo_keywords"]
     return names
 
 
-class ProductOrganizeForm(forms.ModelForm):
+class ProductOrganizeForm(SeoKeywordsFormMixin, forms.ModelForm):
+    seo_keywords = KeywordTagsField()
     tags = TagsField(
         required=False,
         widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter tags separated by commas"}),
@@ -406,6 +505,17 @@ class ProductOrganizeForm(forms.ModelForm):
                 self.fields[name].label = f"{label} ({lang_label})"
         if "share_image" in self.fields:
             self.fields["share_image"].widget.attrs.update({"class": "form-control", "accept": "image/*"})
+
+    def clean(self):
+        cleaned = super().clean()
+        price, kind, value = cleaned.get("price"), cleaned.get("discount_type"), cleaned.get("discount_price")
+        if value is not None and value < 0:
+            self.add_error("discount_price", "The discount cannot be negative.")
+        elif kind == "percent" and value is not None and value > 100:
+            self.add_error("discount_price", "A percentage discount must be 100 or less.")
+        elif kind == "fixed" and value is not None and price is not None and value >= price:
+            self.add_error("discount_price", "The discount must be smaller than the price.")
+        return cleaned
 
     def clean_slug(self):
         """

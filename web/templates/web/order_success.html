@@ -46,6 +46,7 @@
               </div>
               {% endfor %}
               <div class="sum-row"><span>{% translate "Subtotal" %}</span><span>{{ order.subtotal|taka }}</span></div>
+              {% if order.discount %}<div class="sum-row save"><span>{% translate "Discount" %}</span><span>− {{ order.discount|taka }}</span></div>{% endif %}
               <div class="sum-row"><span>{% translate "Delivery" %} ({{ order.get_delivery_zone_display }})</span><span>{{ order.shipping|taka }}</span></div>
               <div class="sum-row total"><span>{% translate "Total" %}</span><span>{{ order.total|taka }}</span></div>
             </div>
@@ -70,7 +71,7 @@
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
             <a class="btn btn-red" href="{% url 'web:home' %}"><i data-icon="home"></i> {% translate "Back to home" %}</a>
             <a class="btn btn-outline" href="{% url 'web:product_list' %}">{% translate "Continue shopping" %}</a>
-            <button type="button" class="btn btn-outline" onclick="window.print()"><i data-icon="printer"></i> {% translate "Print invoice" %}</button>
+            <a class="btn btn-outline" href="{% url 'web:order_invoice' order.order_number %}" target="_blank" rel="noopener"><i data-icon="printer"></i> {% translate "Print invoice" %}</a>
           </div>
         </div>
       </div>

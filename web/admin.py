@@ -3,6 +3,7 @@
 
 import csv
 from datetime import datetime
+from decimal import Decimal
 
 from django import forms
 from django.contrib import admin
@@ -21,6 +22,7 @@ from .models import (
     PageSeo,
     Page,
     Product,
+    SeoKeyword,
     ProductImage,
     PortfolioProject,
     ContactMessage,
@@ -47,7 +49,8 @@ from modeltranslation.admin import TranslationAdmin, TranslationTabularInline
 from django.db import models as dj_models
 
 from .admin_datatables import DataTablesAdminMixin
-from .forms import PRODUCT_LIST_FIELDS, PRODUCT_TEXT_FIELDS, ProductOrganizeForm, product_form_fields
+from .forms import (PRODUCT_LIST_FIELDS, PRODUCT_TEXT_FIELDS, CategoryAdminForm, PageAdminForm, PageSeoAdminForm,
+                    ProductOrganizeForm, product_form_fields)
 from .views import admin_invoice_view
 from .widgets import RichTextarea
 
@@ -131,9 +134,13 @@ class SiteSettingsAdmin(TranslationAdmin):
         (
             "Payment (shown at checkout)",
             {
+                "description": "Switch payment methods on or off. The checkout always shows at least one.",
                 "fields": (
+                    ("pay_cod_enabled", "pay_bkash_enabled", "pay_nagad_enabled"),
+                    "pay_default",
                     "bkash_number",
                     "nagad_number",
+                    "invoice_terms",
                 )
             },
         ),
@@ -454,6 +461,7 @@ class ProductAdmin(admin.ModelAdmin):
         context["list_rows"] = [
             (label, form[f"{field}_en"], form[f"{field}_bn"])
             for field, label, _cls in PRODUCT_LIST_FIELDS
+            if field != "faq"  # the FAQ has its own card with English / Bangla tabs
         ]
         return super().render_change_form(request, context, *args, **kwargs)
 
@@ -470,9 +478,21 @@ class ProductAdmin(admin.ModelAdmin):
 # CATEGORIES
 # ============================================================
 
+SEO_HELP = ("What Google shows and the card people see when the link is shared on Facebook / WhatsApp. "
+            "Empty boxes use the built-in text.")
+FAQ_HELP = "Questions and answers shown on this page (and given to Google as FAQ data)."
+
+
 @admin.register(Category)
 class CategoryAdmin(TranslationAdmin):
     formfield_overrides = RICH_TEXT
+    form = CategoryAdminForm
+    fieldsets = (
+        ("Category", {"fields": ("name", "slug", "description", "is_active")}),
+        ("FAQ", {"description": FAQ_HELP, "fields": ("faq",)}),
+        ("SEO & sharing", {"description": SEO_HELP,
+                           "fields": ("seo_title", "seo_description", "seo_keywords", "share_image")}),
+    )
 
     list_display = (
         "name",
@@ -743,17 +763,42 @@ class OrderAdmin(admin.ModelAdmin):
     )
 
     def get_fields(self, request, obj=None):
+        from .admin_orders import ORDER_CREATE_FIELDS
+
         if obj is not None:
             return self.CHANGE_PAGE_FIELDS
-        return super().get_fields(request, obj)
+        return ORDER_CREATE_FIELDS
+
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        from .admin_orders import AdminOrderChangeForm, AdminOrderCreateForm
+
+        kwargs["form"] = AdminOrderCreateForm if obj is None else AdminOrderChangeForm
+        return super().get_form(request, obj, change=change, **kwargs)
+
+    def get_readonly_fields(self, request, obj=None):
+        return self.readonly_fields if obj is not None else ()
 
     def render_change_form(self, request, context, *args, **kwargs):
         from . import courier
 
         obj = context.get("original")
+        if obj is None:
+            from .admin_orders import posted_items
+            from .delivery import locations_payload
+
+            context.update({
+                "next_order_number": Order.next_order_number(),
+                "delivery_locations": locations_payload(),
+                "order_lines": posted_items(request) if request.method == "POST" else [],
+                "order_search_url": reverse("admin:web_order_product_search"),
+                "order_lookup_url": reverse("admin:web_order_customer_lookup"),
+            })
         if obj is not None:
+            from .delivery import locations_payload
+
             ok, reason = courier.ready()
             context.update({
+                "delivery_locations": locations_payload(),
                 "courier_ready": ok,
                 "courier_reason": reason,
                 "courier_name": courier.NAMES.get(courier.provider(), ""),
@@ -783,6 +828,7 @@ class OrderAdmin(admin.ModelAdmin):
         description="🚚 Mark selected orders as DELIVERED"
     )
     def mark_delivered(self, request, queryset):
+        queryset.filter(delivered_at__isnull=True).update(delivered_at=timezone.now())
         queryset.update(
             status="delivered"
         )
@@ -796,6 +842,21 @@ class OrderAdmin(admin.ModelAdmin):
         )
 
     def save_model(self, request, obj, form, change):
+
+        if not change and getattr(form, "items", None) is not None:
+            # Create order: totals come from the product lines; the delivery
+            # charge from the district / thana (staff may type another one).
+            from customers.models import Customer
+
+            quote = form.quote or {}
+            obj.delivery_zone = quote.get("zone", obj.delivery_zone)
+            obj.subtotal = form.subtotal
+            obj.discount = form.discount
+            obj.shipping = form.cleaned_data.get("shipping") or Decimal("0")
+            obj.total = obj.subtotal - obj.discount + obj.shipping
+            obj.customer = Customer.objects.filter(phone=obj.phone).first()
+            obj.country = "Bangladesh"
+            obj.created_by = request.user
 
         date_str = request.POST.get(
             "created_at_date"
@@ -822,11 +883,33 @@ class OrderAdmin(admin.ModelAdmin):
             change,
         )
 
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        if change or not getattr(form, "items", None):
+            return
+        from django.contrib import messages
+
+        order = form.instance
+        needed = {}
+        for product, qty, price in form.items:
+            OrderItem.objects.create(order=order, product=product, quantity=qty, price=price)
+            needed[product.pk] = (product, needed.get(product.pk, (product, 0))[1] + qty)
+        short = []
+        for product, qty in needed.values():
+            if product.stock < qty:
+                short.append(f"{product.name} (had {product.stock})")
+            Product.objects.filter(pk=product.pk).update(stock=max(0, product.stock - qty))
+        if short:
+            messages.warning(request, "Not enough stock for: " + ", ".join(short) + ". Stock was set to 0.")
+
     def get_urls(self):
+        from .admin_orders import customer_lookup, product_search
 
         urls = super().get_urls()
 
         custom_urls = [
+            path("product-search/", self.admin_site.admin_view(product_search), name="web_order_product_search"),
+            path("customer-lookup/", self.admin_site.admin_view(customer_lookup), name="web_order_customer_lookup"),
             path(
                 "<path:object_id>/invoice/",
                 self.admin_site.admin_view(
@@ -923,20 +1006,45 @@ class ContentItemAdmin(TranslationAdmin):
 @admin.register(Page)
 class PageAdmin(TranslationAdmin):
     formfield_overrides = RICH_TEXT
+    form = PageAdminForm
     list_display = ("title", "slug", "kind", "show_in_footer", "is_active", "order", "updated_at")
     list_editable = ("show_in_footer", "is_active", "order")
     prepopulated_fields = {"slug": ("title",)}
-    fields = ("title", "slug", "kind", "intro", "body", "seo_title", "meta_description", "share_image",
-              "show_in_footer", "is_active", "order")
+    fieldsets = (
+        ("Page", {"fields": ("title", "slug", "kind", "intro")}),
+        ("Text", {"fields": ("body",)}),
+        ("FAQ", {"description": FAQ_HELP + " For a “Questions & answers” page, the questions in the text box above are shown too.",
+                 "fields": ("faq",)}),
+        ("SEO & sharing", {"description": SEO_HELP,
+                           "fields": ("seo_title", "meta_description", "seo_keywords", "share_image")}),
+        ("Settings", {"fields": ("show_in_footer", "is_active", "order")}),
+    )
 
 
 @admin.register(PageSeo)
 class PageSeoAdmin(TranslationAdmin):
     """Google title / description and share picture for Home, Products, Portfolio, About and Contact."""
 
-    list_display = ("page", "title_used", "description_used", "has_image", "noindex")
-    fields = ("page", "title", "description", "share_image", "noindex")
+    form = PageSeoAdminForm
+    list_display = ("page", "title_used", "description_used", "keyword_count", "faq_count", "has_image", "noindex")
+    fieldsets = (
+        ("Page", {"fields": ("page", "noindex")}),
+        ("SEO & sharing", {"description": SEO_HELP,
+                           "fields": ("title", "description", "seo_keywords", "share_image")}),
+        ("FAQ", {"description": FAQ_HELP, "fields": ("faq",)}),
+    )
     readonly_fields = ("page",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(n_keywords=Count("seo_keywords"))
+
+    @admin.display(description="Keywords", ordering="n_keywords")
+    def keyword_count(self, obj):
+        return obj.n_keywords
+
+    @admin.display(description="FAQ")
+    def faq_count(self, obj):
+        return len(obj.faq_en or [])
 
     @admin.display(description="Title")
     def title_used(self, obj):
@@ -955,6 +1063,27 @@ class PageSeoAdmin(TranslationAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(SeoKeyword)
+class SeoKeywordAdmin(admin.ModelAdmin):
+    """Every SEO keyword typed anywhere. Renaming one renames it everywhere it is used."""
+
+    list_display = ("name", "used_on", "created_at")
+    search_fields = ("name",)
+    fields = ("name",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            n_products=Count("products", distinct=True), n_categories=Count("categories", distinct=True),
+            n_pages=Count("pages", distinct=True), n_site_pages=Count("site_pages", distinct=True))
+
+    @admin.display(description="Used on")
+    def used_on(self, obj):
+        parts = [(obj.n_products, "product"), (obj.n_categories, "category"), (obj.n_pages, "policy page"),
+                 (obj.n_site_pages, "site page")]
+        text = ", ".join(f"{n} {label}{'' if n == 1 else 's'}" for n, label in parts if n)
+        return text or "— not used —"
 
 
 # ============================================================

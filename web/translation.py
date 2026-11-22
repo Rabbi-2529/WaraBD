@@ -35,7 +35,8 @@ _EMPTY_DICT = {}
 
 @register(Category)
 class CategoryTranslation(TranslationOptions):
-    fields = ("name", "description")
+    fields = ("name", "description", "seo_title", "seo_description", "faq")
+    fallback_undefined = {"faq": _EMPTY_LIST}
 
 
 @register(Product)
@@ -123,12 +124,14 @@ class ContentItemTranslation(TranslationOptions):
 
 @register(Page)
 class PageTranslation(TranslationOptions):
-    fields = ("title", "intro", "body", "meta_description", "seo_title")
+    fields = ("title", "intro", "body", "meta_description", "seo_title", "faq")
+    fallback_undefined = {"faq": _EMPTY_LIST}
 
 
 @register(PageSeo)
 class PageSeoTranslation(TranslationOptions):
-    fields = ("title", "description")
+    fields = ("title", "description", "faq")
+    fallback_undefined = {"faq": _EMPTY_LIST}
 
 
 @register(District)

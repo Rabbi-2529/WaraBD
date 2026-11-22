@@ -31,6 +31,7 @@
     orderSuccess: urlFrom(DU.orderSuccess, '/order/success/__slug__/'),
     orderFailed: DU.orderFailed || '/order/failed/',
     apiCheckout: DU.apiCheckout || '/api/checkout/',
+    apiCheckoutLookup: DU.apiCheckoutLookup || '/api/checkout/lookup/',
     apiContact: DU.apiContact || '/api/contact/'
   };
 
@@ -386,7 +387,40 @@
   }
 
   /* ---------- Global events ---------- */
+  // Bangla digits become English ones; letters and signs are dropped; a pasted
+  // +880 / 880 prefix is removed, so the box always holds 01XXXXXXXXX.
+  const cleanPhoneInput = v => {
+    let s = toAsciiDigits(v).replace(/\D/g, '');
+    if (/^8801/.test(s)) s = s.slice(2);  // +880 1XXX… → 01XXX…
+    return s.slice(0, 11);
+  };
+  function initPhoneInputs(root) {
+    $$('input[type="tel"]', root).forEach(input => {
+      input.setAttribute('inputmode', 'numeric');
+      input.setAttribute('pattern', '01[3-9][0-9]{8}');
+      if (!input.dataset.rule) input.dataset.rule = 'phone';
+      if (input.value) input.value = cleanPhoneInput(input.value);
+    });
+  }
+
   function initGlobalEvents() {
+    initPhoneInputs(document);
+    document.addEventListener('keydown', e => {
+      const t = e.target;
+      if (!t.matches || !t.matches('input[type="tel"]') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key && e.key.length === 1 && !/[0-9০-৯]/.test(e.key)) e.preventDefault();
+    });
+    document.addEventListener('input', e => {
+      const t = e.target;
+      if (!t.matches || !t.matches('input[type="tel"]')) return;
+      const clean = cleanPhoneInput(t.value);
+      if (clean !== t.value) t.value = clean;
+      if (t.closest('.field.invalid')) checkField(t);
+    }, true);
+    document.addEventListener('focusout', e => {
+      const t = e.target;
+      if (t.matches && t.matches('input[type="tel"]') && t.value.trim()) checkField(t);
+    });
     document.addEventListener('change', e => {
       const wrap = e.target.closest && e.target.closest('.qty');
       if (wrap && e.target.tagName === 'INPUT') syncQty(wrap);
@@ -420,7 +454,7 @@
         const added = Cart.add(p.id, qty);
         if (!added) { toast(T('Cart has max units.'), { type: 'error', href: URLS.cart, linkText: T('View cart') }); return; }
 
-        toast(TF('%(n)s × %(model)s added to cart', { n: num(added), model: esc(p.model) }), { href: URLS.cart, linkText: T('View cart') });
+        toast(TF('%(n)s × %(model)s added to cart', { n: num(added), model: esc(p.model || p.name) }), { href: URLS.cart, linkText: T('View cart') });
         const label = add.innerHTML;
         add.innerHTML = icon('check') + ' ' + T('Added');
         add.disabled = true;
@@ -829,7 +863,7 @@
   const RULES = {
     name: v => v.trim().length >= 3 || T('Please enter your full name.'),
     // Bangla digits typed on a Bangla keyboard are accepted and converted.
-    phone: v => /^(?:\+?88)?01[3-9]\d{8}$/.test(toAsciiDigits(v).replace(/[\s-]/g, '')) || T('Enter a valid Bangladeshi mobile number.'),
+    phone: v => /^01[3-9]\d{8}$/.test(cleanPhoneInput(v)) || T('Enter a valid Bangladeshi mobile number.'),
     email: v => !v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || T('Enter a valid email address.'),
     address: v => v.trim().length >= 10 || T('Please enter your full address.'),
     required: v => v.trim().length > 0 || T('This field is required.'),
@@ -955,51 +989,29 @@
     });
   }
 
-  /* ---------- Cart page ---------- */
-  function initCart() {
-    const mount = $('#cartMount');
-    if (!mount) return;
-    const summaryHTML = t => '<h3>' + T('Order summary') + '</h3>' + totalsHTML(t, T('At checkout')) +
-      '<a class="btn btn-red btn-block" href="' + URLS.checkout + '">' + T('Proceed to checkout') + ' ' + icon('arrow') + '</a>' +
-      '<p class="summary-note">' + icon('truck') + TF('Delivery from %(fee)s · Cash on delivery', { fee: money(DELIVERY.inside.fee) }) + '</p>';
-    const render = () => {
-      const t = Cart.totals();
-      if (!t.lines.length) { mount.innerHTML = emptyCartHTML(); return; }
-      mount.innerHTML =
-        '<div class="cart-layout"><div><table class="cart-table"><thead><tr><th>' + T('Product') + '</th><th>' + T('Price') + '</th><th>' + T('Quantity') + '</th><th>' + T('Total') + '</th><th><span class="sr-only">' + T('Remove') + '</span></th></tr></thead><tbody>' +
-        t.lines.map(l =>
-          '<tr data-id="' + l.id + '"><td><div class="cart-prod"><a href="' + productUrl(l.product) + '">' + productImg(l.product) + '</a>' +
-          '<div><h3><a href="' + productUrl(l.product) + '">' + esc(l.product.name) + '</a></h3>' +
-          '<span>' + T('Model') + ': ' + esc(l.product.model) + (l.product.color ? ' · ' + T('Color') + ': ' + esc(l.product.color) : '') + '</span></div></div></td>' +
-          '<td data-label="' + T('Price') + '">' + money(l.product.price) + '</td>' +
-          '<td data-label="' + T('Quantity') + '">' + qtyHTML(l.qty, 'sm') + '</td>' +
-          '<td data-label="' + T('Total') + '" class="line-total" data-line-total>' + money(l.total) + '</td>' +
-          '<td class="rm"><button type="button" class="remove-btn" data-remove="' + l.id + '" aria-label="' + T('Remove') + '">' + icon('trash') + '</button></td></tr>'
-        ).join('') +
-        '</tbody></table><div class="cart-actions">' +
-        '<a class="btn btn-outline" href="' + URLS.products + '">' + icon('back') + ' ' + T('Continue shopping') + '</a>' +
-        '<button type="button" class="btn btn-outline" data-clear-cart>' + icon('trash') + ' ' + T('Clear cart') + '</button></div></div>' +
-        '<aside class="summary" id="cartSummary">' + summaryHTML(t) + '</aside></div>';
-    };
-    const update = () => {
-      const t = Cart.totals();
-      const rows = $$('tr[data-id]', mount);
-      if (!t.lines.length || rows.length !== t.lines.length) { render(); return; }
-      t.lines.forEach(l => {
-        const row = $('tr[data-id="' + l.id + '"]', mount);
-        if (!row) return;
-        $('[data-line-total]', row).textContent = money(l.total);
-        const input = $('.qty input', row);
-        if (+input.value !== l.qty) { input.value = l.qty; syncQty($('.qty', row)); }
-      });
-      const summary = $('#cartSummary');
-      if (summary) summary.innerHTML = summaryHTML(t);
-    };
-    mount.addEventListener('change', e => {
-      const row = e.target.closest('tr[data-id]');
+  /* ---------- Cart lines (cart page + side cart) ---------- */
+  const lowestFee = () => Math.min(DELIVERY.inside.fee, DELIVERY.outside.fee);
+  function cartLineHTML(l) {
+    const p = l.product;
+    const meta = [p.model ? T('Model') + ': ' + esc(p.model) : '', p.color ? T('Color') + ': ' + esc(p.color) : ''].filter(Boolean);
+    return '<article class="ci" data-id="' + esc(l.id) + '">' +
+      '<a class="ci-img" href="' + productUrl(p) + '">' + productImg(p) + '</a>' +
+      '<div class="ci-info">' +
+        '<h3><a href="' + productUrl(p) + '">' + esc(p.name) + '</a></h3>' +
+        (meta.length ? '<p class="ci-meta">' + meta.map(m => '<span>' + m + '</span>').join('') + '</p>' : '') +
+        '<p class="ci-price"><strong>' + money(p.price) + '</strong>' + (p.oldPrice ? ' <del>' + money(p.oldPrice) + '</del>' : '') + '</p>' +
+      '</div>' +
+      '<div class="ci-qty">' + qtyHTML(l.qty, 'sm') + '</div>' +
+      '<div class="ci-total"><span>' + T('Total') + '</span><strong data-line-total>' + money(l.total) + '</strong></div>' +
+      '<button type="button" class="ci-remove" data-remove="' + esc(l.id) + '" aria-label="' + T('Remove') + '" title="' + T('Remove') + '">' + icon('trash') + '</button>' +
+    '</article>';
+  }
+  function bindCartLines(root) {
+    root.addEventListener('change', e => {
+      const row = e.target.closest('[data-id]');
       if (row && e.target.matches('.qty input')) Cart.setQty(row.dataset.id, e.target.value);
     });
-    mount.addEventListener('click', e => {
+    root.addEventListener('click', e => {
       const rm = e.target.closest('[data-remove]');
       if (rm) {
         const snapshot = Cart.items();
@@ -1012,8 +1024,133 @@
         toast(T('Cart cleared'), { actionText: T('Undo'), onAction: () => Cart.restore(snapshot) });
       }
     });
+  }
+  // Quantity boxes keep their focus while typing: only the numbers around them are repainted.
+  function repaintCartLines(root, t) {
+    const rows = $$('[data-id]', root);
+    if (rows.length !== t.lines.length) return false;
+    for (const l of t.lines) {
+      const row = $('[data-id="' + l.id + '"]', root);
+      if (!row) return false;
+      $('[data-line-total]', row).textContent = money(l.total);
+      const input = $('.qty input', row);
+      if (+input.value !== l.qty) { input.value = l.qty; syncQty($('.qty', row)); }
+    }
+    return true;
+  }
+
+  /* ---------- Cart page ---------- */
+  function initCart() {
+    const mount = $('#cartMount');
+    if (!mount) return;
+    const summaryHTML = t => '<h3>' + T('Order summary') + '</h3>' + totalsHTML(t, T('At checkout')) +
+      '<a class="btn btn-red btn-block cart-go" href="' + URLS.checkout + '">' + icon('lock') + ' ' + T('Proceed to checkout') + '</a>' +
+      '<p class="summary-note">' + icon('truck') + TF('Delivery from %(fee)s · Cash on delivery', { fee: money(lowestFee()) }) + '</p>' +
+      '<div class="pay-chips" aria-label="' + T('Payment method') + '"><span>' + icon('cash') + ' ' + T('Cash on Delivery') + '</span><span class="bk">' + T('bKash') + '</span><span class="ng">' + T('Nagad') + '</span></div>';
+    const countText = n => n === 1 ? TF('%(n)s item', { n: num(n) }) : TF('%(n)s items', { n: num(n) });
+    const render = () => {
+      const t = Cart.totals();
+      if (!t.lines.length) { mount.innerHTML = emptyCartHTML(); return; }
+      mount.innerHTML =
+        '<div class="cart-layout"><div class="cart-card">' +
+          '<div class="cart-card-head"><h2>' + icon('cart') + ' ' + T('Your cart') + ' <span data-cart-count>' + countText(t.count) + '</span></h2>' +
+          '<button type="button" class="link-btn" data-clear-cart>' + icon('trash') + ' ' + T('Clear cart') + '</button></div>' +
+          '<div class="ci-list">' + t.lines.map(cartLineHTML).join('') + '</div>' +
+          '<div class="cart-card-foot"><a class="btn btn-outline btn-sm" href="' + URLS.products + '">' + icon('back') + ' ' + T('Continue shopping') + '</a>' +
+          (t.savings > 0 ? '<span class="cart-saving">' + icon('award') + ' ' + TF('You save %(amount)s on this order', { amount: money(t.savings) }) + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<aside class="summary cart-summary" id="cartSummary">' + summaryHTML(t) + '</aside></div>';
+    };
+    const update = () => {
+      const t = Cart.totals();
+      if (!t.lines.length || !repaintCartLines(mount, t)) { render(); return; }
+      const count = $('[data-cart-count]', mount);
+      if (count) count.textContent = countText(t.count);
+      const summary = $('#cartSummary');
+      if (summary) summary.innerHTML = summaryHTML(t);
+    };
+    bindCartLines(mount);
     document.addEventListener('cart:change', update);
     render();
+  }
+
+  /* ---------- Side cart (opens from the header cart button and after "Add to cart") ---------- */
+  function initMiniCart() {
+    const page = document.body.dataset.page;
+    if (page === 'cart' || page === 'checkout') return;  // those pages already show the cart
+    const root = document.createElement('div');
+    root.className = 'mini-cart';
+    root.hidden = true;
+    root.innerHTML =
+      '<div class="mc-backdrop" data-mc-close></div>' +
+      '<aside class="mc-panel" role="dialog" aria-modal="true" aria-labelledby="mcTitle" tabindex="-1">' +
+        '<header class="mc-head"><div class="mc-brand"></div>' +
+        '<button type="button" class="mc-close" data-mc-close aria-label="' + T('Close') + '">' + icon('x') + '</button>' +
+        '<h2 id="mcTitle">' + icon('cart') + ' ' + T('Your cart') + ' <span class="mc-count"></span></h2></header>' +
+        '<div class="mc-body"></div>' +
+        '<footer class="mc-foot"></footer>' +
+      '</aside>';
+    document.body.appendChild(root);
+    // The shop's logo (uploaded logo or the WaRa BD text logo) at the top of the side cart.
+    const siteLogo = $('.site-header .logo');
+    if (siteLogo) {
+      const logo = siteLogo.cloneNode(true);
+      logo.removeAttribute('id');
+      $('.mc-brand', root).appendChild(logo);
+    }
+    // Floating cart button on the right side of every page (opens this side cart).
+    const floatBtn = document.createElement('button');
+    floatBtn.type = 'button';
+    floatBtn.className = 'cart-float';
+    floatBtn.setAttribute('aria-label', T('Shopping cart'));
+    floatBtn.innerHTML = icon('cart') + '<span class="cf-label">' + T('Cart') + '</span><span class="cart-count">' + num(Cart.count()) + '</span>';
+    document.body.appendChild(floatBtn);
+    floatBtn.addEventListener('click', () => open());
+    const panel = $('.mc-panel', root), body = $('.mc-body', root), foot = $('.mc-foot', root), count = $('.mc-count', root);
+    let lastFocus = null;
+
+    const render = () => {
+      const t = Cart.totals();
+      count.textContent = t.count ? '· ' + (t.count === 1 ? TF('%(n)s item', { n: num(t.count) }) : TF('%(n)s items', { n: num(t.count) })) : '';
+      if (!t.lines.length) {
+        body.innerHTML = '<div class="mc-empty"><div class="big-icon">' + icon('cart') + '</div><h3>' + T('Your cart is empty') + '</h3>' +
+          '<p>' + T('Browse our WaRa products and add your favourites to the cart.') + '</p>' +
+          '<a class="btn btn-red btn-sm" href="' + URLS.products + '">' + icon('bag') + ' ' + T('Browse products') + '</a></div>';
+        foot.innerHTML = '';
+        return;
+      }
+      if (!repaintCartLines(body, t)) body.innerHTML = '<div class="ci-list">' + t.lines.map(cartLineHTML).join('') + '</div>';
+      foot.innerHTML =
+        '<div class="mc-sum"><span>' + T('Subtotal') + '</span><strong>' + money(t.subtotal) + '</strong></div>' +
+        (t.savings > 0 ? '<div class="mc-sum save"><span>' + T('You save') + '</span><span>− ' + money(t.savings) + '</span></div>' : '') +
+        '<p class="mc-note">' + icon('truck') + ' ' + T('Delivery charge is added at checkout, by your district.') + '</p>' +
+        '<div class="mc-actions"><a class="btn btn-outline" href="' + URLS.cart + '">' + T('View cart') + '</a>' +
+        '<a class="btn btn-red" href="' + URLS.checkout + '">' + T('Checkout') + ' ' + icon('arrow') + '</a></div>';
+    };
+    const open = () => {
+      render();
+      lastFocus = document.activeElement;
+      root.hidden = false;
+      document.body.classList.add('mc-lock');
+      requestAnimationFrame(() => { root.classList.add('open'); panel.focus(); });
+    };
+    const close = () => {
+      if (root.hidden) return;
+      root.classList.remove('open');
+      document.body.classList.remove('mc-lock');
+      setTimeout(() => { root.hidden = true; }, 280);
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    };
+
+    document.addEventListener('click', e => {
+      const btn = e.target.closest('a.cart-btn:not(.account-btn)');
+      if (btn && !e.ctrlKey && !e.metaKey && !e.shiftKey) { e.preventDefault(); open(); }
+    });
+    root.addEventListener('click', e => { if (e.target.closest('[data-mc-close]')) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    bindCartLines(body);
+    document.addEventListener('cart:change', () => { if (!root.hidden) render(); });
   }
 
   /* ---------- District → thana dropdowns (Select2) ----------
@@ -1096,6 +1233,18 @@
       dEl.addEventListener('change', changed('district'));
       tEl.addEventListener('change', changed('thana'));
     }
+    // Fill in a district + thana (e.g. from the customer's last order).
+    api.set = (district, thana) => {
+      const d = byName[district] || data.find(x => x.v.toLowerCase() === String(district || '').toLowerCase());
+      if (!d) return false;
+      dEl.value = d.v;
+      if ($j) $j(dEl).trigger('change.select2');
+      fillThanas(thana || '');
+      if ($j) $j(tEl).trigger('change.select2');
+      [dEl, tEl].forEach(el => { const w = el.closest('.field'); if (w && w.classList.contains('invalid')) checkField(el); });
+      onChange();
+      return true;
+    };
     return api;
   }
 
@@ -1139,6 +1288,54 @@
       form.elements.phone.select();
     }
 
+    /* Mobile number first: a returning customer's details are filled in.
+       From this browser's own earlier orders, or (logged in / number confirmed
+       by SMS today) from the server. Fields already typed are never overwritten. */
+    const PROFILES_KEY = 'wara_checkout_profiles';
+    const phoneEl = form.elements.phone;
+    const found = $('#coFound');
+    const cleanPhone = cleanPhoneInput;
+    const fillDetails = d => {
+      if (!d) return false;
+      let filled = false;
+      [['name', d.name], ['email', d.email], ['address', d.address]].forEach(([k, v]) => {
+        const el = form.elements[k];
+        if (el && v && !el.value.trim()) { el.value = v; filled = true; }
+      });
+      if (d.district && loc && !form.elements.district.value) filled = loc.set(d.district, d.thana) || filled;
+      if (filled && found) found.hidden = false;
+      return filled;
+    };
+    let lookedUp = '';
+    const onPhone = () => {
+      const p = cleanPhone(phoneEl.value);
+      if (found) found.hidden = true;
+      if (!/^01[3-9]\d{8}$/.test(p) || p === lookedUp) return;
+      lookedUp = p;
+      const saved = (store.get(PROFILES_KEY, {}) || {})[p];
+      if (fillDetails(saved)) return;
+      const csrf = form.querySelector('[name="csrfmiddlewaretoken"]');
+      fetch(URLS.apiCheckoutLookup, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf ? csrf.value : '' },
+        body: JSON.stringify({ phone: p })
+      }).then(r => r.json()).then(d => { if (d && d.found && cleanPhone(phoneEl.value) === p) fillDetails(d); }).catch(() => {});
+    };
+    const rememberDetails = payload => {
+      const p = cleanPhone(payload.phone);
+      if (!p) return;
+      const all = store.get(PROFILES_KEY, {}) || {};
+      delete all[p];
+      all[p] = { name: payload.name, email: payload.email, district: payload.district, thana: payload.thana, address: payload.address };
+      const keys = Object.keys(all);
+      keys.slice(0, Math.max(0, keys.length - 3)).forEach(k => delete all[k]);  // keep the last 3 numbers
+      store.set(PROFILES_KEY, all);
+    };
+    if (phoneEl) {
+      phoneEl.addEventListener('input', onPhone);
+      onPhone();
+    }
+
     const summaryMount = $('#coSummary');
     const pay = () => {
       const el = form.elements.payment;
@@ -1165,7 +1362,7 @@
       const t = Cart.totals();
       const fee = deliveryFee();
       summaryMount.innerHTML = '<h3>' + T('Your order') + '</h3>' +
-        t.lines.map(l => '<div class="sum-item"><div class="meta"><h4>' + esc(l.product.name) + '</h4><span>' + T('Qty') + ': ' + num(l.qty) + '</span></div><div class="price">' + money(l.total) + '</div></div>').join('') +
+        t.lines.map(l => '<div class="sum-item"><a class="sum-img" href="' + productUrl(l.product) + '">' + productImg(l.product) + '</a><div class="meta"><h4>' + esc(l.product.name) + '</h4><span>' + T('Qty') + ': ' + num(l.qty) + ' × ' + money(l.product.price) + '</span></div><div class="price">' + money(l.total) + '</div></div>').join('') +
         '<div class="sum-row"><span>' + T('Subtotal') + '</span><span>' + money(t.subtotal) + '</span></div>' +
         '<div class="sum-row"><span>' + T('Delivery') + (loc && loc.district() ? ' (' + esc(loc.placeLabel()) + ')' : '') + '</span><span>' +
           (fee == null ? T('Select district') : money(fee)) + '</span></div>' +
@@ -1194,15 +1391,26 @@
     liveValidate(form);
 
     $$('input[name="payment"]', form).forEach(r => r.addEventListener('change', paintPayment));
+    const termsInput = form.elements.terms;
+    if (termsInput) termsInput.addEventListener('change', () => { if (termsInput.checked) $('#coTerms').classList.remove('invalid'); });
 
     form.addEventListener('submit', async e => {
       e.preventDefault();
 
       const bad = validateForm(form);
-      if (bad) { bad.focus(); toast(T('Please fix the highlighted fields.'), { type: 'error' }); return; }
-
       const terms = form.elements.terms;
-      if (!terms || !terms.checked) { toast(T('Please confirm your details and accept the delivery & warranty policy.'), { type: 'error' }); return; }
+      const termsBox = $('#coTerms');
+      const termsOk = !!(terms && terms.checked);
+      if (termsBox) termsBox.classList.toggle('invalid', !termsOk);
+      if (bad) { bad.focus(); toast(T('Please fix the highlighted fields.'), { type: 'error' }); return; }
+      if (!termsOk) {
+        if (termsBox) {
+          termsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          termsBox.classList.remove('shake'); void termsBox.offsetWidth; termsBox.classList.add('shake');
+        }
+        toast(T('Please confirm your details and accept the delivery & warranty policy.'), { type: 'error' });
+        return;
+      }
 
       const csrfInput = form.querySelector('[name="csrfmiddlewaretoken"]');
       const csrfToken = csrfInput ? csrfInput.value : '';
@@ -1235,6 +1443,7 @@
         const result = await response.json();
 
         if (response.ok && result.success) {
+          rememberDetails(payload);
           Cart.clear();
           store.remove(DRAFT_KEY);
           location.href = URLS.orderSuccess(result.order_number);
@@ -1242,6 +1451,7 @@
           // Guest: confirm the mobile number with an SMS code; the order is
           // placed on the code page. Keep the form in case they change number.
           store.set(DRAFT_KEY, Object.assign({}, payload, { lines: undefined }));
+          rememberDetails(payload);
           location.href = result.redirect;
         } else {
           if (proc) proc.classList.remove('show');
@@ -1271,14 +1481,32 @@
         if (digits.length === 6 && input.form) { input.value = digits; input.form.requestSubmit(); }
       });
     }
+    // "Change number": type the right number here; a new code is sent to it.
+    const toggle = $('#otpChangeToggle'), change = $('#otpChange');
+    if (toggle && change) {
+      const box = $('input', change);
+      toggle.addEventListener('click', () => {
+        change.hidden = !change.hidden;
+        toggle.setAttribute('aria-expanded', String(!change.hidden));
+        if (!change.hidden) box.focus();
+      });
+      box.addEventListener('input', () => {
+        const c = toAsciiDigits(box.value).replace(/\D/g, '').slice(0, 11);
+        if (c !== box.value) box.value = c;
+      });
+      change.addEventListener('submit', e => {
+        if (!/^01[3-9]\d{8}$/.test(box.value)) { e.preventDefault(); toast(T('Enter a valid Bangladeshi mobile number.'), { type: 'error' }); box.focus(); }
+      });
+    }
     const resend = $('#otpResend');
     if (!resend) return;
     const label = $('span', resend);
     let wait = parseInt(resend.dataset.wait, 10) || 0;
+    const clock = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
     const tick = () => {
       if (wait > 0) {
         resend.disabled = true;
-        label.textContent = label.dataset.waitLabel.replace('%(s)s', num(wait));
+        label.textContent = label.dataset.waitLabel.replace('%(s)s', num(clock(wait)));
         wait -= 1;
         setTimeout(tick, 1000);
       } else {
@@ -1295,6 +1523,7 @@
     renderLayout();
     bindContent();
     initGlobalEvents();
+    initMiniCart();
 
     const pages = {
       home: initHome,

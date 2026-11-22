@@ -39,15 +39,16 @@
                     <a href="{% url 'customers:login' %}?next={% url 'web:checkout' %}">{% translate "Have an account? Log in" %}</a></p>
                 {% endif %}
                 <div class="form-grid">
+                  <div class="field full co-phone-field">
+                    <label for="coPhone">{% translate "Mobile number" %} <span class="req">*</span></label>
+                    <input id="coPhone" name="phone" type="tel" inputmode="numeric" maxlength="16" autocomplete="tel" placeholder="01XXXXXXXXX" data-rule="phone" value="{% firstof checkout_address.phone customer.phone '' %}">
+                    <p class="co-found" id="coFound" hidden><i data-icon="check"></i> <span>{% translate "Welcome back! We filled in your details from your last order. Please check them." %}</span></p>
+                  </div>
                   <div class="field">
                     <label for="coName">{% translate "Full name" %} <span class="req">*</span></label>
                     <input id="coName" name="name" type="text" autocomplete="name" placeholder="{% translate 'Your full name' %}" data-rule="name" value="{% firstof checkout_address.name customer.name '' %}">
                   </div>
                   <div class="field">
-                    <label for="coPhone">{% translate "Mobile number" %} <span class="req">*</span></label>
-                    <input id="coPhone" name="phone" type="tel" autocomplete="tel" placeholder="01XXXXXXXXX" data-rule="phone" value="{% firstof checkout_address.phone customer.phone '' %}">
-                  </div>
-                  <div class="field full">
                     <label for="coEmail">{% translate "Email" %} <span style="color:var(--muted);font-weight:400">{% translate "(optional — for the invoice)" %}</span></label>
                     <input id="coEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" data-rule="email" value="{{ customer.email|default:'' }}">
                   </div>
@@ -79,11 +80,11 @@
                   </div>
                   <div class="field full">
                     <label for="coAddress">{% translate "Full address" %} <span class="req">*</span></label>
-                    <textarea id="coAddress" name="address" autocomplete="street-address" placeholder="{% translate 'House, road, area' %}" style="min-height:90px" data-rule="address">{% if checkout_address %}{{ checkout_address.address }}{% endif %}</textarea>
+                    <input id="coAddress" name="address" type="text" autocomplete="street-address" maxlength="255" placeholder="{% translate 'House, road, area' %}" data-rule="address" value="{% if checkout_address %}{{ checkout_address.address }}{% endif %}">
                   </div>
                   <div class="field full">
                     <label for="coNote">{% translate "Order note" %} <span style="color:var(--muted);font-weight:400">{% translate "(optional)" %}</span></label>
-                    <textarea id="coNote" name="note" placeholder="{% translate 'Landmark, preferred delivery time, etc.' %}" style="min-height:80px"></textarea>
+                    <input id="coNote" name="note" type="text" maxlength="300" placeholder="{% translate 'Landmark, preferred delivery time, etc.' %}">
                   </div>
                 </div>
               </div>
@@ -91,20 +92,29 @@
               <!-- Payment -->
               <div class="co-block">
                 <h2><span class="n">{{ 3|digits }}</span> {% translate "Payment method" %}</h2>
-                <div class="opt-grid three">
+                {# Which methods show, and which is ticked first: admin → Site settings → Payment. #}
+                {% with pays=site_settings.payment_methods default_pay=site_settings.default_payment_method %}
+                <div class="opt-grid{% if pays|length == 3 %} three{% endif %}" data-default-payment="{{ default_pay }}">
+                  {% if "cod" in pays %}
                   <div class="opt">
-                    <input type="radio" name="payment" id="pCod" value="cod" checked>
+                    <input type="radio" name="payment" id="pCod" value="cod"{% if default_pay == "cod" %} checked{% endif %}>
                     <label for="pCod"><span class="pay-logo"><i data-icon="cash"></i></span><span><strong>{% translate "Cash on Delivery" %}</strong><small>{% translate "Pay when it arrives" %}</small></span></label>
                   </div>
+                  {% endif %}
+                  {% if "bkash" in pays %}
                   <div class="opt">
-                    <input type="radio" name="payment" id="pBkash" value="bkash">
+                    <input type="radio" name="payment" id="pBkash" value="bkash"{% if default_pay == "bkash" %} checked{% endif %}>
                     <label for="pBkash"><span class="pay-logo red"><i data-icon="mobile"></i></span><span><strong>{% translate "bKash" %}</strong><small>{% translate "Mobile payment" %}</small></span></label>
                   </div>
+                  {% endif %}
+                  {% if "nagad" in pays %}
                   <div class="opt">
-                    <input type="radio" name="payment" id="pNagad" value="nagad">
+                    <input type="radio" name="payment" id="pNagad" value="nagad"{% if default_pay == "nagad" %} checked{% endif %}>
                     <label for="pNagad"><span class="pay-logo green"><i data-icon="mobile"></i></span><span><strong>{% translate "Nagad" %}</strong><small>{% translate "Mobile payment" %}</small></span></label>
                   </div>
+                  {% endif %}
                 </div>
+                {% endwith %}
 
                 <div class="mobile-pay" id="mobilePay">
                   <ol>
@@ -125,7 +135,7 @@
                 </div>
               </div>
 
-              <label class="check">
+              <label class="check" id="coTerms">
                 <input type="checkbox" name="terms">
                 {% url 'web:page' 'warranty-delivery' as policy_url %}
                 <span>{% blocktranslate trimmed with url=policy_url %}I confirm my details are correct and agree to the <a href="{{ url }}" target="_blank" style="color:var(--red);font-weight:700">delivery &amp; warranty policy</a>.{% endblocktranslate %}</span>

@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+{# Change history of one item, as a timeline card. #}
+
+{% block content %}
+<div class="wf-narrow wf-narrow-wide">
+    <section class="wf-card">
+        <header class="wf-card-head wf-card-head-row">
+            <div>
+                <h2>Change history</h2>
+                <p class="wf-desc">{{ object|truncatechars:80 }}</p>
+            </div>
+            <a class="wf-btn" href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}"><i class="bx bx-arrow-back"></i> Back to {{ opts.verbose_name }}</a>
+        </header>
+        {% if action_list %}
+            <ol class="wf-timeline">
+            {% for action in action_list %}
+                <li>
+                    <span class="wf-dot{% if action.is_addition %} add{% elif action.is_deletion %} del{% endif %}"></span>
+                    <div>
+                        <strong>{{ action.get_change_message|default:"Changed" }}</strong>
+                        <span>{{ action.action_time|date:"d M Y, h:i A" }} · {{ action.user.get_full_name|default:action.user.get_username }}</span>
+                    </div>
+                </li>
+            {% endfor %}
+            </ol>
+            {% if pagination_required %}
+            <p class="wf-pages">
+                {% for i in page_range %}
+                    {% if i == action_list.paginator.ELLIPSIS %}<span>{{ i }}</span>
+                    {% elif i == action_list.number %}<span class="this-page">{{ i }}</span>
+                    {% else %}<a href="?{{ page_var }}={{ i }}">{{ i }}</a>{% endif %}
+                {% endfor %}
+            </p>
+            {% endif %}
+        {% else %}
+            <div class="wf-empty"><i class="bx bx-time-five"></i><p>No changes recorded yet. Changes made in this admin from now on are listed here.</p></div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

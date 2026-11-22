@@ -18,6 +18,26 @@ from .services import place_order
 logger = logging.getLogger(__name__)
 
 
+PLACED_KEY = "placed_orders"  # order numbers placed from this browser (session)
+
+
+def remember_placed_order(request, order):
+    placed = [n for n in request.session.get(PLACED_KEY, []) if n != order.order_number]
+    request.session[PLACED_KEY] = (placed + [order.order_number])[-20:]
+
+
+def can_view_order(request, order):
+    """Order numbers run in sequence (WB20261122001, …002), so knowing one is not enough:
+    shop staff, the logged-in customer who owns the order, or the browser that placed it."""
+    user = getattr(request, "user", None)
+    if user is not None and user.is_authenticated and user.is_staff:
+        return True
+    customer = getattr(request, "customer", None)
+    if customer and order.customer_id == customer.pk:
+        return True
+    return order.order_number in request.session.get(PLACED_KEY, [])
+
+
 def place_checkout_order(request, cleaned, customer=None):
     """Returns (order, error_message, http_status). `cleaned` comes from views._validate_checkout."""
     cart = Cart(request)
@@ -72,6 +92,7 @@ def place_checkout_order(request, cleaned, customer=None):
         return None, _("Something went wrong. Please try again or call us."), 500
 
     cart.clear()
+    remember_placed_order(request, order)
 
     if customer:
         order.customer = customer

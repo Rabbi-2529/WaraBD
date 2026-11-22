@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 
 from web.checkout import place_checkout_order
 from web.delivery import locations_payload
+from web.bd import normalize_bd_phone
 from web.models import Order, SiteSettings
 from web.views import order_progress
 
@@ -41,6 +42,40 @@ def _safe_next(request, fallback):
 def _draft(request, purpose):
     draft = request.session.get(DRAFT_KEY) or {}
     return draft.get("data", {}) if draft.get("purpose") == purpose else {}
+
+
+def _send_to_new_number(request, otp, raw_phone):
+    """Re-send the pending code's purpose to another number; the old code stays valid if this fails."""
+    try:
+        phone = normalize_bd_phone(raw_phone)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("customers:otp")
+    if phone == otp.phone:
+        messages.info(request, _("That is the same number. Enter the code we sent, or tap Resend code."))
+        return redirect("customers:otp")
+    if otp.purpose == OtpCode.PURPOSE_LOGIN and not Customer.objects.filter(phone=phone, is_active=True).exists():
+        messages.error(request, _("No account uses this number yet. Create an account instead."))
+        return redirect("customers:otp")
+    if otp.purpose == OtpCode.PURPOSE_REGISTER and Customer.objects.filter(phone=phone).exists():
+        messages.error(request, _("This number already has an account. Please log in."))
+        return redirect("customers:otp")
+    if otp.purpose == OtpCode.PURPOSE_CHANGE_PHONE and Customer.objects.filter(phone=phone).exists():
+        messages.error(request, _("This number already belongs to another account."))
+        return redirect("customers:otp")
+
+    payload = dict(otp.payload or {})
+    if otp.purpose == OtpCode.PURPOSE_CHECKOUT and isinstance(payload.get("checkout"), dict):
+        payload["checkout"] = {**payload["checkout"], "phone": phone}
+    try:
+        request_otp(request, phone=phone, purpose=otp.purpose, payload=payload)
+    except OtpError as exc:
+        messages.error(request, str(exc))
+        return redirect("customers:otp")
+    otp.cancelled = True
+    otp.save(update_fields=["cancelled"])
+    messages.success(request, _("A new code has been sent to %(phone)s.") % {"phone": phone})
+    return redirect("customers:otp")
 
 
 # ------------------------------------------------------------------------------
@@ -190,10 +225,16 @@ def otp_resend(request):
 
 @require_POST
 def otp_change_number(request):
-    """Cancel the pending code and go back to the form to type another number."""
+    """Wrong number on the code page.
+
+    With a new number (typed on the code page): send a code to it and stay on the page.
+    Without one: cancel the code and go back to the form the customer came from.
+    """
     otp = pending_otp(request)
     if otp is None:
         return redirect("customers:login")
+    if request.POST.get("phone"):
+        return _send_to_new_number(request, otp, request.POST["phone"])
     otp.cancelled = True
     otp.save(update_fields=["cancelled"])
     clear_pending(request)

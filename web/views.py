@@ -18,11 +18,12 @@ from django.urls import Resolver404, resolve, reverse
 from django.views.decorators.http import require_POST
 
 from customers.models import Customer, OtpCode
+from customers.auth import phone_verified_today
 from customers.otp import OtpError, otp_needed_for_order, request_otp
 
 from . import product_page
 from .bd import clean_bd_district, normalize_bd_phone
-from .checkout import place_checkout_order
+from .checkout import can_view_order, place_checkout_order
 from .delivery import DeliveryError, delivery_quote, locations_payload
 from .richtext import plain as plain_text
 from .cart import Cart
@@ -35,6 +36,7 @@ from .models import (
     PortfolioProject,
     Product,
     SiteHighlight,
+    SiteSettings,
     SiteFeature,
     TimelineStep,
     UseCase,
@@ -251,7 +253,20 @@ def product_list(request):
     Loads active Django products and converts them into JSON-compatible
     dictionaries for products.js and app.js.
     """
+    category_slug = request.GET.get("category")
+    if category_slug and Category.objects.filter(slug=category_slug, is_active=True).exists():
+        # Old ?category= links → the category's own page (its own title, text and FAQ).
+        return redirect("web:category", slug=category_slug, permanent=True)
+    return _product_list_page(request)
 
+
+def category_detail(request, slug):
+    """/category/<slug>/ — the shop page limited to one category, with its own SEO and FAQ."""
+    category = get_object_or_404(Category, slug=slug, is_active=True)
+    return _product_list_page(request, category)
+
+
+def _product_list_page(request, category=None):
     qs = (
         Product.objects
         .filter(is_active=True)
@@ -259,10 +274,10 @@ def product_list(request):
         .prefetch_related("gallery")
     )
 
-    category_slug = request.GET.get("category")
+    category_slug = category.slug if category else None
 
-    if category_slug:
-        qs = qs.filter(category__slug=category_slug)
+    if category:
+        qs = qs.filter(category=category)
 
     # Build JavaScript product data from Django database records.
     products_json = [
@@ -287,6 +302,7 @@ def product_list(request):
         # Existing category functionality.
         "categories": Category.objects.filter(is_active=True),
         "active_category": category_slug,
+        "category": category,
     })
 
 
@@ -551,8 +567,8 @@ def _validate_checkout(data):
 
     cleaned["note"] = _clean_text(data, "note", 1000)
 
-    cleaned["payment"] = str(data.get("payment") or "cod")
-    if cleaned["payment"] not in dict(Order.PAYMENT_METHOD_CHOICES):
+    cleaned["payment"] = str(data.get("payment") or SiteSettings.load().default_payment_method)
+    if cleaned["payment"] not in SiteSettings.load().payment_methods():
         errors["payment"] = _("Please choose a payment method.")
 
     cleaned["sender"] = ""
@@ -574,6 +590,36 @@ def _validate_checkout(data):
         cleaned["lines"] = lines
 
     return cleaned, errors
+
+
+@require_POST
+def api_checkout_lookup(request):
+    """Checkout, mobile number typed first → the details of that customer's last order.
+
+    Only answered for the logged-in customer's own number, or a number this browser
+    confirmed by SMS today; anyone else gets {"found": false}, so nobody can look up
+    a stranger's address by typing their number.
+    """
+    data = _read_json(request) or {}
+    try:
+        phone = normalize_bd_phone(data.get("phone"))
+    except ValueError:
+        return JsonResponse({"found": False})
+    if not phone_verified_today(request, phone):
+        return JsonResponse({"found": False})
+    details = {}
+    order = Order.objects.filter(phone=phone).order_by("-created_at").first()
+    if order:
+        details = {"name": order.full_name, "email": order.email, "district": order.city,
+                   "thana": order.thana, "address": order.address_line1}
+    customer = request.customer if request.customer and request.customer.phone == phone else None
+    if customer:
+        address = customer.default_address
+        details.setdefault("name", customer.name)
+        details["email"] = details.get("email") or customer.email
+        if address and not order:
+            details.update({"district": address.district, "thana": address.thana, "address": address.address})
+    return JsonResponse({"found": bool(details), **details})
 
 
 @require_POST
@@ -611,10 +657,39 @@ def order_success(request, order_number):
         Order,
         order_number=order_number,
     )
+    if not can_view_order(request, order):
+        messages.info(request, _("For your privacy, enter your order number and mobile number to see this order."))
+        return redirect("web:track_order")
 
     return render(request, "web/order_success.html", {
         "order": order,
     })
+
+
+def render_invoice(request, order, back_url=""):
+    """The printable invoice (web/invoice.html), always in English."""
+    from django.utils import translation
+
+    site = SiteSettings.load()
+    with translation.override("en"):
+        context = {
+            "order": order,
+            "site": site,
+            "items": order.items.select_related("product"),
+            "address": ", ".join(p for p in (order.address_line1, order.address_line2, order.thana, order.city) if p),
+            "payment_label": str(order.get_payment_method_display()),
+            "website": (getattr(django_settings, "SITE_URL", "") or request.build_absolute_uri("/")).rstrip("/"),
+            "back_url": back_url,
+        }
+        return render(request, "web/invoice.html", context)
+
+
+def order_invoice(request, order_number):
+    order = get_object_or_404(Order, order_number=order_number)
+    if not can_view_order(request, order):
+        messages.info(request, _("For your privacy, enter your order number and mobile number to see this order."))
+        return redirect("web:track_order")
+    return render_invoice(request, order, back_url=request.META.get("HTTP_REFERER", ""))
 
 
 def order_failed(request):
@@ -695,10 +770,7 @@ def admin_invoice_view(request, object_id):
         Order,
         id=object_id,
     )
-
-    return render(request, "admin/invoice.html", {
-        "order": order,
-    })
+    return render_invoice(request, order, back_url=reverse("admin:web_order_change", args=[order.pk]))
 
 
 # ==============================================================================

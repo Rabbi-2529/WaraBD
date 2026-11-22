@@ -15,7 +15,8 @@ class PhoneField(forms.CharField):
         kwargs.setdefault("label", _("Mobile number"))
         kwargs.setdefault("max_length", 20)
         kwargs.setdefault("widget", forms.TextInput(attrs={
-            "type": "tel", "inputmode": "tel", "autocomplete": "tel", "placeholder": "01XXXXXXXXX",
+            "type": "tel", "inputmode": "numeric", "autocomplete": "tel", "placeholder": "01XXXXXXXXX",
+            "pattern": "01[3-9][0-9]{8}", "title": "01XXXXXXXXX",
         }))
         super().__init__(**kwargs)
 

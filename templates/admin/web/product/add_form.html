@@ -753,6 +753,7 @@
                 <a href="#sec-basics">Basics</a>
                 <a href="#sec-description">Description</a>
                 <a href="#sec-content">Page content</a>
+                <a href="#sec-faq">FAQ</a>
                 <a href="#sec-seo">SEO</a>
                 <a href="#sec-image">Images</a>
                 <a href="#sec-pricing">Price</a>
@@ -891,6 +892,28 @@
                     {% endfor %}
                 </section>
 
+                <!-- FAQ (this product only) -->
+                <section class="product-card" id="sec-faq">
+                    <div class="card-heading">
+                        <span class="sec-icon"><i class="bx bx-help-circle"></i></span>
+                        <h2>FAQ</h2>
+                        <p>Questions and answers for this product only. They appear in the FAQ tab of the product page.</p>
+                    </div>
+                    <div class="lang-tabs" role="tablist" data-lang-tabs>
+                        <button type="button" role="tab" class="active" data-lang="en"><span>EN</span> English</button>
+                        <button type="button" role="tab" data-lang="bn"><span>BN</span> বাংলা</button>
+                    </div>
+                    <div class="lang-pane active" data-lang-pane="en">
+                        {{ adminform.form.faq_en }}
+                        {{ adminform.form.faq_en.errors }}
+                    </div>
+                    <div class="lang-pane" data-lang-pane="bn">
+                        <p class="lang-note"><i class="bx bx-info-circle"></i> Leave empty to show the English questions on Bangla pages.</p>
+                        {{ adminform.form.faq_bn }}
+                        {{ adminform.form.faq_bn.errors }}
+                    </div>
+                </section>
+
                 <!-- SEO & SHARING (Phase 6) -->
                 <section class="product-card" id="sec-seo">
                     <div class="card-heading">
@@ -921,6 +944,10 @@
                     <div class="field-group">
                         <label for="{{ adminform.form.share_image.id_for_label }}">Share image <span class="optional-mark">1200×630 · empty = main product image</span></label>
                         {{ adminform.form.share_image }}{{ adminform.form.share_image.errors }}
+                    </div>
+                    <div class="field-group">
+                        <label for="{{ adminform.form.seo_keywords.id_for_label }}">SEO keywords <span class="optional-mark">pick keywords you used before, or type a new one and press Enter</span></label>
+                        {{ adminform.form.seo_keywords }}{{ adminform.form.seo_keywords.errors }}
                     </div>
                     <div class="seo-preview" aria-hidden="true">
                         <span class="seo-preview-url">{{ request.get_host }}/{{ adminform.form.slug.value|default:"product-link" }}</span>

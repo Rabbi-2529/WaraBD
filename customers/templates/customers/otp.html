@@ -12,7 +12,7 @@
     <div class="form-card auth-card">
       <div class="auth-icon"><i data-icon="mobile"></i></div>
       <h1>{% translate "Enter your code" %}</h1>
-      <p class="auth-lead">
+      <p class="auth-lead" id="otpLead">
         {% blocktranslate trimmed with phone=otp.phone|digits %}We sent a 6-digit code by SMS to <strong>{{ phone }}</strong>.{% endblocktranslate %}
         {% if otp.purpose == "checkout" %}{% translate "Your order is placed as soon as you enter it." %}{% endif %}
       </p>
@@ -34,14 +34,22 @@
         <form method="post" action="{% url 'customers:otp_resend' %}" id="otpResendForm">
           {% csrf_token %}
           <button type="submit" class="link-btn" id="otpResend" data-wait="{{ resend_in }}"{% if resend_in %} disabled{% endif %}>
-            <i data-icon="refresh"></i> <span data-label="{% translate 'Resend code' %}" data-wait-label="{% translate 'Resend code in %(s)s s' %}">{% translate "Resend code" %}</span>
+            <i data-icon="refresh"></i> <span data-label="{% translate 'Resend code' %}" data-wait-label="{% translate 'Resend code in %(s)s' %}">{% translate "Resend code" %}</span>
           </button>
         </form>
-        <form method="post" action="{% url 'customers:otp_change_number' %}">
-          {% csrf_token %}
-          <button type="submit" class="link-btn"><i data-icon="phone"></i> {% translate "Change number" %}</button>
-        </form>
+        <button type="button" class="link-btn" id="otpChangeToggle" aria-controls="otpChange" aria-expanded="false"><i data-icon="phone"></i> {% translate "Change number" %}</button>
       </div>
+
+      {# Wrong number? Type the right one here: a new code goes to it, without leaving this page. #}
+      <form method="post" action="{% url 'customers:otp_change_number' %}" class="otp-change" id="otpChange" hidden novalidate>
+        {% csrf_token %}
+        <label for="otpNewPhone">{% translate "Your correct mobile number" %}</label>
+        <div class="otp-change-row">
+          <input id="otpNewPhone" name="phone" type="tel" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="01XXXXXXXXX" required>
+          <button type="submit" class="btn btn-dark btn-sm"><i data-icon="send"></i> {% translate "Send code" %}</button>
+        </div>
+        <p class="hint">{% translate "We will send a new code to this number." %}</p>
+      </form>
     </div>
   </div>
 </section>

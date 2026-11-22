@@ -1,0 +1,42 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+{# Delete one item: a card with what will be removed and a clear red button. #}
+
+{% block extrahead %}{{ block.super }}{{ media }}<script src="{% static 'admin/js/cancel.js' %}" async></script>{% endblock %}
+
+{% block content %}
+<div class="wf-narrow">
+    <section class="wf-card wf-danger-card">
+        <div class="wf-danger-head">
+            <span class="wf-danger-icon"><i class="bx {% if perms_lacking or protected %}bx-block{% else %}bx-trash{% endif %}"></i></span>
+            <div>
+                <h2>{% if perms_lacking or protected %}This item can't be deleted{% else %}Delete {{ object_name }}?{% endif %}</h2>
+                <p class="wf-desc">“{{ object|truncatechars:80 }}”</p>
+            </div>
+        </div>
+
+        {% if perms_lacking %}
+            <p>{% blocktranslate with escaped_object=object %}Deleting the {{ object_name }} '{{ escaped_object }}' would result in deleting related objects, but your account doesn't have permission to delete the following types of objects:{% endblocktranslate %}</p>
+            <ul class="wf-object-list">{{ perms_lacking|unordered_list }}</ul>
+        {% elif protected %}
+            <p>{% blocktranslate with escaped_object=object %}Deleting the {{ object_name }} '{{ escaped_object }}' would require deleting the following protected related objects:{% endblocktranslate %}</p>
+            {% if opts.model_name == "product" %}<p class="wf-help">A product that was ordered stays linked to its orders. To take it off the shop, untick <b>Active</b> on the product instead.</p>{% endif %}
+            <ul class="wf-object-list">{{ protected|unordered_list }}</ul>
+        {% else %}
+            <p>Everything below will be removed for good. This cannot be undone.</p>
+            {% include "admin/includes/object_delete_summary.html" %}
+            <ul class="wf-object-list">{{ deleted_objects|unordered_list }}</ul>
+        {% endif %}
+
+        <form method="post" class="wf-danger-actions">{% csrf_token %}
+            <input type="hidden" name="post" value="yes">
+            {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
+            {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">{% endif %}
+            <a href="#" class="wf-btn cancel-link"><i class="bx bx-arrow-back"></i> No, take me back</a>
+            {% if not perms_lacking and not protected %}
+                <button type="submit" class="wf-btn wf-btn-danger"><i class="bx bx-trash"></i> Yes, delete it</button>
+            {% endif %}
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -43,3 +43,21 @@ def taka(value):
 def tel_href(value):
     """Digits and a leading + only, for href="tel:..."."""
     return re.sub(r"[^\d+]", "", str(value or ""))
+
+
+@register.filter
+def money2(value):
+    """1395 -> "1,395.00" (lakh grouping, two decimals, English digits) for invoices."""
+    from decimal import Decimal, InvalidOperation
+
+    from web.bd import format_taka
+
+    try:
+        amount = Decimal(str(value or 0)).quantize(Decimal("0.01"))
+    except InvalidOperation:
+        return value
+    sign = "-" if amount < 0 else ""
+    amount = abs(amount)
+    whole = int(amount)
+    cents = int((amount - whole) * 100)
+    return f"{sign}{format_taka(whole).replace('৳', '')}.{cents:02d}"

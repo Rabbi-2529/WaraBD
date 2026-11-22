@@ -91,6 +91,12 @@
                     <td class="label">Subtotal:</td>
                     <td class="amount">৳{{ order.subtotal }}</td>
                 </tr>
+                {% if order.discount %}
+                <tr>
+                    <td class="label">Discount:</td>
+                    <td class="amount">− ৳{{ order.discount }}</td>
+                </tr>
+                {% endif %}
                 <tr>
                     <td class="label">Delivery Fee ({{ order.get_delivery_zone_display }}):</td>
                     <td class="amount">৳{{ order.shipping }}</td>

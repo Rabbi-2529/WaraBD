@@ -104,3 +104,23 @@ def admin_dashboard():
             Product.objects.filter(is_active=True, stock__lte=3).order_by("stock", "name")[:6]
         ),
     }
+
+
+@register.filter
+def wf_wide(admin_field):
+    """True when a form field needs the whole row: text boxes, editors, keyword pickers, uploads."""
+    from django import forms
+
+    bound = getattr(admin_field, "field", None)
+    widget = getattr(getattr(bound, "field", None), "widget", None)
+    if widget is None:  # read-only value
+        return False
+    widget = getattr(widget, "widget", widget)  # "add another" wrapper around selects
+    return isinstance(widget, (forms.Textarea, forms.SelectMultiple, forms.ClearableFileInput,
+                               forms.CheckboxSelectMultiple))
+
+
+@register.filter
+def wf_has(classes, name):
+    """'collapse wide'|wf_has:'collapse' -> True"""
+    return name in str(classes or "").split()

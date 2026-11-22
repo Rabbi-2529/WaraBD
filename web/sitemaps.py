@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
-from .models import Page, Product
+from .models import Category, Page, Product
 
 
 class _SiteUrlSitemap(Sitemap):
@@ -67,8 +67,19 @@ class PageSitemap(_SiteUrlSitemap):
         return obj.updated_at
 
 
+class CategorySitemap(_SiteUrlSitemap):
+    """Category pages (/category/<slug>/)."""
+
+    changefreq = "weekly"
+    priority = 0.6
+
+    def items(self):
+        return Category.objects.filter(is_active=True).order_by("pk")
+
+
 SITEMAPS = {
     "static": StaticViewSitemap,
+    "categories": CategorySitemap,
     "products": ProductSitemap,
     "pages": PageSitemap,
 }
