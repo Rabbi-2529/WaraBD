@@ -1517,11 +1517,24 @@
   function initOtp() {
     const input = $('.otp-input');
     if (input) {
+      const form = input.form;
       // Submit as soon as 6 digits (English or Bangla) are typed or pasted.
       input.addEventListener('input', () => {
         const digits = toAsciiDigits(input.value).replace(/\D/g, '');
-        if (digits.length === 6 && input.form) { input.value = digits; input.form.requestSubmit(); }
+        if (digits.length === 6 && form && !form.dataset.sent) { input.value = digits; form.requestSubmit(); }
       });
+      if (form) {
+        // Send the code once: the auto-submit and a tap on the button must not
+        // both arrive (the second one came after the code was used up).
+        const btn = $('button[type="submit"]', form);
+        form.addEventListener('submit', e => {
+          if (form.dataset.sent) { e.preventDefault(); return; }
+          form.dataset.sent = '1';
+          if (btn) btn.disabled = true;
+        });
+        // Back button: the page comes back from the cache, so make it usable again.
+        window.addEventListener('pageshow', () => { delete form.dataset.sent; if (btn) btn.disabled = false; });
+      }
     }
     const resend = $('#otpResend');
     if (!resend) return;

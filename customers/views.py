@@ -1,14 +1,17 @@
 """Customer pages: phone login / registration with SMS code, OTP page, My Account."""
 
+from datetime import timedelta
+
 from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
-from web.checkout import place_checkout_order
+from web.checkout import PLACED_KEY, place_checkout_order
 from web.delivery import locations_payload
 from web.models import Order, SiteSettings
 from web.views import order_progress
@@ -130,9 +133,24 @@ def logout_view(request):
 # OTP page (shared by login, registration, orders and number changes)
 # ------------------------------------------------------------------------------
 
+def _order_just_placed(request):
+    """The order this browser placed in the last 15 minutes, if any.
+
+    A second tap on "Confirm & place order" (or going back to the code page)
+    arrives after the code was used: show that order again, not "code expired"."""
+    placed = request.session.get(PLACED_KEY) or []
+    if not placed:
+        return None
+    since = timezone.now() - timedelta(minutes=15)
+    return Order.objects.filter(order_number=placed[-1], created_at__gte=since).first()
+
+
 def otp_view(request):
     otp = pending_otp(request)
     if otp is None:
+        order = _order_just_placed(request)
+        if order:
+            return redirect(f"{reverse('web:order_success', args=[order.order_number])}?placed=1")
         messages.info(request, _("Your code has expired or was already used. Please start again."))
         return redirect("customers:login")
 

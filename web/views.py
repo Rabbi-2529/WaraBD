@@ -632,9 +632,9 @@ def api_checkout(request):
     if errors:
         return _json_error(next(iter(errors.values())), errors=errors)
 
-    # Guests confirm their mobile number with an SMS code first (once per day
-    # per browser; logged-in customers never need it). The OTP page places
-    # the order after the right code is entered.
+    # Guests confirm their mobile number with a new SMS code for every order
+    # (logged-in customers never need it). The OTP page places the order after
+    # the right code is entered.
     if otp_needed_for_order(request, cleaned["phone"]):
         try:
             request_otp(request, phone=cleaned["phone"], purpose=OtpCode.PURPOSE_CHECKOUT,

@@ -238,13 +238,32 @@ class CheckoutOtpTests(OtpTestCase):
         self.assertRedirects(r, f"/order/success/{order.order_number}/?placed=1", fetch_redirect_response=False)
         self.assertEqual(order.total, Decimal("1060"))
 
-    def test_same_number_same_day_gets_no_second_sms(self):
+    def test_same_number_needs_a_new_code_for_every_order(self):
         self.checkout()
+        first_code = self.last_code()
+        self.client.post("/account/verify/", {"code": first_code})
+        self.age_last_sms()
+        r = self.checkout().json()                       # same number, same browser, same day
+        self.assertTrue(r["otp_required"])
+        self.assertEqual(Order.objects.count(), 1)        # not placed until the new code is entered
+        self.assertEqual(len(self.sent), 2)
+        self.assertContains(self.client.post("/account/verify/", {"code": first_code}), "Wrong code")
         self.client.post("/account/verify/", {"code": self.last_code()})
-        r = self.checkout().json()
-        self.assertTrue(r["success"])
         self.assertEqual(Order.objects.count(), 2)
-        self.assertEqual(len(self.sent), 1)
+
+    def test_second_tap_after_the_order_shows_the_order(self):
+        self.checkout()
+        code = self.last_code()
+        stale = OtpCode.objects.get()                     # what a second, simultaneous tap would hold
+        self.client.post("/account/verify/", {"code": code})
+        order = Order.objects.get()
+        r = self.client.post("/account/verify/", {"code": code})   # auto-submit + button tap
+        self.assertRedirects(r, f"/order/success/{order.order_number}/?placed=1", fetch_redirect_response=False)
+        from .otp import OtpError, verify_otp
+
+        with self.assertRaises(OtpError):                 # the same code can never be used twice
+            verify_otp(None, stale, code)
+        self.assertEqual(Order.objects.count(), 1)
 
     def test_other_browser_still_needs_a_code(self):
         self.checkout()

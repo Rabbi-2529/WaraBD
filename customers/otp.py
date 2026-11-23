@@ -5,8 +5,9 @@ Rules (all editable in admin → Site Settings → "Phone login / OTP"):
   * "Resend code" only after `otp_resend_seconds`
   * at most `sms_daily_limit_per_number` SMS per number and
     `sms_daily_limit_per_ip` per internet connection per day (Dhaka time)
-  * a number verified in this browser today is not sent another code
-    (see customers.auth.phone_verified_today)
+  * guests get a new code for every order (logged-in customers never need one);
+    a number verified in this browser today may fill in its last address at
+    checkout (see customers.auth.phone_verified_today)
 Failed SMS do not count toward the limits.
 """
 
@@ -148,20 +149,22 @@ def verify_otp(request, otp, code):
             left,
         ) % {"n": left})
 
-    otp.verified_at = timezone.now()
-    otp.save(update_fields=["verified_at"])
+    # Mark it used in one step, so the same code sent twice at once (double tap)
+    # can never place two orders: only the first one gets through.
+    now = timezone.now()
+    used = OtpCode.objects.filter(pk=otp.pk, verified_at__isnull=True, cancelled=False).update(verified_at=now)
+    if not used:
+        raise OtpError(_("This code is no longer valid. Please request a new one."))
+    otp.verified_at = now
     remember_verified_phone(request, otp.phone)
     clear_pending(request)
     return otp
 
 
 def otp_needed_for_order(request, phone):
-    """Guests must verify their number before ordering (Site Settings → OTP for orders)."""
-    from .auth import phone_verified_today
-
+    """Guests confirm their number with a new SMS code for every order, even the
+    same number again the same day (Site Settings → OTP for orders)."""
     site = SiteSettings.load()
     if not site.otp_for_orders or sms_mode(site) == "off":
         return False
-    if getattr(request, "customer", None):  # logged in = number already verified
-        return False
-    return not phone_verified_today(request, phone)
+    return not getattr(request, "customer", None)  # logged in = number already verified
