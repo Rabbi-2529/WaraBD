@@ -208,6 +208,15 @@ class SmsLimitTests(OtpTestCase):
         self.client.post("/account/verify/resend/")
         self.assertEqual(len(self.sent), 2)
 
+    def test_zero_means_no_daily_limit(self):
+        SiteSettings.objects.update(sms_daily_limit_per_number=0, sms_daily_limit_per_ip=0)
+        for _ in range(4):
+            self.client.post("/account/register/", {"name": "Rahim Uddin", "phone": "01712345678"})
+            self.age_last_sms()
+            self.client.post("/account/verify/resend/")
+            self.age_last_sms()
+        self.assertEqual(len(self.sent), 5)   # first code + 4 resends: never blocked
+
     def test_daily_limit_per_ip(self):
         SiteSettings.objects.update(sms_daily_limit_per_ip=2)
         for i in range(3):
@@ -250,12 +259,31 @@ class CheckoutOtpTests(OtpTestCase):
         self.client.post("/account/verify/", {"code": self.last_code()})
         self.assertEqual(Order.objects.count(), 2)
 
-    def test_unused_code_still_has_the_resend_wait(self):
+    def test_back_to_checkout_uses_the_same_code(self):
         self.checkout()
-        r = self.checkout()                               # first code not entered yet
+        code = self.last_code()
+        r = self.checkout(phone="01912345678").json()     # back, changed something, place order again
+        self.assertTrue(r["otp_required"])                 # no "please wait", no second SMS
+        self.assertEqual(len(self.sent), 1)
+        self.client.post("/account/verify/", {"code": code})
+        self.assertEqual(Order.objects.count(), 1)
+
+    def test_failed_sms_after_an_order_does_not_bring_the_wait_back(self):
+        self.checkout()
+        self.client.post("/account/verify/", {"code": self.last_code()})   # order 1 done
+        from .otp import seconds_until_resend
+
+        OtpCode.objects.create(phone="01912345678", purpose=OtpCode.PURPOSE_CHECKOUT, code_hash="x",
+                               cancelled=True, expires_at=timezone.now() + timedelta(minutes=5))  # SMS failed
+        self.assertEqual(seconds_until_resend("01912345678"), 0)
+
+    def test_resend_and_other_browsers_still_wait(self):
+        self.checkout()
+        self.client.post("/account/verify/resend/")
+        self.assertEqual(len(self.sent), 1)                # "Resend code" too early: waits
+        r = self.checkout(client=Client(HTTP_HOST="localhost"))
         self.assertEqual(r.status_code, 429)
         self.assertIn("Please wait", r.json()["errors"]["phone"])
-        self.assertEqual(len(self.sent), 1)
 
     def test_second_tap_after_the_order_shows_the_order(self):
         self.checkout()

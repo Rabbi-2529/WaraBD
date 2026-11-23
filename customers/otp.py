@@ -5,7 +5,7 @@ Rules (all editable in admin → Site Settings → "Phone login / OTP"):
   * "Resend code" only after `otp_resend_seconds` — no wait once the last code
     was entered correctly (order placed, logged in …), so the next order can start at once
   * at most `sms_daily_limit_per_number` SMS per number and
-    `sms_daily_limit_per_ip` per internet connection per day (Dhaka time)
+    `sms_daily_limit_per_ip` per internet connection per day (Dhaka time); 0 = no limit
   * guests get a new code for every order (logged-in customers never need one);
     a number verified in this browser today may fill in its last address at
     checkout (see customers.auth.phone_verified_today)
@@ -59,9 +59,12 @@ def seconds_until_resend(phone, site=None):
     if not last:
         return 0
     # The wait only stops "Resend code" being pressed again and again. When the
-    # newest code was already entered correctly, a new one may be sent at once.
-    newest = OtpCode.objects.filter(phone=phone).order_by("-created_at").first()
-    if newest and newest.verified_at:
+    # code that last SMS carried was already entered correctly (order placed,
+    # logged in …), a new one may be sent at once. (A code is saved just before
+    # its SMS, so it is the newest code created up to the SMS time; codes whose
+    # SMS failed do not count.)
+    carried = OtpCode.objects.filter(phone=phone, created_at__lte=last.created_at).order_by("-created_at").first()
+    if carried and carried.verified_at:
         return 0
     elapsed = (timezone.now() - last.created_at).total_seconds()
     return max(0, int(site.otp_resend_seconds - elapsed + 0.999))
@@ -74,11 +77,32 @@ def _sms_text(site, code):
         return DEFAULT_SMS_TEXT.format(code=code, minutes=site.otp_valid_minutes)
 
 
-def request_otp(request, *, phone, purpose, payload=None):
-    """Create a code, send it by SMS and remember it in the session. Raises OtpError."""
+def _open_code_in_session(request, phone, purpose, site):
+    """The code this browser is already waiting for, for the same number and purpose."""
+    otp = pending_otp(request)
+    if otp and otp.phone == phone and otp.purpose == purpose and otp.is_open \
+            and otp.attempts < site.otp_max_attempts:
+        return otp
+    return None
+
+
+def request_otp(request, *, phone, purpose, payload=None, resend=False):
+    """Create a code, send it by SMS and remember it in the session. Raises OtpError.
+
+    Back on the checkout (or login) page and sent again with the same number while
+    the code from a moment ago still works: no new SMS and no "please wait" — the
+    same code is used, with the new details (cart, address …). Only "Resend code"
+    (resend=True) always asks for a new SMS."""
     site = SiteSettings.load()
     if sms_mode(site) == "off":
         raise OtpError(_("SMS codes are not available right now. Please call us and we will help you."))
+
+    if not resend:
+        otp = _open_code_in_session(request, phone, purpose, site)
+        if otp:
+            otp.payload = payload or {}
+            otp.save(update_fields=["payload"])
+            return otp
 
     wait = seconds_until_resend(phone, site)
     if wait:
@@ -89,10 +113,11 @@ def request_otp(request, *, phone, purpose, payload=None):
         ) % {"n": wait})
 
     today = SmsLog.objects.filter(created_at__gte=_day_start(), status__in=_COUNTED)
-    if today.filter(phone=phone).count() >= site.sms_daily_limit_per_number:
+    per_number, per_ip = site.sms_daily_limit_per_number, site.sms_daily_limit_per_ip  # 0 = no limit
+    if per_number and today.filter(phone=phone).count() >= per_number:
         raise OtpError(_("This number has reached today's SMS limit. Please try again tomorrow or call us."))
     ip = client_ip(request)
-    if ip and today.filter(ip=ip).count() >= site.sms_daily_limit_per_ip:
+    if per_ip and ip and today.filter(ip=ip).count() >= per_ip:
         raise OtpError(_("Too many SMS codes were requested from this connection today. Please try again tomorrow or call us."))
 
     # Only one open code per number and purpose.

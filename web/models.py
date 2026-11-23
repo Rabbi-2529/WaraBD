@@ -491,22 +491,28 @@ class SiteSettings(models.Model):
 
     # Phone login / OTP (Phase 4)
     otp_for_orders = models.BooleanField(
+        "SMS code for guest orders",
         default=True,
-        help_text="Guests must enter an SMS code before an order is placed. "
-                  "Logged-in customers and numbers already verified today skip it.",
+        help_text="Guests enter a new SMS code for every order. Logged-in customers never need one.",
     )
     sms_daily_limit_per_number = models.PositiveSmallIntegerField(
+        "SMS codes per mobile number per day",
         default=3,
-        help_text="Most SMS codes one mobile number can receive per day (resets at midnight, Dhaka time). "
-                  "Set 1 to never send the same number a second SMS on the same day.",
+        help_text="Most SMS codes one mobile number can receive in a day: logins and orders together "
+                  "(each guest order uses one). Resets at midnight, Dhaka time. 0 = no limit.",
     )
     sms_daily_limit_per_ip = models.PositiveSmallIntegerField(
-        default=10, help_text="Most SMS codes requested from one internet connection per day (stops SMS abuse).",
+        "SMS codes per internet connection per day",
+        default=10,
+        help_text="Most SMS codes asked for from one internet connection in a day, for all numbers together "
+                  "(stops someone sending many SMS from your account). 0 = no limit.",
     )
-    otp_valid_minutes = models.PositiveSmallIntegerField(default=5)
+    otp_valid_minutes = models.PositiveSmallIntegerField("Code works for (minutes)", default=5)
     otp_resend_seconds = models.PositiveSmallIntegerField(
-        default=300, help_text="Seconds to wait before 'Resend code' is allowed (300 = 5 minutes).")
-    otp_max_attempts = models.PositiveSmallIntegerField(default=5, help_text="Wrong tries before the code stops working.")
+        "Wait before “Resend code” (seconds)",
+        default=300, help_text="300 = 5 minutes. No wait once the last code was used (order placed, logged in).")
+    otp_max_attempts = models.PositiveSmallIntegerField(
+        "Wrong tries allowed", default=5, help_text="Wrong tries before the code stops working.")
     otp_sms_text = models.CharField(
         max_length=160,
         default="{code} is your WaRa BD verification code. It expires in {minutes} minutes. Do not share it.",

@@ -225,7 +225,7 @@ def otp_resend(request):
     if otp is None:
         return redirect("customers:login")
     try:
-        request_otp(request, phone=otp.phone, purpose=otp.purpose, payload=otp.payload)
+        request_otp(request, phone=otp.phone, purpose=otp.purpose, payload=otp.payload, resend=True)
     except OtpError as exc:
         messages.error(request, str(exc))
     else:
