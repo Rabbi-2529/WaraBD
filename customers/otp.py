@@ -2,7 +2,8 @@
 
 Rules (all editable in admin → Site Settings → "Phone login / OTP"):
   * 6-digit code, valid `otp_valid_minutes`, at most `otp_max_attempts` wrong tries
-  * "Resend code" only after `otp_resend_seconds`
+  * "Resend code" only after `otp_resend_seconds` — no wait once the last code
+    was entered correctly (order placed, logged in …), so the next order can start at once
   * at most `sms_daily_limit_per_number` SMS per number and
     `sms_daily_limit_per_ip` per internet connection per day (Dhaka time)
   * guests get a new code for every order (logged-in customers never need one);
@@ -56,6 +57,11 @@ def seconds_until_resend(phone, site=None):
     site = site or SiteSettings.load()
     last = SmsLog.objects.filter(phone=phone, status__in=_COUNTED).order_by("-created_at").first()
     if not last:
+        return 0
+    # The wait only stops "Resend code" being pressed again and again. When the
+    # newest code was already entered correctly, a new one may be sent at once.
+    newest = OtpCode.objects.filter(phone=phone).order_by("-created_at").first()
+    if newest and newest.verified_at:
         return 0
     elapsed = (timezone.now() - last.created_at).total_seconds()
     return max(0, int(site.otp_resend_seconds - elapsed + 0.999))

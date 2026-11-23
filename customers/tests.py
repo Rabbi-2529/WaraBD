@@ -242,14 +242,20 @@ class CheckoutOtpTests(OtpTestCase):
         self.checkout()
         first_code = self.last_code()
         self.client.post("/account/verify/", {"code": first_code})
-        self.age_last_sms()
-        r = self.checkout().json()                       # same number, same browser, same day
+        r = self.checkout().json()                       # same number, same browser, right away
         self.assertTrue(r["otp_required"])
         self.assertEqual(Order.objects.count(), 1)        # not placed until the new code is entered
         self.assertEqual(len(self.sent), 2)
         self.assertContains(self.client.post("/account/verify/", {"code": first_code}), "Wrong code")
         self.client.post("/account/verify/", {"code": self.last_code()})
         self.assertEqual(Order.objects.count(), 2)
+
+    def test_unused_code_still_has_the_resend_wait(self):
+        self.checkout()
+        r = self.checkout()                               # first code not entered yet
+        self.assertEqual(r.status_code, 429)
+        self.assertIn("Please wait", r.json()["errors"]["phone"])
+        self.assertEqual(len(self.sent), 1)
 
     def test_second_tap_after_the_order_shows_the_order(self):
         self.checkout()
