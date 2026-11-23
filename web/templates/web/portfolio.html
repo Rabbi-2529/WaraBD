@@ -13,7 +13,8 @@
       </div>
     </section>
 
-    <!-- Gallery -->
+    <!-- Gallery: photos of the product ticked "Show on home page" -->
+    {% if featured_product %}
     <section class="section">
       <div class="container">
         <div class="section-head left reveal">
@@ -24,6 +25,7 @@
         <div class="photo-grid reveal" id="photoGrid"></div>
       </div>
     </section>
+    {% endif %}
 
     <!-- Use cases (Website Content → Use Cases) -->
     <section class="section section-soft">
@@ -55,14 +57,14 @@
 
     <section class="section" style="padding-top:0">
       <div class="container">
-        <div class="cta-band reveal" data-buy-scope>
+        <div class="cta-band reveal"{% if featured_product %} data-buy-scope data-id="{{ featured_product.slug }}"{% endif %}>
           <div>
             <h2>{% cms "portfolio.cta.title" %}{% translate "Need locks for a whole building?" %}{% endcms %}</h2>
             <p>{% cms "portfolio.cta.text" %}{% translate "Hotels, gyms, schools and offices — talk to us about bulk orders and installation support." %}{% endcms %}</p>
           </div>
           <div class="actions">
             <a class="btn btn-white" href="{% url 'web:contact' %}"><i data-icon="mail"></i> {% translate "Request a quote" %}</a>
-            <button type="button" class="btn btn-outline-light" data-add-to-cart><i data-icon="cart"></i> {% translate "Add one to cart" %}</button>
+            {% if featured_product %}<button type="button" class="btn btn-outline-light" data-add-to-cart><i data-icon="cart"></i> {% translate "Add one to cart" %}</button>{% endif %}
           </div>
         </div>
       </div>

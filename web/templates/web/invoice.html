@@ -71,7 +71,8 @@
   <main class="sheet">
     <header class="head">
       <div class="logo">
-        {% if site.logo %}<img src="{{ site.logo.url }}" alt="{{ site.name }}">{% else %}<span class="mark">WaRa</span>{% endif %}
+        {# The square icon (Site settings → Favicon) fits this box; a wide logo would be tiny here. #}
+        {% if site.favicon %}<img src="{{ site.favicon.url }}" alt="{{ site.name }}">{% elif site.logo %}<img src="{{ site.logo.url }}" alt="{{ site.name }}">{% else %}<span class="mark">WaRa</span>{% endif %}
       </div>
       <div class="shop">
         <h1>{{ site.name }}</h1>

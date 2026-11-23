@@ -1224,3 +1224,7 @@ main { margin-bottom: 10px; }
   .delivery-full .row strong { font-size: 15px; }
   .delivery-full .row span { font-size: 13px; }
 }
+
+/* Uploaded logo on dark backgrounds (footer, side cart bar): a white rounded backing,
+   so dark text in the logo stays readable. */
+.site-footer .logo-img, .mc-brand .logo-img { box-sizing: content-box; background: var(--white); padding: 6px 10px; border-radius: 10px; }

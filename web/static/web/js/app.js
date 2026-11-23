@@ -62,7 +62,9 @@
     price: 0, oldPrice: 0, stock: 'in-stock', images: [{ src: '', caption: '' }],
     warranty: '1 Year', description: [], specs: [], features: [], applications: {}, faq: []
   };
-  const PRODUCT = CATALOG.find(p => p.featured) || CATALOG[0] || FALLBACK_PRODUCT;
+  // The product ticked "Show on home page" in admin (prices, photos and Buy Now on
+  // the home, about and portfolio pages). None ticked = those parts are hidden.
+  const PRODUCT = CATALOG.find(p => p.featured) || FALLBACK_PRODUCT;
 
   const STOCK = {
     'in-stock':     { label: T('In stock'),     buy: true  },
@@ -830,12 +832,13 @@
   }
 
   /* ---------- Portfolio ---------- */
-  const USE_CASES = (window.__WARA__ && window.__WARA__.useCases && window.__WARA__.useCases.length > 0)
-    ? window.__WARA__.useCases
-    : [{ cat: 'home', icon: 'archive', tone: '', title: 'Bedroom Wardrobes', place: 'Homes & apartments', mode: 'private', text: 'Keep jewellery, cash and documents behind a code only your family knows.' }];
+  const USE_CASES = (window.__WARA__ && Array.isArray(window.__WARA__.useCases)) ? window.__WARA__.useCases : [];
   const CATS = { all: T('All'), home: T('Home'), office: T('Office'), hospitality: T('Hospitality & Health'), public: T('Public Spaces'), commercial: T('Commercial') };
 
   function initPortfolio() {
+    // No use cases entered yet: hide that section instead of showing an empty grid.
+    const ucGrid = $('#pfGrid');
+    if (ucGrid && !USE_CASES.length) ucGrid.closest('section').hidden = true;
     const pg = $('#photoGrid');
     if (!pg) return;
     pg.innerHTML = PRODUCT.images.map((im, i) =>

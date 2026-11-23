@@ -3,7 +3,7 @@ import re
 
 from django import forms
 
-from .widgets import FaqEditor, KeywordTagsWidget, RichTextarea
+from .widgets import FaqEditor, KeywordTagsWidget, ListEditor, RichTextarea
 from django.utils.text import slugify
 
 from .models import Category, ContactMessage, Order, Page, PageSeo, Product, SeoKeyword
@@ -100,10 +100,12 @@ class TextListField(forms.CharField):
     """
 
     help_text_default = ""
+    editor = ""  # row editor in the admin (widgets.ListEditor); "" = plain text box
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("required", False)
-        kwargs.setdefault("widget", forms.Textarea(attrs={"class": "form-control", "rows": 5}))
+        kwargs.setdefault("widget", ListEditor(self.editor) if self.editor
+                          else forms.Textarea(attrs={"class": "form-control", "rows": 5}))
         kwargs.setdefault("help_text", self.help_text_default)
         super().__init__(*args, **kwargs)
 
@@ -136,11 +138,13 @@ class TextListField(forms.CharField):
 
 
 class HighlightsField(TextListField):
-    help_text_default = "One highlight per line."
+    help_text_default = "One short point per row, shown as a tick list."
+    editor = "highlights"
 
 
 class SpecsField(TextListField):
-    help_text_default = "One per line, as  Label: Value   e.g.  Model: FT-SCL029"
+    help_text_default = "A name and a value per row, e.g. Model · FT-SCL029. Shown as a table."
+    editor = "specs"
 
     def to_text(self, value):
         rows = []
@@ -169,7 +173,8 @@ class SpecsField(TextListField):
 
 
 class FeaturesField(TextListField):
-    help_text_default = "One per line:  icon | Title | Text   (icon is optional, e.g. keypad, usb, lock, battery, zap, shield)"
+    help_text_default = "An icon, a title and a short text per row. Shown as cards."
+    editor = "features"
 
     def to_text(self, value):
         rows = []
@@ -195,7 +200,8 @@ class FeaturesField(TextListField):
 
 
 class StepsField(TextListField):
-    help_text_default = "One step per line:  Title | Text"
+    help_text_default = "One step per row, in order. The title is optional."
+    editor = "steps"
 
     def to_text(self, value):
         rows = []
@@ -262,7 +268,8 @@ class FaqField(TextListField):
 
 
 class ApplicationsField(TextListField):
-    help_text_default = "Two lines:  Works with: Cabinets, Drawers   and   Used in: Kitchen, Office, Hotel"
+    help_text_default = "What it fits and where it is used. Separate items with commas."
+    editor = "applications"
 
     def empty_value_stored(self):
         return {}
@@ -403,7 +410,7 @@ class TagsField(forms.CharField):
 # custom admin template (templates/admin/web/product/add_form.html).
 PRODUCT_TEXT_FIELDS = [
     ("subtitle", "Subtitle", forms.TextInput),
-    ("short_description", "Short description", forms.Textarea),
+    ("short_description", "Short description", RichTextarea),  # small editor (bold, italic, links, lists)
     ("description_title", "Description heading", forms.TextInput),
     ("warranty", "Warranty", forms.TextInput),
     ("color", "Color", forms.TextInput),
@@ -480,7 +487,10 @@ class ProductOrganizeForm(SeoKeywordsFormMixin, forms.ModelForm):
                     attrs["rows"] = 3
                 if code == "bn":
                     attrs["lang"] = "bn"
-                self.fields[name].widget = widget_cls(attrs=attrs)
+                if widget_cls is RichTextarea:
+                    self.fields[name].widget = RichTextarea(attrs={**attrs, "rows": 4}, compact=True)
+                else:
+                    self.fields[name].widget = widget_cls(attrs=attrs)
                 self.fields[name].label = f"{label} ({lang_label})"
         for field, label, field_cls in PRODUCT_LIST_FIELDS:
             for code, lang_label in LANGS:

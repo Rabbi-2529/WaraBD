@@ -16,12 +16,12 @@ Every storefront page gets, from one place (layout.html → {% seo_data as seo %
 import json
 
 from django.conf import settings
-from django.utils.html import strip_tags
 from django.utils.text import Truncator
 from django.utils.translation import gettext as _
 
 from .models import Category, Page, PageSeo, Product, SiteSettings
 from .product_page import clean_faq
+from .richtext import plain
 
 DEFAULTS = {
     # url name: (title, description) — same msgids as before, so the Bangla catalog keeps working.
@@ -66,7 +66,7 @@ def _file_url(field):
 
 
 def _clean(text, limit):
-    text = " ".join(strip_tags(str(text or "")).split())
+    text = " ".join(plain(text).split())  # tags and any <script> text removed, &amp; etc. decoded
     return Truncator(text).chars(limit) if text else ""
 
 

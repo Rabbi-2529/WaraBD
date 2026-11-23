@@ -30,3 +30,6 @@ rizz/static/js/pages/leaflet-map.init.js
 
 # Old/broken virtualenvs
 .venv*/
+
+# Upload / backup archives (may contain .env)
+*.zip

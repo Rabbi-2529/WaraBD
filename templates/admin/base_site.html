@@ -25,6 +25,9 @@
     <link href="{% static 'admin/css/wara-admin.css' %}" rel="stylesheet" type="text/css">
     
     {% block extrastyle %}{% endblock %}
+    {# English -> বাংলা buttons on every admin form (static/admin/js/wara-translate.js) #}
+    <meta name="wara-translate" content="{% url 'admin_translate' %}" data-ready="{% if site_settings.google_translate_api_key %}1{% endif %}" data-settings="{% url 'admin:web_sitesettings_change' 1 %}#translation">
+    <script src="{% static 'admin/js/wara-translate.js' %}" defer></script>
     {# Django admin puts form media here (inline "Add another", date pickers, slug prefill). #}
     {% block extrahead %}{% endblock %}
 </head>

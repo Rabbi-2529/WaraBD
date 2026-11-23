@@ -82,6 +82,9 @@
       }
       // Keep the hidden textarea current (some scripts read it before submit).
       editor.model.document.on("change:data", function () { textarea.value = editor.getData(); });
+      // Other scripts (the translate buttons) reach the editor through its textarea.
+      textarea._waraEditor = editor;
+      textarea.dispatchEvent(new CustomEvent("wara:editor-ready", { bubbles: true }));
     }).catch(function (err) {
       textarea.dataset.editorReady = "";
       console.error("CKEditor failed to start", err);

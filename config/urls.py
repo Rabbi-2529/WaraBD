@@ -5,10 +5,13 @@ from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.decorators.cache import cache_control
+from django.views.static import serve
 
 from web.sitemaps import SITEMAPS
 from web.editor_upload import editor_upload
+from web.translate import translate_view
 from web.views import robots_txt
 
 
@@ -21,6 +24,7 @@ urlpatterns = [
     ),
     path("robots.txt", robots_txt, name="robots_txt"),
     path("admin/editor-upload/", editor_upload, name="editor_upload"),  # CKEditor pictures (staff only)
+    path("admin/translate/", translate_view, name="admin_translate"),  # English -> বাংলা (staff only)
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
 ]
@@ -44,10 +48,18 @@ urlpatterns += i18n_patterns(
 #     ]
 
 
-# Serve uploaded media files during development.
+# Uploaded files (logo, product pictures, editor images, share images).
 # ------------------------------------------------------------------------------
-if settings.DEBUG:
-    urlpatterns += static(
-        settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT,
-    )
+def media_urlpatterns():
+    """On cPanel / Passenger nothing else serves the media folder, so Django does it
+    (DJANGO_SERVE_MEDIA=False turns this off when the web server serves /media/ itself)."""
+    if settings.DEBUG:
+        return static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    prefix = str(settings.MEDIA_URL or "")
+    if not getattr(settings, "SERVE_MEDIA", False) or not prefix.startswith("/") or prefix == "/":
+        return []
+    view = cache_control(public=True, max_age=60 * 60 * 24 * 7)(serve)  # uploads get new names, so a week is safe
+    return [re_path(r"^%s(?P<path>.+)$" % prefix.lstrip("/"), view, {"document_root": settings.MEDIA_ROOT})]
+
+
+urlpatterns = media_urlpatterns() + urlpatterns

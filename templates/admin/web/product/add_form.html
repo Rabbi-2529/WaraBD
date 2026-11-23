@@ -952,7 +952,7 @@
                     <div class="seo-preview" aria-hidden="true">
                         <span class="seo-preview-url">{{ request.get_host }}/{{ adminform.form.slug.value|default:"product-link" }}</span>
                         <span class="seo-preview-title" data-seo-title>{% firstof adminform.form.seo_title_en.value adminform.form.name_en.value "Product title" %}</span>
-                        <span class="seo-preview-text" data-seo-text>{% firstof adminform.form.seo_description_en.value adminform.form.short_description_en.value "Short description shown under the title on Google." %}</span>
+                        <span class="seo-preview-text" data-seo-text>{% if adminform.form.seo_description_en.value %}{{ adminform.form.seo_description_en.value }}{% elif adminform.form.short_description_en.value %}{{ adminform.form.short_description_en.value|striptags }}{% else %}Short description shown under the title on Google.{% endif %}</span>
                     </div>
                 </section>
                 <style>
@@ -967,8 +967,11 @@
                         var input = document.getElementById(id), out = document.querySelector(target);
                         var fb = fallbackId && document.getElementById(fallbackId);
                         if (!out) return;
-                        function paint() { var v = (input && input.value.trim()) || (fb && fb.value.trim()) || out.textContent; out.textContent = v; }
+                        var text = function (el) { return el ? el.value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : ""; };
+                        function paint() { var v = text(input) || text(fb) || out.textContent; out.textContent = v; }
                         [input, fb].forEach(function (el) { if (el) el.addEventListener("input", paint); });
+                        // the short description is a CKEditor box: follow its changes too
+                        if (fb) fb.addEventListener("wara:editor-ready", function () { fb._waraEditor.model.document.on("change:data", paint); });
                     }
                     bind("id_seo_title_en", "[data-seo-title]", "id_name_en");
                     bind("id_seo_description_en", "[data-seo-text]", "id_short_description_en");
@@ -1194,7 +1197,8 @@
                         <div class="status-box">
                             {{ adminform.form.is_featured }}
                             <label for="{{ adminform.form.is_featured.id_for_label }}">
-                                Featured (home page &amp; footer links)
+                                Show on home page
+                                <small style="display:block;font-weight:400;color:#6b7280">The product in the home page's top banner (price, Buy Now, photos). Only one at a time.</small>
                             </label>
                         </div>
                         {{ adminform.form.is_featured.errors }}

@@ -1,0 +1,21 @@
+/* Product list editors (static/admin/js/wara-lists.js). The row look comes from the
+   FAQ editor styles in wara-admin.css (.faq-ed-*); this only lays out the boxes. */
+.list-ed .faq-ed-row { align-items: center; }
+.list-ed-fields { display: grid; gap: 8px; }
+.list-ed-specs .list-ed-fields { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+.list-ed-features .list-ed-fields { grid-template-columns: 120px minmax(0, 1fr); }
+.list-ed-features .list-ed-text { grid-column: 1 / -1; }
+.admin-content .list-ed-fields input, .admin-content .list-ed-fields select, .admin-content .list-ed-fields textarea { margin: 0 !important; }
+.admin-content .list-ed-fields textarea { min-height: 58px !important; resize: vertical; }
+.admin-content .list-ed-title { font-weight: 600 !important; }
+.list-ed-applications { display: flex; flex-direction: column; gap: 6px; padding: 12px; }
+.list-ed-label { margin: 4px 0 0 !important; font-size: 12.5px !important; font-weight: 600 !important; color: #374151 !important; }
+.list-ed-label small { font-weight: 500; color: #9ca3af; }
+@media (max-width: 600px) {
+    .list-ed-specs .list-ed-fields, .list-ed-features .list-ed-fields { grid-template-columns: 1fr; }
+}
+
+/* Each list gets the full width (English above বাংলা), and the row buttons sit in one line. */
+.field-row:has(.list-ed) { grid-template-columns: 1fr !important; display: grid !important; }
+.list-ed .faq-ed-tools { flex-direction: row; align-self: center; }
+.list-ed-features .faq-ed-tools, .list-ed-steps .faq-ed-tools { align-self: start; }

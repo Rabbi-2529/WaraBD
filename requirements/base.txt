@@ -1,20 +1,20 @@
 python-slugify==8.0.4  # https://github.com/un33k/python-slugify
 Pillow==10.3.0  # https://github.com/python-pillow/Pillow
 argon2-cffi==23.1.0  # https://github.com/hynek/argon2_cffi
-whitenoise==6.7.0  # https://github.com/evansd/whitenoise
+whitenoise==6.12.0  # https://github.com/evansd/whitenoise
 redis==5.0.6  # https://github.com/redis/redis-py
 hiredis==2.3.2  # https://github.com/redis/hiredis-py
 mysqlclient==2.2.4  # https://github.com/PyMySQL/mysqlclient — MySQL / MariaDB driver
 
 # Django
 # ------------------------------------------------------------------------------
-django==4.2.13  # pyup: < 5.0  # https://www.djangoproject.com/
-django-environ==0.11.2  # https://github.com/joke2k/django-environ
+django==4.2.27  # pyup: < 5.0  # https://www.djangoproject.com/
+django-environ==0.14.0  # https://github.com/joke2k/django-environ
 django-model-utils==4.5.1  # https://github.com/jazzband/django-model-utils
-django-allauth[mfa]==0.63.3  # https://github.com/pennersr/django-allauth
-django-crispy-forms==2.2  # https://github.com/django-crispy-forms/django-crispy-forms
-crispy-bootstrap5==2024.2  # https://github.com/django-crispy-forms/crispy-bootstrap5
+django-allauth[mfa]==65.22.1  # settings use the allauth 65 names (ACCOUNT_LOGIN_METHODS …) — https://github.com/pennersr/django-allauth
+django-crispy-forms==2.3  # https://github.com/django-crispy-forms/django-crispy-forms
+crispy-bootstrap5==2024.10  # https://github.com/django-crispy-forms/crispy-bootstrap5
 django-redis==5.4.0  # https://github.com/jazzband/django-redis
-django-modeltranslation==0.19.17  # https://github.com/deschler/django-modeltranslation — English/Bangla model fields
+django-modeltranslation==0.19.12  # https://github.com/deschler/django-modeltranslation — English/Bangla model fields
 polib==1.2.0  # https://github.com/izimobil/polib — compiles locale/*.po without GNU gettext
 nh3==0.2.18  # sanitises CKEditor HTML before it is shown on the site

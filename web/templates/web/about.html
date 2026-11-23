@@ -27,8 +27,10 @@
           </ul>
         </div>
         <div class="about-visual reveal">
+          {% if featured_product %}
           <div class="frame"><img data-pimg="3" alt=""></div>
-          <div class="badge-float"><strong data-bind="warranty"></strong><span>{% cms "about.badge" %}{% translate "warranty on every lock" %}{% endcms %}</span></div>
+          {% if featured_product.warranty %}<div class="badge-float"><strong data-bind="warranty"></strong><span>{% cms "about.badge" %}{% translate "warranty on every lock" %}{% endcms %}</span></div>{% endif %}
+          {% endif %}
         </div>
       </div>
     </section>

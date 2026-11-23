@@ -377,3 +377,57 @@ class PhoneFormatTests(TestCase):
         for bad in ("958666966", "1258666966", "19586669661"):
             with self.assertRaises(ValueError):
                 normalize_bd_phone(bad)
+
+
+class MediaServingTests(TestCase):
+    """Live server (DEBUG off): uploaded files such as the logo must still load."""
+
+    def test_uploaded_files_are_served_when_debug_is_off(self):
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        from django.core.exceptions import SuspiciousFileOperation
+        from django.http import Http404
+        from django.test import RequestFactory
+
+        from config.urls import media_urlpatterns
+
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        (Path(root) / "site").mkdir()
+        (Path(root) / "site" / "logo.png").write_bytes(b"\x89PNG fake")
+        with override_settings(DEBUG=False, SERVE_MEDIA=True, MEDIA_URL="/media/", MEDIA_ROOT=root):
+            patterns = media_urlpatterns()
+            self.assertEqual(len(patterns), 1)
+            match = patterns[0].resolve("media/site/logo.png")
+            response = match.func(RequestFactory().get("/media/site/logo.png"), *match.args, **match.kwargs)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(b"".join(response.streaming_content), b"\x89PNG fake")
+            self.assertIn("max-age", response["Cache-Control"])
+            traversal = patterns[0].resolve("media/../config/urls.py")
+            with self.assertRaises((Http404, SuspiciousFileOperation)):  # files outside media/ are refused
+                traversal.func(RequestFactory().get("/"), *traversal.args, **traversal.kwargs)
+        with override_settings(DEBUG=False, SERVE_MEDIA=False):
+            self.assertEqual(media_urlpatterns(), [])
+
+
+@override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
+class ProductListEditorTests(TestCase):
+    def test_product_form_uses_row_editors_and_still_reads_the_text(self):
+        from .forms import ApplicationsField, FeaturesField, SpecsField, StepsField
+
+        staff = get_user_model().objects.create_superuser(email="owner@example.com", password="x-test-only")
+        self.client.force_login(staff)
+        page = self.client.get("/admin/web/product/add/").content.decode()
+        for kind in ("highlights", "specs", "features", "steps", "applications"):
+            self.assertEqual(page.count(f'data-list-editor="{kind}"'), 2, kind)   # English + Bangla
+        self.assertIn("admin/js/wara-lists.js", page)
+        # the text the editor writes back is read as before
+        self.assertEqual(SpecsField().clean("Model: FT-SCL029\nSize: 5 x 5 cm"), [["Model", "FT-SCL029"], ["Size", "5 x 5 cm"]])
+        self.assertEqual(FeaturesField().clean("keypad | Two codes | Owner and user"),
+                         [{"icon": "keypad", "title": "Two codes", "text": "Owner and user"}])
+        self.assertEqual(StepsField().clean("Fit | Screw it in\nSet the code"),
+                         [{"title": "Fit", "text": "Screw it in"}, {"title": "", "text": "Set the code"}])
+        self.assertEqual(ApplicationsField().clean("Works with: Cabinets, Drawers\nUsed in: Office"),
+                         {"compatible": ["Cabinets", "Drawers"], "places": ["Office"]})

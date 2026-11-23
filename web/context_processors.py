@@ -40,10 +40,9 @@ def cart_summary(request):
     return {"cart_count": len(cart), "cart_total": cart.get_total()}
 
 def site_settings(request):
-    # Featured product: used by the hero/footer product links.
-    featured = (
-        Product.objects.filter(is_active=True).order_by("-is_featured", "-created_at").first()
-    )
+    # The product ticked "Show on home page" (home top banner, about / portfolio photos,
+    # footer link). None ticked = those parts are hidden; no other product is picked.
+    featured = Product.objects.filter(is_active=True, is_featured=True).order_by("-updated_at").first()
     return {
         "site_settings": SiteSettings.load(),
         "featured_product": featured,
@@ -80,7 +79,7 @@ def products_json(request):
             "stock": p.stock_status,
             "warranty": p.warranty or "1 Year",
             "added": p.created_at.strftime("%Y-%m-%d"),
-            "short": p.short_description or plain(p.description)[:200],
+            "short": plain(p.short_description) or plain(p.description)[:200],
             "images": images,  # 🟢 Now includes gallery
             "highlights": p.highlights or [],
             "descriptionTitle": p.description_title or "",

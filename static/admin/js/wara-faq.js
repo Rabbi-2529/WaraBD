@@ -129,6 +129,7 @@
     add.addEventListener("click", function () { addRow({}, true); write(); });
     toText.addEventListener("click", function () { box.hidden = true; raw.hidden = false; textarea.focus(); });
     back.addEventListener("click", function () { raw.hidden = true; box.hidden = false; load(); });
+    textarea.addEventListener("wara:reload", load);  // text changed by another script (translate)
 
     load();
   }

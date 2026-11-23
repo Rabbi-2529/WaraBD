@@ -46,7 +46,7 @@
             </div>
 
             <h1 class="p-title">{{ product.name }}{% if product.subtitle %} <span style="color:var(--red)">{{ product.subtitle }}</span>{% endif %}</h1>
-            {% if product.short_description %}<p class="p-short">{{ product.short_description }}</p>{% endif %}
+            {% if product.short_description %}<p class="p-short">{{ product.short_description|rich_inline }}</p>{% endif %}
 
             <div class="p-price">
               <span class="price-now">{{ price_now|taka }}</span>
@@ -110,7 +110,7 @@
                 {% if product.description %}
                   <div class="rich rich-text">{{ product.description|rich }}</div>
                 {% else %}
-                  <p class="rich">{{ product.short_description|default:product.name }}</p>
+                  <p class="rich">{% if product.short_description %}{{ product.short_description|rich_inline }}{% else %}{{ product.name }}{% endif %}</p>
                 {% endif %}
                 {% if tags %}
                 <div class="tags" style="margin-top:20px">

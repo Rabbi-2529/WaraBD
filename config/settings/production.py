@@ -2,6 +2,7 @@
 # ruff: noqa: E501
 """Production settings for WaRa BD."""
 
+from .base import *  # noqa: F401,F403 — every base setting (apps, URLs, middleware …); changed below
 from .base import (
     BASE_DIR,
     DATABASES,
@@ -43,21 +44,29 @@ DATABASES["default"]["CONN_MAX_AGE"] = int(CONN_MAX_AGE)
 # REDIS CACHE
 # ==============================================================================
 
-REDIS_URL = env(
-    "REDIS_URL",
-    default="redis://127.0.0.1:6379/1",
-)
+# Redis only when REDIS_URL is set (e.g. redis://127.0.0.1:6379/1). Shared cPanel
+# hosting usually has no Redis: then each app process keeps its own small
+# in-memory cache (sessions and SMS limits live in the database, not here).
+REDIS_URL = env("REDIS_URL", default="")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "IGNORE_EXCEPTIONS": True,
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,
+            },
         },
-    },
-}
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "warabd",
+        },
+    }
 
 
 # ==============================================================================
@@ -120,9 +129,9 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": (
-            "whitenoise.storage.CompressedManifestStaticFilesStorage"
-        ),
+        # WhiteNoise hashed + compressed files; tolerates theme CSS that
+        # points at pictures the theme never shipped (config/storage.py).
+        "BACKEND": "config.storage.ForgivingManifestStaticFilesStorage",
     },
 }
 
@@ -131,6 +140,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_ROOT = BASE_DIR / "media"
 
 MEDIA_URL = "/media/"
+
+# cPanel / Passenger: Apache does not serve the app's media folder, so without this
+# every uploaded file (logo, product pictures …) is a 404 on the live site.
+SERVE_MEDIA = env_bool("DJANGO_SERVE_MEDIA", default=True)
 
 
 # ==============================================================================

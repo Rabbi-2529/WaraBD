@@ -119,7 +119,7 @@ def _build_product_data(product):
         "slug": product.slug,
         "name": product.name,
         "subtitle": product.subtitle or "",
-        "short": product.short_description or "",
+        "short": plain_text(product.short_description),  # product cards show plain text
 
         # Product details
         "brand": product.brand or "",

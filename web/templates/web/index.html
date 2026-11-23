@@ -11,15 +11,21 @@
         <div>
           <h1>{% cms "home.hero.title" html %}{% blocktranslate trimmed %}Keyless security for every <span class="r">cabinet</span> &amp; <span class="g">drawer</span>.{% endblocktranslate %}{% endcms %}</h1>
           <p class="hero-lead">{% cms "home.hero.lead" %}{% translate "A slim round keypad lock with visitor password changing access. Set a code, close the drawer, done — no keys to lose and no wiring to run." %}{% endcms %}</p>
+          {% if featured_product %}
           <div class="hero-price">
             <span class="price-now" data-bind="price"></span>
-            <span class="price-old" data-bind="old-price"></span>
-            <span class="price-save">{% translate "Save" %} <span data-bind="save"></span></span>
+            {% if featured_product.current_price < featured_product.price %}<span class="price-old" data-bind="old-price"></span>
+            <span class="price-save">{% translate "Save" %} <span data-bind="save"></span></span>{% endif %}
           </div>
-          <div class="hero-cta" data-buy-scope>
+          <div class="hero-cta" data-buy-scope data-id="{{ featured_product.slug }}">
             <button type="button" class="btn btn-red" data-buy-now><i data-icon="zap"></i> {% translate "Buy Now" %}</button>
             <button type="button" class="btn btn-green" data-add-to-cart><i data-icon="cart"></i> {% translate "Add to Cart" %}</button>
           </div>
+          {% else %}
+          <div class="hero-cta">
+            <a class="btn btn-red" href="{% url 'web:product_list' %}"><i data-icon="bag"></i> {% translate "Browse products" %}</a>
+          </div>
+          {% endif %}
           <div class="hero-trust">
             {% cms_items "home.hero_trust" as trust %}
             {% for item in trust %}<span><i data-icon="{{ item.icon|default:'check' }}"></i> {{ item.title }}</span>{% endfor %}
@@ -29,7 +35,7 @@
           <div class="hero-ring"></div>
           <div class="keypad-wrap" id="heroKeypad"></div>
           <div class="lock-status" id="lockStatus" aria-live="off"><span class="led"></span><b>{% translate "Locked" %}</b></div>
-          <a class="hero-photo" href="{% if featured_product %}{{ featured_product.get_absolute_url }}{% else %}{% url 'web:product_list' %}{% endif %}"><img data-pimg="0" alt=""><span>{% cms "home.hero.photo_caption" %}{% translate "Real product · Black" %}{% endcms %}</span></a>
+          {% if featured_product %}<a class="hero-photo" href="{{ featured_product.get_absolute_url }}"><img data-pimg="0" alt=""><span>{% cms "home.hero.photo_caption" %}{% translate "Real product · Black" %}{% endcms %}</span></a>{% endif %}
         </div>
       </div>
     </section>
@@ -48,14 +54,15 @@
       </div>
     </section>
 
-    <!-- Spotlight -->
+    <!-- Spotlight (the product ticked "Show on home page") -->
+    {% if featured_product %}
     <section class="section">
       <div class="container spotlight">
         <div class="spot-media reveal">
           <span class="tag">{% cms "home.spotlight.tag" %}{% translate "Visitor password access" %}{% endcms %}</span>
           <img data-pimg="3" alt="">
         </div>
-        <div class="reveal" data-buy-scope>
+        <div class="reveal" data-buy-scope data-id="{{ featured_product.slug }}">
           <span class="eyebrow">{% cms "home.spotlight.eyebrow" %}{% translate "Meet the FT-SCL029" %}{% endcms %}</span>
           <h2 style="font-size:36px">{% cms "home.spotlight.title" %}{% translate "A smart lock that fits where keys never worked well" %}{% endcms %}</h2>
           <p style="color:var(--muted)">{% cms "home.spotlight.text" %}{% translate "The keypad sits flush on the outside of the door while a motorized lock body mounts out of sight inside. Owners keep a management code and USB keys; everyday users get their own code — or, in public mode, every visitor sets a fresh one." %}{% endcms %}</p>
@@ -66,11 +73,12 @@
           <div class="buy-row" style="margin-bottom:0">
             <div data-qty-mount></div>
             <button type="button" class="btn btn-green" data-add-to-cart><i data-icon="cart"></i> {% translate "Add to Cart" %}</button>
-            <a class="btn btn-outline" href="{% if featured_product %}{{ featured_product.get_absolute_url }}{% else %}{% url 'web:product_list' %}{% endif %}">{% translate "Full details" %}</a>
+            <a class="btn btn-outline" href="{{ featured_product.get_absolute_url }}">{% translate "Full details" %}</a>
           </div>
         </div>
       </div>
     </section>
+    {% endif %}
 
     <!-- Products -->
     <section class="section" style="padding-top:0">
@@ -168,13 +176,14 @@
     <!-- CTA -->
     <section class="section" style="padding-top:0">
       <div class="container">
-        <div class="cta-band reveal" data-buy-scope>
+        <div class="cta-band reveal"{% if featured_product %} data-buy-scope data-id="{{ featured_product.slug }}"{% endif %}>
           <div>
-            <h2>{% cms "home.cta.title" %}{% translate "Secure your drawers today —" %}{% endcms %} <span data-bind="price"></span></h2>
+            <h2>{% cms "home.cta.title" %}{% translate "Secure your drawers today —" %}{% endcms %}{% if featured_product %} <span data-bind="price"></span>{% endif %}</h2>
             <p>{% cms "home.cta.text" %}{% translate "Delivered to your door with cash on delivery all over Bangladesh." %}{% endcms %}</p>
           </div>
           <div class="actions">
-            <button type="button" class="btn btn-white" data-buy-now><i data-icon="zap"></i> {% translate "Order Now" %}</button>
+            {% if featured_product %}<button type="button" class="btn btn-white" data-buy-now><i data-icon="zap"></i> {% translate "Order Now" %}</button>
+            {% else %}<a class="btn btn-white" href="{% url 'web:product_list' %}"><i data-icon="bag"></i> {% translate "Browse products" %}</a>{% endif %}
             <a class="btn btn-outline-light" data-href="wa"><i data-icon="message"></i> {% translate "WhatsApp" %}</a>
           </div>
         </div>

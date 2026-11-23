@@ -145,6 +145,14 @@ class SiteSettingsAdmin(TranslationAdmin):
             },
         ),
         (
+            "Translation (Google)",
+            {
+                "description": "With a key here, every বাংলা box in the admin gets a “Translate from English” "
+                               "button, and an empty বাংলা box is filled when you finish the English one.",
+                "fields": ("google_translate_api_key",),
+            },
+        ),
+        (
             "Social Links",
             {
                 "fields": (
@@ -229,7 +237,7 @@ class SiteSettingsAdmin(TranslationAdmin):
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name in ("sms_api_key", "steadfast_api_key", "steadfast_secret_key", "pathao_client_secret",
-                             "pathao_password"):
+                             "pathao_password", "google_translate_api_key"):
             kwargs["widget"] = forms.PasswordInput(render_value=True, attrs={"autocomplete": "off", "class": "vTextField"})
         return super().formfield_for_dbfield(db_field, request, **kwargs)
 
@@ -472,6 +480,15 @@ class ProductAdmin(admin.ModelAdmin):
             form,
             change,
         )
+        if obj.is_featured:
+            # "Show on home page" is for one product: take the tick off the others.
+            others = Product.objects.filter(is_featured=True).exclude(pk=obj.pk)
+            names = list(others.values_list("name", flat=True)[:3])
+            if names:
+                others.update(is_featured=False)
+                from django.contrib import messages
+
+                messages.info(request, f"Now on the home page: {obj.name}. Taken off: {', '.join(names)}.")
 
 
 # ============================================================

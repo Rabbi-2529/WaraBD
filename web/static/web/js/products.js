@@ -34,34 +34,7 @@ window.WARA_PRODUCTS = (function () {
     }
   }
 
-  /* ---- Fallback: hardcoded catalog (only used when Django sends nothing usable) ---- */
-  window.__WARA_PRODUCTS_SOURCE = 'fallback';
-
-  const IMG = 'https://admin.felnatech.com/storage/app/public/products/';
-
-  return [
-    {
-      id: 'ft-scl029',
-      featured: true,
-      brand: 'WaRa',
-      category: 'Smart Cabinet Lock',
-      name: 'WaRa FT-SCL029 Cabinet Drawer Lock',
-      subtitle: 'With Visitor Password Changing Access',
-      model: 'FT-SCL029',
-      sku: 'WR-SCL029-BK',
-      color: 'Black',
-      price: 1975,
-      oldPrice: 2050,
-      stock: 'in-stock',
-      warranty: '1 Year',
-      added: '2026-10-22',
-      short: 'A compact round keypad and a motorized lock body that turn any cabinet, drawer, wardrobe or locker into keyless, code-protected storage.',
-      images: [
-        { src: IMG + 'ft-scl029-felnatech-6609-ft.jpg', caption: 'Round keypad & motorized lock body' },
-        { src: IMG + 'ft-scl029-felnatech-6609-1.jpg',  caption: 'Compact keypad — fits in your palm' },
-        { src: IMG + 'ft-scl029-felnatech-6609-2.jpg',  caption: 'Front-mounted keypad on a cabinet door' },
-        { src: IMG + 'ft-scl029-felnatech-6609-3.jpg',  caption: 'Installed on wardrobe cabinets' }
-      ]
-    }
-  ];
+  /* No products in the database: the shop is empty (no built-in demo product). */
+  window.__WARA_PRODUCTS_SOURCE = 'none';
+  return [];
 })();

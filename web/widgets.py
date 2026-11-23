@@ -59,6 +59,22 @@ class KeywordTagsWidget(forms.SelectMultiple):
         css = {"screen": ADMIN_SELECT2_CSS}
 
 
+class ListEditor(forms.Textarea):
+    """Row editor for the product lists (highlights, specifications, features, steps,
+    works with / used in): one row of boxes per item, "Add" button, move up / down, remove.
+    static/admin/js/wara-lists.js writes the rows back into this textarea in the
+    one-item-per-line format the field reads, so the form still works without JavaScript."""
+
+    def __init__(self, kind, attrs=None):
+        base = {"data-list-editor": kind, "rows": 6, "class": "form-control"}
+        base.update(attrs or {})
+        super().__init__(attrs=base)
+
+    class Media:
+        js = ("admin/js/wara-lists.js",)
+        css = {"all": ("admin/css/wara-lists.css",)}
+
+
 class FaqEditor(forms.Textarea):
     """Question / answer rows in the admin. The rows are written back into this
     textarea as  Q: … / A: …  lines, so the form still works without JavaScript."""

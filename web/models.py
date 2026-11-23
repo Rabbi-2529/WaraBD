@@ -97,7 +97,8 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     subtitle = models.CharField(max_length=200, blank=True, default="")
-    short_description = models.CharField(max_length=255, blank=True)
+    # Edited with the small CKEditor; 600 leaves room for the formatting it adds.
+    short_description = models.CharField(max_length=600, blank=True)
     description = models.TextField(blank=True)
     description_title = models.CharField(max_length=200, blank=True, default="")
 
@@ -455,6 +456,11 @@ class SiteSettings(models.Model):
     pay_cod_enabled = models.BooleanField("Cash on delivery", default=True)
     pay_bkash_enabled = models.BooleanField("bKash", default=True)
     pay_nagad_enabled = models.BooleanField("Nagad", default=True)
+    google_translate_api_key = models.CharField(
+        "Google Translate API key", max_length=200, blank=True,
+        help_text="Google Cloud → APIs & Services → Credentials → API key, with the Cloud Translation API "
+                  "switched on. Fills the বাংলা boxes in the admin from the English text.",
+    )
     invoice_terms = models.TextField(
         "Invoice terms & conditions", blank=True,
         default=(

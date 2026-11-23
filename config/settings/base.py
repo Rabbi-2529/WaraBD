@@ -313,9 +313,9 @@ if not DEBUG:
             "BACKEND": "django.core.files.storage.FileSystemStorage",
         },
         "staticfiles": {
-            "BACKEND": (
-                "whitenoise.storage.CompressedManifestStaticFilesStorage"
-            ),
+            # WhiteNoise hashed + compressed files; tolerates theme CSS that
+            # points at pictures the theme never shipped (config/storage.py).
+            "BACKEND": "config.storage.ForgivingManifestStaticFilesStorage",
         },
     }
 
@@ -327,6 +327,10 @@ if not DEBUG:
 MEDIA_URL = "/media/"
 
 MEDIA_ROOT = MEDIA_DIR
+
+# Let Django serve the uploaded files when DEBUG is off (production.py turns it on
+# for cPanel, where nothing else serves the media folder).
+SERVE_MEDIA = env_bool("DJANGO_SERVE_MEDIA", default=False)
 
 
 # ==============================================================================
